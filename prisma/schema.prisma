@@ -1,0 +1,111 @@
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+model User {
+    id        BigInt   @id @default(autoincrement()) // Discord user ID as BigInt
+    username  String
+    role      Role     @default(USER)
+    createdAt DateTime @default(now())
+    isBanned  Boolean  @default(false)
+    bannedUntil DateTime?
+    banReason String?
+    history   ConversationHistory[]
+    checkIns  MoodCheckIn[]
+    ghostLetters GhostLetter[]
+    copingToolUsages CopingToolUsage[]
+    crisisEvents CrisisEvent[]
+    modActionsAsModerator ModAction[] @relation("ModActionModerator")
+    preferences UserPreferences?
+}
+
+model Guild {
+    id           BigInt   @id
+    name         String
+    ownerId      BigInt
+    joinedAt     DateTime @default(now())
+    isBanned     Boolean  @default(false)
+    bannedUntil  DateTime? 
+    banReason    String?
+    modAlertChannelId String?
+    modActions   ModAction[]
+}
+
+model ConversationHistory {
+    id        Int      @id @default(autoincrement())
+    user      User     @relation(fields: [userId], references: [id])
+    userId    BigInt
+    content   String
+    isAiResponse Boolean
+    timestamp DateTime @default(now())
+}
+
+model MoodCheckIn {
+    id        Int      @id @default(autoincrement())
+    user      User     @relation(fields: [userId], references: [id])
+    userId    BigInt
+    mood      String
+    intensity Int?     @default(3)  // 1-5 scale
+    activity  String?
+    note      String?
+    nextCheckIn DateTime?
+    createdAt DateTime @default(now())
+}
+
+model GhostLetter {
+    id        Int      @id @default(autoincrement())
+    user      User     @relation(fields: [userId], references: [id])
+    userId    BigInt
+    content   String
+    createdAt DateTime @default(now())
+}
+
+model CopingToolUsage {
+    id        Int      @id @default(autoincrement())
+    user      User     @relation(fields: [userId], references: [id])
+    userId    BigInt
+    toolName  String
+    usedAt    DateTime @default(now())
+}
+
+model CrisisEvent {
+    id        Int      @id @default(autoincrement())
+    user      User     @relation(fields: [userId], references: [id])
+    userId    BigInt
+    detectedAt DateTime @default(now())
+    details   String?
+    escalated Boolean  @default(false)
+}
+
+model ModAction {
+    id           Int      @id @default(autoincrement())
+    guild        Guild    @relation(fields: [guildId], references: [id])
+    guildId      BigInt
+    moderator    User     @relation("ModActionModerator", fields: [moderatorId], references: [id])
+    moderatorId  BigInt
+    targetUserId BigInt
+    action       String
+    reason       String?
+    roleId       BigInt?
+    createdAt    DateTime @default(now())
+}
+
+model UserPreferences {
+    id              BigInt    @id
+    user            User      @relation(fields: [id], references: [id])
+    checkInInterval Int       @default(720)  // minutes (12 hours default)
+    lastReminder    DateTime?
+    createdAt      DateTime  @default(now())
+    updatedAt      DateTime  @updatedAt
+}
+
+enum Role {
+    ADMIN
+    MOD
+    USER
+}
