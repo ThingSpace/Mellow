@@ -2,9 +2,9 @@ import { cmdTypes } from '../../../configs/cmdTypes.config.js'
 
 export default {
     structure: {
-        name: 'affirmations',
+        name: 'breathing',
         category: 'Coping',
-        description: 'Receive a positive affirmation to brighten your day.',
+        description: 'Start a guided breathing exercise.',
         handlers: {
             cooldown: 15000,
             requiredPerms: [],
@@ -33,14 +33,14 @@ export default {
 
         const userId = BigInt(interaction.user.id)
 
-        const affirmation = await client.ai.getCopingResponse({
-            tool: 'affirmations',
+        const tool = await client.ai.getCopingResponse({
+            tool: 'breathing',
             feeling,
             userId
         })
 
         return interaction.editReply({
-            content: affirmation,
+            content: tool,
             ephemeral: isPrivate
         })
     }
