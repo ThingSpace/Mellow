@@ -33,15 +33,12 @@ export default {
 
         const userId = BigInt(interaction.user.id)
 
-        const tool = await client.ai.getCopingResponse({
+        const breathing = await client.ai.getCopingResponse({
             tool: 'breathing',
             feeling,
             userId
         })
 
-        return interaction.editReply({
-            content: tool,
-            ephemeral: isPrivate
-        })
+        return interaction.editReply({ content: breathing })
     }
 }

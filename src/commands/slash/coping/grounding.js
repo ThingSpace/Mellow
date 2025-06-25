@@ -2,9 +2,9 @@ import { cmdTypes } from '../../../configs/cmdTypes.config.js'
 
 export default {
     structure: {
-        name: 'affirmations',
+        name: 'grounding',
         category: 'Coping',
-        description: 'Receive a positive affirmation to brighten your day.',
+        description: 'Try a 5-4-3-2-1 grounding exercise.',
         handlers: {
             cooldown: 15000,
             requiredPerms: [],
@@ -31,14 +31,12 @@ export default {
 
         await interaction.deferReply({ ephemeral: isPrivate })
 
-        const userId = BigInt(interaction.user.id)
-
-        const affirmation = await client.ai.getCopingResponse({
-            tool: 'affirmations',
+        const grounding = await client.ai.getCopingResponse({
+            tool: 'grounding',
             feeling,
             userId
         })
 
-        return interaction.editReply({ content: affirmation })
+        return interaction.editReply({ content: grounding })
     }
 }

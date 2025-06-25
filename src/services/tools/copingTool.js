@@ -18,8 +18,10 @@ export async function buildCopingPrompt({ tool, feeling, userId, db, goal }) {
     // Streaks
     if (userId && db && db.copingToolUsage) {
         const usages = await db.copingToolUsage.findMany({ where: { userId }, orderBy: { usedAt: 'asc' } })
+
         let streak = 0,
             lastDate = null
+
         for (const usage of usages) {
             const date = usage.usedAt.toISOString().slice(0, 10)
             if (lastDate && new Date(date) - new Date(lastDate) === 86400000) {

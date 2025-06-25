@@ -2,9 +2,9 @@ import { cmdTypes } from '../../../configs/cmdTypes.config.js'
 
 export default {
     structure: {
-        name: 'affirmations',
+        name: 'distraction',
         category: 'Coping',
-        description: 'Receive a positive affirmation to brighten your day.',
+        description: 'Get a joke, fun fact, or mini-game to distract yourself.',
         handlers: {
             cooldown: 15000,
             requiredPerms: [],
@@ -31,14 +31,12 @@ export default {
 
         await interaction.deferReply({ ephemeral: isPrivate })
 
-        const userId = BigInt(interaction.user.id)
-
-        const affirmation = await client.ai.getCopingResponse({
-            tool: 'affirmations',
+        const distraction = await client.ai.getCopingResponse({
+            tool: 'distraction',
             feeling,
             userId
         })
 
-        return interaction.editReply({ content: affirmation })
+        return interaction.editReply({ content: distraction })
     }
 }
