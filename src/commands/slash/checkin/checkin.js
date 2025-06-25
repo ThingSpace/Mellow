@@ -65,6 +65,7 @@ export default {
         })
 
         let nextCheckInTime
+
         if (!prefs?.preferences) {
             const createdPrefs = await client.db.prisma.userPreferences.create({
                 data: {
@@ -73,6 +74,7 @@ export default {
                     nextCheckIn: new Date(Date.now() + 720 * 60 * 1000)
                 }
             })
+
             nextCheckInTime = createdPrefs.nextCheckIn
         } else {
             // Update nextCheckIn to now + interval
@@ -81,6 +83,7 @@ export default {
                 where: { id: BigInt(userId) },
                 data: { nextCheckIn: new Date(Date.now() + checkInInterval * 60 * 1000) }
             })
+
             nextCheckInTime = updatedPrefs.nextCheckIn
         }
 

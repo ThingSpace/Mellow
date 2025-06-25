@@ -72,7 +72,10 @@ export default {
                     ]
                 })
             }
-            if (!requiredRoles.includes(user.role)) {
+            // OWNER bypass: OWNERs always have access
+            if (user.role === 'OWNER') {
+                // OWNERs bypass all role checks
+            } else if (!requiredRoles.includes(user.role)) {
                 return interaction.reply({
                     ephemeral: true,
                     embeds: [

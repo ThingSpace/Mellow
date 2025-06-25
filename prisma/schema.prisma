@@ -22,6 +22,8 @@ model User {
     crisisEvents CrisisEvent[]
     modActionsAsModerator ModAction[] @relation("ModActionModerator")
     preferences UserPreferences?
+    feedback  Feedback[]
+    reports   Report[]
 }
 
 model Guild {
@@ -105,7 +107,24 @@ model UserPreferences {
     updatedAt      DateTime  @updatedAt
 }
 
+model Feedback {
+    id        Int      @id @default(autoincrement())
+    user      User?    @relation(fields: [userId], references: [id])
+    userId    BigInt?
+    message   String
+    createdAt DateTime @default(now())
+}
+
+model Report {
+    id        Int      @id @default(autoincrement())
+    user      User?    @relation(fields: [userId], references: [id])
+    userId    BigInt?
+    message   String
+    createdAt DateTime @default(now())
+}
+
 enum Role {
+    OWNER
     ADMIN
     MOD
     USER

@@ -6,18 +6,6 @@ dotenv.config()
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 
 /**
- * Moderation categories for content filtering
- */
-const MOD_CATEGORIES = {
-    SPAM: 'spam',
-    TOXIC: 'toxic',
-    HATE: 'hate',
-    THREAT: 'threat',
-    NSFW: 'nsfw',
-    ADVERTISING: 'advertising'
-}
-
-/**
  * Action levels for moderation responses
  */
 const ACTION_LEVELS = {
@@ -142,8 +130,24 @@ function analyzeUserBehavior(userData) {
     const messageCount = messages.length
     const timeWindow = messageCount > 1 ? messages[messageCount - 1].timestamp - messages[0].timestamp : 0
 
+    // Only analyze if at least 5 messages in the last 30 seconds
+    if (messageCount < 5 || timeWindow < 30000) {
+        return {
+            isSpamming: false,
+            messageFrequency: 0,
+            repetitionRatio: 1,
+            avgLength: 0,
+            recentInfractions: userData.recentInfractions || {
+                warnings: userData.warnings,
+                mutes: userData.mutes,
+                lastWarning: userData.lastWarning,
+                lastMute: userData.lastMute
+            }
+        }
+    }
+
     // Calculate message frequency (messages per minute)
-    const messageFrequency = messageCount > 1 ? messageCount / (timeWindow / 60000) : 0
+    const messageFrequency = messageCount / (timeWindow / 60000)
 
     // Check for repeated content
     const uniqueMessages = new Set(messages.map(m => m.content)).size
@@ -153,7 +157,7 @@ function analyzeUserBehavior(userData) {
     const avgLength = messages.reduce((sum, msg) => sum + msg.content.length, 0) / messageCount
 
     return {
-        isSpamming: messageFrequency > 6 || repetitionRatio < 0.3,
+        isSpamming: messageFrequency > 15 || repetitionRatio < 0.3,
         messageFrequency,
         repetitionRatio,
         avgLength,
@@ -237,9 +241,9 @@ export function generateModerationReport(contentAnalysis, behaviorAnalysis, user
  * @returns {string} Final recommended action
  */
 function determineFinalAction(contentAnalysis, behaviorAnalysis) {
-    // Escalate action for repeat offenders
+    // Escalate action for repeat offenders (but never kick for spam alone)
     if (behaviorAnalysis.recentInfractions.warnings > 3 || behaviorAnalysis.recentInfractions.mutes > 1) {
-        return ACTION_LEVELS.KICK
+        return ACTION_LEVELS.MUTE // Only mute, never kick for spam
     }
 
     // Escalate for combined violations
@@ -249,7 +253,7 @@ function determineFinalAction(contentAnalysis, behaviorAnalysis) {
 
     // Use the more severe action between content and behavior analysis
     if (behaviorAnalysis.isSpamming) {
-        return ACTION_LEVELS.MUTE
+        return ACTION_LEVELS.WARN // Only warn for spam
     }
 
     return contentAnalysis.action

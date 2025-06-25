@@ -1,5 +1,3 @@
-import { filterSlash } from '../../../filters/slash.js'
-
 export default {
     structure: {
         name: 'invite',

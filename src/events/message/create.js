@@ -104,6 +104,16 @@ export default {
         const req = args[1]?.trim()?.toLowerCase()
         const bot = args[0]
 
+        // Exempt OWNERs, ADMINs, and MODs from automod
+        const dbUser = await client.db.users.findById(BigInt(message.author.id))
+        if (dbUser && ['OWNER', 'ADMIN', 'MOD'].includes(dbUser.role)) return
+
+        // Exempt Discord server admins and managers from automod
+        if (message.guild) {
+            const member = await message.guild.members.fetch(message.author.id).catch(() => null)
+            if (member && (member.permissions.has('ADMINISTRATOR') || member.permissions.has('MANAGE_MEMBERS'))) return
+        }
+
         // Auto-moderation for guild messages
         try {
             // Analyze message content and user behavior
