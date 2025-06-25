@@ -17,6 +17,6 @@
         "allowSyntheticDefaultImports": true,
         "esModuleInterop": true
     },
-    "include": ["src/**/*.js"],
+    "include": ["src/**/*.js", "ignored/breathing.js", "ignored/music.js", "src/commands/slash/coping/affirmations.js", "ignored/support.js", "ignored/journal.js", "ignored/streaks.js"],
     "exclude": ["node_modules"]
 }

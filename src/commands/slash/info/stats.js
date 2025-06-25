@@ -29,23 +29,19 @@ export default {
             client.db.prisma.copingToolUsage.count(),
             client.db.prisma.conversationHistory.count()
         ])
-        await interaction.reply({
-            embeds: [
-                new client.Gateway.EmbedBuilder()
-                    .setTitle('Mellow Bot Stats')
-                    .addFields(
-                        { name: 'Servers', value: guildCount.toString(), inline: true },
-                        { name: 'Users', value: userCount.toString(), inline: true },
-                        { name: 'Mood Check-Ins', value: checkInCount.toString(), inline: true },
-                        { name: 'Conversations', value: conversationCount.toString(), inline: true },
-                        { name: 'Feedback', value: feedbackCount.toString(), inline: true },
-                        { name: 'Reports', value: reportCount.toString(), inline: true },
-                        { name: 'Ghost Letters', value: ghostLetterCount.toString(), inline: true },
-                        { name: 'Coping Tool Uses', value: copingToolCount.toString(), inline: true }
-                    )
-                    .setColor(client.colors.info)
-                    .setFooter({ text: client.footer, iconURL: client.logo })
-            ]
+
+        return interaction.reply({
+            content:
+                "Hey there! Here's how I've been supporting the community lately:\n\n" +
+                `- 🖥️ I'm currently in: **${guildCount} servers**\n` +
+                `- 👤I'm available for: **${userCount} users**\n` +
+                `- 📝 I've handled: **${checkInCount} check-ins**!\n` +
+                `- 👻 I've processed: **${ghostLetterCount} ghost letters**\n` +
+                `- 🧰 I've executed: **${copingToolCount} coping tools**\n` +
+                `- 💬 I'm trained on: **${conversationCount} conversations**\n` +
+                `- 📨 I've received feedback: **${feedbackCount} times**\n` +
+                `- 🚩 My team has handled: **${reportCount} report**\n\n` +
+                'Thanks for being part of Mellow’s journey! 💜'
         })
     }
 }

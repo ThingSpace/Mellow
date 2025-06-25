@@ -49,7 +49,7 @@ export default {
                             },
                             {
                                 name: 'Important Note',
-                                value: 'Mellow is not a replacement for therapy or professional help. It is here for support, reflection, and companionship — not diagnosis or treatment.',
+                                value: 'Mellow is not a replacement for therapy or professional help. It is here for support, reflection, and companionship not diagnosis or treatment.',
                                 inline: false
                             }
                         )

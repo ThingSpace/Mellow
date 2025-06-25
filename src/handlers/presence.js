@@ -2,21 +2,21 @@ import { ActivityType } from 'discord.js'
 
 export const setClientPresence = async client => {
     const presences = [
-        { name: 'athing.space', type: ActivityType.Playing },
-        { name: 'for check-ins', type: ActivityType.Watching },
-        { name: 'your feelings', type: ActivityType.Listening },
-        { name: 'late-night chats', type: ActivityType.Playing },
-        { name: 'for someone to talk to', type: ActivityType.Watching },
-        { name: 'gentle support', type: ActivityType.Listening },
-        { name: 'coping tools', type: ActivityType.Playing },
-        { name: 'with kindness', type: ActivityType.Playing },
+        { name: 'Watching athing.space', type: ActivityType.Custom },
+        { name: 'Watching for check-ins', type: ActivityType.Custom },
+        { name: 'Listening to your feelings', type: ActivityType.Custom },
+        { name: 'Enjoying late night chats', type: ActivityType.Custom },
+        { name: 'Looking for someone to talk to', type: ActivityType.Custom },
+        { name: 'Providing gentle support', type: ActivityType.Custom },
+        { name: 'Executing coping tools', type: ActivityType.Custom },
+        { name: 'Competing with kindness', type: ActivityType.Custom },
         { name: 'Mellow moments', type: ActivityType.Custom },
-        { name: 'mental health tips', type: ActivityType.Watching },
-        { name: 'for crisis keywords', type: ActivityType.Competing },
-        { name: 'your DMs', type: ActivityType.Watching }
+        { name: 'Providing mental health tips', type: ActivityType.Custom },
+        { name: 'Watching for crisis keywords', type: ActivityType.Custom },
+        { name: 'Responding to your DMs', type: ActivityType.Custom }
     ]
 
-    client.user.setStatus('idle')
+    client.user.setStatus('online')
 
     setInterval(() => {
         const presence = presences[Math.floor(Math.random() * presences.length)]
@@ -25,5 +25,5 @@ export const setClientPresence = async client => {
             name: presence.name,
             type: presence.type
         })
-    }, 10000)
+    }, 30000)
 }

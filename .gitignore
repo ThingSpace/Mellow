@@ -18,6 +18,9 @@
 /scripts/*
 scripts/*
 /.scripts
+./ignored/*
+/ignored/*
+ignored/*
 
 # VS Code
 .vscode/*

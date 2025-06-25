@@ -5,23 +5,32 @@ export default {
         description: 'Learn about how your data is handled and our privacy policy.',
         handlers: {
             cooldown: 15000,
-            requiredRoles: []
+            requiredRoles: [],
+            requiredPerms: []
         }
     },
     run: async (client, interaction) => {
         await interaction.reply({
             embeds: [
                 new client.Gateway.EmbedBuilder()
-                    .setTitle('Privacy Policy')
+                    .setTitle('Mellow: privacy policy')
                     .setDescription(
-                        'Mellow values your privacy. We only store the minimum data necessary to provide our services, such as check-in history and preferences. Your data is never sold or shared with third parties. You can request deletion of your data at any time.'
+                        'Mellow values your privacy. We only store the minimum data necessary to provide our services, such as check-in history and preferences.'
                     )
-                    .addFields({
-                        name: 'Full Policy',
-                        value: '[Read the full privacy policy](https://github.com/ThingSpace/Mellow#privacy-policy)',
-                        inline: false
-                    })
-                    .setColor(client.colors.info)
+                    .setThumbnail(client.logo)
+                    .setColor(client.colors.primary)
+                    .addFields(
+                        {
+                            name: 'Full Policy',
+                            value: '[Read the full privacy policy](https://github.com/ThingSpace/Mellow/blob/master/docs/privacy-policy.md)',
+                            inline: false
+                        },
+                        {
+                            name: 'Terms of Service',
+                            value: '[View our Terms of Service](https://github.com/ThingSpace/Mellow/blob/master/docs/terms-of-service.md)'
+                        }
+                    )
+                    .setTimestamp()
                     .setFooter({
                         text: client.footer,
                         iconURL: client.logo
