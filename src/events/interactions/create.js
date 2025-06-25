@@ -17,7 +17,7 @@ export default {
         }
 
         // Dual permission system
-        const requiredDiscordPermissions = command.structure.handlers.requiredDiscordPermissions || []
+        const requiredDiscordPermissions = command.structure.handlers.requiredPerms || []
         const requiredRoles = command.structure.handlers.requiredRoles || []
 
         // Discord permissions check

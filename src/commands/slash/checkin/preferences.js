@@ -1,3 +1,5 @@
+import { cmdTypes } from '../../../configs/cmdTypes.config.js'
+
 export default {
     structure: {
         name: 'preferences',
@@ -12,9 +14,9 @@ export default {
                 name: 'interval',
                 description: 'How often would you like to be reminded to check in? (in hours)',
                 required: false,
-                type: 3, // STRING
+                type: cmdTypes.INTEGER,
                 min_value: 1,
-                max_value: 72 // Max 3 days
+                max_value: 72
             }
         ]
     },

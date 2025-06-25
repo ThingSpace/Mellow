@@ -12,7 +12,7 @@ export default {
                 name: 'timeframe',
                 description: 'Period to analyze',
                 required: false,
-                type: 3, // STRING
+                type: 3,
                 choices: [
                     { name: 'Last Week', value: 'week' },
                     { name: 'Last Month', value: 'month' },

@@ -64,22 +64,24 @@ export default {
             include: { preferences: true }
         })
 
+        let nextCheckInTime
         if (!prefs?.preferences) {
-            await client.db.prisma.userPreferences.create({
+            const createdPrefs = await client.db.prisma.userPreferences.create({
                 data: {
                     id: BigInt(userId),
                     checkInInterval: 720, // 12 hours default
                     nextCheckIn: new Date(Date.now() + 720 * 60 * 1000)
                 }
             })
+            nextCheckInTime = createdPrefs.nextCheckIn
         } else {
             // Update nextCheckIn to now + interval
             const checkInInterval = prefs.preferences.checkInInterval ?? 720
-
-            await client.db.prisma.userPreferences.update({
+            const updatedPrefs = await client.db.prisma.userPreferences.update({
                 where: { id: BigInt(userId) },
                 data: { nextCheckIn: new Date(Date.now() + checkInInterval * 60 * 1000) }
             })
+            nextCheckInTime = updatedPrefs.nextCheckIn
         }
 
         // Add the check-in (no nextCheckIn field)
@@ -114,7 +116,7 @@ export default {
                             `**Current Mood:** ${mood} (${intensity}/5)` +
                             `${activity ? `\n**Activity:** ${activity}` : ''}` +
                             `${note ? `\n**Note:** ${note}` : ''}` +
-                            `\n\nI'll remind you to check in again <t:${Math.floor(new Date(prefs.preferences.nextCheckIn).getTime() / 1000)}:R>.`
+                            `\n\nI'll remind you to check in again <t:${Math.floor(new Date(nextCheckInTime).getTime() / 1000)}:R>.`
                     )
                     .addFields({ name: 'Recent Check-Ins', value: history || 'No recent check-ins.' })
                     .setColor(client.colors.primary)
