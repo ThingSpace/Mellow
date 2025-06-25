@@ -26,15 +26,23 @@ export class ReminderTool {
 
     async checkReminders() {
         try {
-            // Get all due reminders
-            const dueReminders = await this.client.db.moodCheckIns.getDueReminders()
-
-            for (const reminder of dueReminders) {
-                try {
-                    const user = await this.client.users.fetch(reminder.userId.toString())
-                    if (!user) {
-                        continue
+            // Get all due reminders from UserPreferences
+            const now = new Date()
+            const dueUsers = await this.client.db.prisma.userPreferences.findMany({
+                where: {
+                    nextCheckIn: {
+                        lte: now
                     }
+                },
+                include: {
+                    user: true
+                }
+            })
+
+            for (const pref of dueUsers) {
+                try {
+                    const user = await this.client.users.fetch(pref.id.toString())
+                    if (!user) continue
 
                     const embed = new EmbedBuilder()
                         .setTitle('Time for a Mood Check-in!')
@@ -48,16 +56,14 @@ export class ReminderTool {
 
                     await user.send({ embeds: [embed] })
 
-                    // Update next check-in time
-                    const nextCheckIn = new Date()
-                    nextCheckIn.setHours(nextCheckIn.getHours() + reminder.checkInInterval)
-
+                    // Update nextCheckIn to now + checkInInterval (in minutes)
+                    const nextCheckIn = new Date(Date.now() + (pref.checkInInterval ?? 720) * 60 * 1000)
                     await this.client.db.prisma.userPreferences.update({
-                        where: { userId: reminder.userId },
+                        where: { id: pref.id },
                         data: { nextCheckIn }
                     })
                 } catch (err) {
-                    console.error(`Failed to send reminder to user ${reminder.userId}:`, err)
+                    console.error(`Failed to send reminder to user ${pref.id}:`, err)
                 }
             }
         } catch (err) {

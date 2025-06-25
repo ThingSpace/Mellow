@@ -68,17 +68,22 @@ export default {
             await client.db.prisma.userPreferences.create({
                 data: {
                     id: BigInt(userId),
-                    checkInInterval: 720 // 12 hours default
+                    checkInInterval: 720, // 12 hours default
+                    nextCheckIn: new Date(Date.now() + 720 * 60 * 1000)
                 }
+            })
+        } else {
+            // Update nextCheckIn to now + interval
+            const checkInInterval = prefs.preferences.checkInInterval ?? 720
+
+            await client.db.prisma.userPreferences.update({
+                where: { id: BigInt(userId) },
+                data: { nextCheckIn: new Date(Date.now() + checkInInterval * 60 * 1000) }
             })
         }
 
-        // Calculate next check-in time based on interval
-        const checkInInterval = prefs?.preferences?.checkInInterval ?? 720
-        const nextCheckIn = new Date(Date.now() + checkInInterval * 60 * 1000)
-
-        // Add the check-in
-        await client.db.moodCheckIns.add(userId, mood, note, intensity, activity, nextCheckIn)
+        // Add the check-in (no nextCheckIn field)
+        await client.db.moodCheckIns.add(userId, mood, note, intensity, activity)
         const recent = await client.db.moodCheckIns.getAllForUser(userId, 5)
 
         // Format history with emojis and intensity
@@ -109,7 +114,7 @@ export default {
                             `**Current Mood:** ${mood} (${intensity}/5)` +
                             `${activity ? `\n**Activity:** ${activity}` : ''}` +
                             `${note ? `\n**Note:** ${note}` : ''}` +
-                            `\n\nI'll remind you to check in again <t:${Math.floor(nextCheckIn.getTime() / 1000)}:R>.`
+                            `\n\nI'll remind you to check in again <t:${Math.floor(new Date(prefs.preferences.nextCheckIn).getTime() / 1000)}:R>.`
                     )
                     .addFields({ name: 'Recent Check-Ins', value: history || 'No recent check-ins.' })
                     .setColor(client.colors.primary)
