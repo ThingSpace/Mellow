@@ -59,29 +59,24 @@ export default {
         const userId = interaction.user.id
 
         // Get or create user preferences for check-in interval
-        const prefs = await client.db.prisma.user.findUnique({
-            where: { id: BigInt(userId) },
+        const prefs = await client.db.users.findById(userId, {
             include: { preferences: true }
         })
 
         let nextCheckInTime
 
         if (!prefs?.preferences) {
-            const createdPrefs = await client.db.prisma.userPreferences.create({
-                data: {
-                    id: BigInt(userId),
-                    checkInInterval: 720, // 12 hours default
-                    nextCheckIn: new Date(Date.now() + 720 * 60 * 1000)
-                }
+            const createdPrefs = await client.db.userPreferences.upsert(userId, {
+                checkInInterval: 720, // 12 hours default
+                nextCheckIn: new Date(Date.now() + 720 * 60 * 1000)
             })
 
             nextCheckInTime = createdPrefs.nextCheckIn
         } else {
             // Update nextCheckIn to now + interval
             const checkInInterval = prefs.preferences.checkInInterval ?? 720
-            const updatedPrefs = await client.db.prisma.userPreferences.update({
-                where: { id: BigInt(userId) },
-                data: { nextCheckIn: new Date(Date.now() + checkInInterval * 60 * 1000) }
+            const updatedPrefs = await client.db.userPreferences.upsert(userId, {
+                nextCheckIn: new Date(Date.now() + checkInInterval * 60 * 1000)
             })
 
             nextCheckInTime = updatedPrefs.nextCheckIn

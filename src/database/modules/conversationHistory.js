@@ -49,6 +49,28 @@ export class ConversationHistoryModule {
     }
 
     /**
+     * Adds a conversation history record (alias for create)
+     *
+     * @param {string|number} userId - Discord user ID
+     * @param {string} content - Message content
+     * @param {boolean} isAiResponse - Whether this is an AI response
+     * @returns {Promise<Object>} The created conversation history record
+     *
+     * @example
+     * // Log a user message
+     * await conversationHistoryModule.add('123456789', 'I\'m feeling anxious today', false)
+     *
+     * // Log an AI response
+     * await conversationHistoryModule.add('123456789', 'I understand you\'re feeling anxious.', true)
+     */
+    async add(userId, content, isAiResponse = false) {
+        return this.create(userId, {
+            content,
+            isAiResponse
+        })
+    }
+
+    /**
      * Creates or updates a conversation history record
      *
      * @param {number} id - Conversation history record ID

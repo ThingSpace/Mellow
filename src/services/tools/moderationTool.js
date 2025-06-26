@@ -272,3 +272,81 @@ export function cleanupBehaviorCache() {
         }
     }
 }
+
+/**
+ * Log a moderation action to the database
+ * @param {string} guildId - Discord guild ID
+ * @param {string} moderatorId - Discord moderator ID
+ * @param {string} targetUserId - Discord target user ID
+ * @param {string} action - Action taken
+ * @param {string} reason - Reason for action
+ * @param {string} roleId - Role ID (for role-based actions)
+ * @param {object} db - Database client
+ * @returns {Promise<object>} - Created mod action
+ */
+export async function logModAction(guildId, moderatorId, targetUserId, action, reason, roleId, db) {
+    try {
+        const modAction = await db.modActions.create({
+            guildId: BigInt(guildId),
+            moderatorId: BigInt(moderatorId),
+            targetUserId: BigInt(targetUserId),
+            action,
+            reason,
+            roleId: roleId ? BigInt(roleId) : null
+        })
+
+        console.log(`Mod action logged: ${action} on user ${targetUserId} by ${moderatorId} in guild ${guildId}`)
+        return modAction
+    } catch (error) {
+        console.error('Failed to log mod action:', error)
+        throw error
+    }
+}
+
+/**
+ * Get recent moderation actions for a guild
+ * @param {string} guildId - Discord guild ID
+ * @param {object} db - Database client
+ * @param {number} limit - Number of actions to retrieve
+ * @returns {Promise<Array>} - Array of mod actions
+ */
+export async function getRecentModActions(guildId, db, limit = 10) {
+    try {
+        return await db.modActions.findMany({
+            where: { guildId: BigInt(guildId) },
+            orderBy: { createdAt: 'desc' },
+            take: limit,
+            include: {
+                moderator: true,
+                guild: true
+            }
+        })
+    } catch (error) {
+        console.error('Failed to get mod actions:', error)
+        return []
+    }
+}
+
+/**
+ * Get moderation actions for a specific user
+ * @param {string} targetUserId - Discord target user ID
+ * @param {object} db - Database client
+ * @param {number} limit - Number of actions to retrieve
+ * @returns {Promise<Array>} - Array of mod actions
+ */
+export async function getUserModActions(targetUserId, db, limit = 10) {
+    try {
+        return await db.modActions.findMany({
+            where: { targetUserId: BigInt(targetUserId) },
+            orderBy: { createdAt: 'desc' },
+            take: limit,
+            include: {
+                moderator: true,
+                guild: true
+            }
+        })
+    } catch (error) {
+        console.error('Failed to get user mod actions:', error)
+        return []
+    }
+}

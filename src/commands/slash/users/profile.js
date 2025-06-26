@@ -12,8 +12,7 @@ export default {
     run: async (client, interaction) => {
         await interaction.deferReply()
 
-        const fetch = await client.db.prisma.user.findUnique({
-            where: { id: BigInt(interaction.user.id) },
+        const fetch = await client.db.users.findById(interaction.user.id, {
             include: {
                 checkIns: true,
                 ghostLetters: true,

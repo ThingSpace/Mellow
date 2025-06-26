@@ -63,6 +63,7 @@ export class MellowModule {
                 checkInTools: true,
                 copingTools: true,
                 ghostTools: true,
+                crisisTools: true,
                 owners: ['510065483693817867', '896951964234043413', '787241442770419722'],
                 feedbackLogs: '1387604970999906334',
                 reportLogs: '1387605025857212447',
@@ -131,6 +132,7 @@ You are Mellow. You help users find moments of calm, safe conversations, and rem
                 checkInTools: data.checkInTools !== undefined ? data.checkInTools : true,
                 copingTools: data.copingTools !== undefined ? data.copingTools : true,
                 ghostTools: data.ghostTools !== undefined ? data.ghostTools : true,
+                crisisTools: data.crisisTools !== undefined ? data.crisisTools : true,
                 owners: data.owners || ['510065483693817867', '896951964234043413', '787241442770419722'],
                 feedbackLogs: data.feedbackLogs || '1387604970999906334',
                 reportLogs: data.reportLogs || '1387605025857212447',
@@ -167,7 +169,8 @@ You are Mellow. You help users find moments of calm, safe conversations, and rem
             features: {
                 checkInTools: config.checkInTools ? '✅' : '❌',
                 copingTools: config.copingTools ? '✅' : '❌',
-                ghostTools: config.ghostTools ? '✅' : '❌'
+                ghostTools: config.ghostTools ? '✅' : '❌',
+                crisisTools: config.crisisTools ? '✅' : '❌'
             },
             owners: config.owners || [],
             serverId: config.serverId,
@@ -278,6 +281,7 @@ You are Mellow. You help users find moments of calm, safe conversations, and rem
         if (config.checkInTools) features.push('checkInTools')
         if (config.copingTools) features.push('copingTools')
         if (config.ghostTools) features.push('ghostTools')
+        if (config.crisisTools) features.push('crisisTools')
 
         return features
     }

@@ -37,7 +37,7 @@ export default {
             timeframeDate.setMonth(now.getMonth() - 1)
         }
 
-        const checkIns = await client.db.prisma.moodCheckIn.findMany({
+        const checkIns = await client.db.moodCheckIns.findMany({
             where: {
                 userId: BigInt(userId),
                 ...(timeframe !== 'all' && {

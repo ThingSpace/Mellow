@@ -19,6 +19,7 @@ model Mellow {
     checkInTools       Boolean  @default(true)
     copingTools        Boolean  @default(true)
     ghostTools         Boolean  @default(true)
+    crisisTools        Boolean  @default(true)
     owners             String[]
     feedbackLogs       BigInt?
     reportLogs         BigInt?

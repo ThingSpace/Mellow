@@ -20,11 +20,9 @@ export default {
         const message = interaction.options.getString('message')
         const userId = interaction.user?.id ? BigInt(interaction.user.id) : null
 
-        await client.db.prisma.report.create({
-            data: {
-                userId,
-                message
-            }
+        await client.db.reports.create({
+            userId,
+            message
         })
 
         // Send log to support server channel

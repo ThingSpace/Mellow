@@ -1,4 +1,4 @@
-# 04: Scaffold Feature Commands/Handlers
+# 01: Scaffold Feature Commands/Handlers
 
 ## Goal
 

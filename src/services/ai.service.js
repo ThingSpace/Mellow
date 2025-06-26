@@ -1,6 +1,7 @@
 import { PerformanceTool } from './tools/performance.js'
 import { buildCopingPrompt } from './tools/copingTool.js'
 import { MessageFormattingTool } from './tools/messageFormatting.js'
+import { MessageHistoryTool } from './tools/messageHistory.js'
 import { db } from '../database/client.js'
 import { openai } from '@ai-sdk/openai'
 import { generateText } from 'ai'
@@ -10,6 +11,7 @@ export class AIService {
     constructor() {
         this.messageFormatting = new MessageFormattingTool()
         this.performance = new PerformanceTool()
+        this.messageHistory = new MessageHistoryTool(db)
         this.model = null // Will be initialized dynamically
         this.config = null // Will be loaded from database
     }
@@ -211,6 +213,135 @@ export class AIService {
             console.error('Error generating coping response:', error)
             throw error
         }
+    }
+
+    /**
+     * Get AI-powered crisis support resources based on user context
+     * @param {Object} context - User crisis context
+     * @param {string} context.situation - User's described situation
+     * @param {boolean} context.hasRecentCrisis - Whether user has recent crisis events
+     * @param {string} context.crisisTrend - Trend of crisis events (increasing/decreasing/stable)
+     * @param {number} context.recentEvents - Number of recent crisis events
+     * @param {number} context.escalatedEvents - Number of escalated events
+     * @returns {Promise<Object>} - Structured crisis resources
+     */
+    async getCrisisResources(context) {
+        try {
+            // Check if crisis tools are enabled
+            const enabledFeatures = await db.mellow.getEnabledFeatures()
+            if (!enabledFeatures.includes('crisisTools')) {
+                throw new Error('Crisis tools are currently disabled')
+            }
+
+            // Ensure we have fresh configuration
+            if (!this.config) {
+                await this.loadConfig()
+            }
+
+            // Build crisis resources prompt
+            const prompt = `You are a compassionate crisis support specialist. A user needs help with: "${context.situation}"
+
+User Context:
+- Has recent crisis events: ${context.hasRecentCrisis ? 'Yes' : 'No'}
+- Crisis trend: ${context.crisisTrend}
+- Recent events: ${context.recentEvents}
+- Escalated events: ${context.escalatedEvents}
+
+Please provide structured crisis support resources in the following format:
+
+IMMEDIATE: [Immediate actions they can take right now for safety and support]
+HOTLINES: [Specific crisis hotlines and emergency resources]
+COPING: [Immediate coping strategies and techniques]
+LONGTERM: [Long-term support options and recommendations]
+
+Be compassionate, practical, and provide specific, actionable resources. Focus on safety first, then support.`
+
+            const { text: aiResponse } = await generateText({
+                model: this.model,
+                messages: [
+                    {
+                        role: 'system',
+                        content:
+                            'You are a compassionate crisis support specialist. Provide practical, actionable resources while maintaining a warm, supportive tone. Always prioritize safety and provide specific contact information for crisis services.'
+                    },
+                    {
+                        role: 'user',
+                        content: prompt
+                    }
+                ],
+                temperature: this.config.temperature,
+                maxTokens: this.config.maxTokens,
+                presencePenalty: this.config.presencePenalty,
+                frequencyPenalty: this.config.frequencyPenalty
+            })
+
+            // Parse the AI response into structured sections
+            const sections = this.parseCrisisResources(aiResponse)
+
+            return {
+                immediate: sections.immediate || null,
+                hotlines: sections.hotlines || null,
+                coping: sections.coping || null,
+                longTerm: sections.longTerm || null
+            }
+        } catch (error) {
+            console.error('Error generating crisis resources:', error)
+            throw error
+        }
+    }
+
+    /**
+     * Parse AI response into structured crisis resource sections
+     * @param {string} response - AI response text
+     * @returns {Object} - Parsed sections
+     */
+    parseCrisisResources(response) {
+        const sections = {}
+
+        // Split by common section markers
+        const lines = response.split('\n')
+        let currentSection = null
+        let currentContent = []
+
+        for (const line of lines) {
+            const trimmedLine = line.trim()
+
+            // Check for section headers
+            if (trimmedLine.toUpperCase().includes('IMMEDIATE:')) {
+                if (currentSection && currentContent.length > 0) {
+                    sections[currentSection] = currentContent.join('\n').trim()
+                }
+                currentSection = 'immediate'
+                currentContent = []
+            } else if (trimmedLine.toUpperCase().includes('HOTLINES:')) {
+                if (currentSection && currentContent.length > 0) {
+                    sections[currentSection] = currentContent.join('\n').trim()
+                }
+                currentSection = 'hotlines'
+                currentContent = []
+            } else if (trimmedLine.toUpperCase().includes('COPING:')) {
+                if (currentSection && currentContent.length > 0) {
+                    sections[currentSection] = currentContent.join('\n').trim()
+                }
+                currentSection = 'coping'
+                currentContent = []
+            } else if (trimmedLine.toUpperCase().includes('LONGTERM:')) {
+                if (currentSection && currentContent.length > 0) {
+                    sections[currentSection] = currentContent.join('\n').trim()
+                }
+                currentSection = 'longTerm'
+                currentContent = []
+            } else if (currentSection && trimmedLine) {
+                currentContent.push(trimmedLine)
+            }
+        }
+
+        // Add the last section
+        if (currentSection && currentContent.length > 0) {
+            sections[currentSection] = currentContent.join('\n').trim()
+        }
+
+        return sections
     }
 
     /**

@@ -174,7 +174,7 @@ export default {
 
         /** LIST ALL ADMINS/MODERATORS FOR MELLOW */
         if (sub === 'list') {
-            const users = await client.db.prisma.user.findMany({
+            const users = await client.db.users.findMany({
                 take: 20,
                 orderBy: {
                     createdAt: 'desc'
@@ -273,7 +273,7 @@ export default {
         if (sub === 'promote') {
             const role = interaction.options.getString('role')
 
-            await client.db.prisma.user.update({ where: { id: BigInt(targetId) }, data: { role } })
+            await client.db.users.upsert(targetId, { role })
 
             return interaction.reply({
                 content: `User ${targetId} has been promoted to ${role}.`,
@@ -283,7 +283,7 @@ export default {
 
         /** DEMOTE A USER WITHIN THE MELLOW TEAM */
         if (sub === 'demote') {
-            await client.db.prisma.user.update({ where: { id: BigInt(targetId) }, data: { role: 'USER' } })
+            await client.db.users.upsert(targetId, { role: 'USER' })
 
             return interaction.reply({
                 content: `User ${targetId} has been demoted to USER.`,
@@ -293,7 +293,7 @@ export default {
 
         /** ADD A MELLOW BOT OWNER */
         if (sub === 'addowner') {
-            await client.db.prisma.user.update({ where: { id: BigInt(targetId) }, data: { role: 'OWNER' } })
+            await client.db.users.upsert(targetId, { role: 'OWNER' })
 
             return interaction.reply({
                 content: `User ${targetId} has been granted the owner role.`,
@@ -307,7 +307,7 @@ export default {
 
             if (!role) role = 'USER'
 
-            await client.db.prisma.user.update({ where: { id: BigInt(targetId) }, data: { role } })
+            await client.db.users.upsert(targetId, { role })
 
             return interaction.reply({
                 content: `User ${targetId} has been promoted to ${role}.`,
@@ -317,7 +317,7 @@ export default {
 
         /** ADD A USER AS A MELLOW ADMIN */
         if (sub === 'addadmin') {
-            await client.db.prisma.user.update({ where: { id: BigInt(targetId) }, data: { role: 'ADMIN' } })
+            await client.db.users.upsert(targetId, { role: 'ADMIN' })
 
             return interaction.reply({
                 content: `User ${targetId} has been granted ADMIN role.`,
@@ -327,7 +327,7 @@ export default {
 
         /** REMOVE A USER FROM MELLOW ADMIN */
         if (sub === 'removeadmin') {
-            await client.db.prisma.user.update({ where: { id: BigInt(targetId) }, data: { role: 'USER' } })
+            await client.db.users.upsert(targetId, { role: 'USER' })
 
             return interaction.reply({
                 content: `User ${targetId} has been removed from ADMIN role.`,

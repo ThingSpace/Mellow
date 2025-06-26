@@ -28,7 +28,7 @@ export async function buildCopingPrompt({ tool, feeling, userId, db, goal }) {
     // Mood Trends/Streaks
     if (userId && db && db.copingToolUsage) {
         const usages = await db.copingToolUsage.findMany({
-            where: { userId },
+            where: { userId: BigInt(userId) },
             orderBy: { usedAt: 'asc' }
         })
 
@@ -49,25 +49,42 @@ export async function buildCopingPrompt({ tool, feeling, userId, db, goal }) {
     }
 
     // Toolbox favorites
+    if (userId && db && db.favoriteCopingTools) {
+        const favorites = await db.favoriteCopingTools.findMany({
+            where: { userId: BigInt(userId) },
+            take: 3
+        })
+
+        if (favorites.length) {
+            const toolNames = favorites.map(f => f.tool).join(', ')
+            prompt += `\n- Favorite coping tools: ${toolNames}`
+        }
+    }
+
+    // Recent gratitude entry
     if (userId && db && db.gratitudeEntries) {
-        const entry = await db.gratitudeEntries.findMany({
-            where: { userId },
+        const entries = await db.gratitudeEntries.findMany({
+            where: { userId: BigInt(userId) },
             orderBy: { createdAt: 'desc' },
             take: 1
         })
 
-        if (entry.length) prompt += `\n- Recent gratitude: ${gratitude[0].item}`
+        if (entries.length) prompt += `\n- Recent gratitude: ${entries[0].item}`
     }
 
     // Recent journal entry
     if (userId && db && db.journalEntries) {
-        const entry = await db.journalEntries.findMany({
-            where: { userId },
+        const entries = await db.journalEntries.findMany({
+            where: { userId: BigInt(userId) },
             orderBy: { createdAt: 'desc' },
             take: 1
         })
 
-        if (entry.length) prompt += `- Recent journal entry: ${journal[0].content}`
+        if (entries.length) {
+            const content =
+                entries[0].content.length > 100 ? entries[0].content.substring(0, 100) + '...' : entries[0].content
+            prompt += `\n- Recent journal entry: ${content}`
+        }
     }
 
     // Current time of day

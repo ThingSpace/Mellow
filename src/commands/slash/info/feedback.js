@@ -20,11 +20,9 @@ export default {
         const message = interaction.options.getString('message')
         const userId = interaction.user?.id ? BigInt(interaction.user.id) : null
 
-        await client.db.prisma.feedback.create({
-            data: {
-                userId,
-                message
-            }
+        await client.db.feedback.create({
+            userId,
+            message
         })
 
         const logChannel = client.channels.cache.get('1387375352837308526')
