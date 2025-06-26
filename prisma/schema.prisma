@@ -31,15 +31,25 @@ model User {
 }
 
 model Guild {
-    id           BigInt   @id
-    name         String
-    ownerId      BigInt
-    joinedAt     DateTime @default(now())
-    isBanned     Boolean  @default(false)
-    bannedUntil  DateTime? 
-    banReason    String?
-    modAlertChannelId String?
-    modActions   ModAction[]
+    id                    BigInt   @id
+    name                  String
+    ownerId               BigInt
+    joinedAt              DateTime @default(now())
+    isBanned              Boolean  @default(false)
+    bannedUntil           DateTime? 
+    banReason             String?
+    modAlertChannelId     String?
+    modLogChannelId       String?
+    checkInChannelId      String?
+    copingToolLogId       String?
+    enableCheckIns        Boolean  @default(true)
+    enableGhostLetters    Boolean  @default(true)
+    enableCrisisAlerts    Boolean  @default(true)
+    moderatorRoleId       String?
+    autoModEnabled        Boolean  @default(false)
+    autoModLevel          Int?
+    language              String?  @default("en")
+    modActions            ModAction[]
 }
 
 model ConversationHistory {
@@ -102,13 +112,20 @@ model ModAction {
 }
 
 model UserPreferences {
-    id              BigInt    @id
-    user            User      @relation(fields: [id], references: [id])
-    checkInInterval Int       @default(720)  // minutes (12 hours default)
-    lastReminder    DateTime?
-    nextCheckIn     DateTime?
-    createdAt      DateTime  @default(now())
-    updatedAt      DateTime  @updatedAt
+    id                  BigInt    @id
+    user                User      @relation(fields: [id], references: [id])
+    checkInInterval     Int       @default(720)  // minutes (12 hours default)
+    lastReminder        DateTime?
+    nextCheckIn         DateTime?
+    remindersEnabled    Boolean   @default(true)
+    reminderMethod      String?   @default("dm")
+    journalPrivacy      Boolean   @default(true)
+    aiPersonality       String?   @default("gentle")
+    profileTheme        String?   @default("blue")
+    language            String?   @default("en")
+    timezone            String? 
+    createdAt           DateTime  @default(now())
+    updatedAt           DateTime  @updatedAt
 }
 
 model Feedback {
