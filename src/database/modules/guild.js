@@ -23,6 +23,7 @@ export class GuildModule {
      *
      * @param {string|number} id - Discord guild ID
      * @param {Object} data - Guild data to create/update
+     * @param {boolean} [preserveState = true] - Whether to preserve the guilds ban state and settings
      * @param {string} [data.name] - Guild name
      * @param {string|number} [data.ownerId] - Guild owner's Discord ID
      * @param {string} [data.modAlertChannelId] - Channel ID for mod alerts
@@ -39,25 +40,58 @@ export class GuildModule {
      * @returns {Promise<Object>} The created or updated guild record
      *
      * @example
-     * // Create a new guild
+     * // Update guild name on rejoin (preserves ban state)
      * await guildModule.upsert('123456789', {
-     *   name: 'My Server',
-     *   ownerId: '987654321',
-     *   enableCheckIns: true
-     * })
+     *   name: 'New Server Name',
+     *   ownerId: '987654321'
+     * }, true)
      *
-     * // Update existing guild settings
+     * // Force update all fields (admin action)
      * await guildModule.upsert('123456789', {
-     *   modLogChannelId: '111222333',
-     *   language: 'es'
-     * })
+     *   name: 'New Name',
+     *   isBanned: false,
+     *   banReason: null
+     * }, false)
      */
-    async upsert(id, data) {
-        return this.prisma.guild.upsert({
-            where: { id: BigInt(id) },
-            update: data,
-            create: { id: BigInt(id), ...data }
-        })
+    async upsert(id, data, preserveState = true) {
+        if (preserveState) {
+            // Only update "safe" fields that can change on rejoin
+            const safeFields = [
+                'name',
+                'ownerId',
+                'language',
+                'modAlertChannelId',
+                'modLogChannelId',
+                'checkInChannelId',
+                'copingToolLogId',
+                'enableCheckIns',
+                'enableGhostLetters',
+                'enableCrisisAlerts',
+                'moderatorRoleId',
+                'autoModEnabled',
+                'autoModLevel'
+            ]
+
+            const safeData = {}
+
+            for (const field of safeFields) {
+                if (data[field] !== undefined) {
+                    safeData[field] = data[field]
+                }
+            }
+
+            return this.prisma.guild.upsert({
+                where: { id: BigInt(id) },
+                create: { id: BigInt(id), ...data },
+                update: safeData
+            })
+        } else {
+            return this.prisma.guild.upsert({
+                where: { id: BigInt(id) },
+                create: { id: BigInt(id), ...data },
+                update: data
+            })
+        }
     }
 
     /**

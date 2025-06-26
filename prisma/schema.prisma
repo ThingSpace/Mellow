@@ -38,6 +38,10 @@ model Guild {
     isBanned              Boolean  @default(false)
     bannedUntil           DateTime? 
     banReason             String?
+    systemRoleId          String?
+    systemChannelId       String?
+    systemLogsEnabled     Boolean  @default(false)
+    auditLogChannelId     String?
     modAlertChannelId     String?
     modLogChannelId       String?
     checkInChannelId      String?
