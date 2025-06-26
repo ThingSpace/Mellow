@@ -31,7 +31,7 @@ export default {
         const user = interaction.options.getUser('user')
         const guildId = interaction.guildId
 
-        await interaction.deferReply({ ephemeral: true })
+        await interaction.deferReply()
 
         try {
             const result = await handleCrisis(user.id, guildId, message, client, client.db)

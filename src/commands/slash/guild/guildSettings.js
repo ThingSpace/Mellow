@@ -21,17 +21,28 @@ export default {
     },
     run: async (client, interaction) => {
         const channel = interaction.options.getChannel('set_mod_alert_channel')
+        const guildId = interaction.guild.id
 
         if (channel) {
-            await client.db.guilds.setModAlertChannel(interaction.guild.id, channel.id)
-            return interaction.reply({ content: `Mod alert channel set to <#${channel.id}>.`, ephemeral: true })
+            try {
+                await client.db.guilds.upsert(guildId, { modAlertChannelId: channel.id })
+                return interaction.reply({ content: `Mod alert channel set to <#${channel.id}>.`, ephemeral: true })
+            } catch (error) {
+                console.error('Failed to set mod alert channel:', error)
+                return interaction.reply({ content: '❌ Failed to set mod alert channel.', ephemeral: true })
+            }
         }
 
-        const modAlertChannelId = await client.db.guilds.getModAlertChannel(interaction.guild.id)
-
-        return interaction.reply({
-            content: `Current mod alert channel: ${modAlertChannelId ? `<#${modAlertChannelId}>` : 'Not set.'}`,
-            ephemeral: false
-        })
+        try {
+            const guild = await client.db.guilds.findById(guildId)
+            const modAlertChannelId = guild?.modAlertChannelId
+            return interaction.reply({
+                content: `Current mod alert channel: ${modAlertChannelId ? `<#${modAlertChannelId}>` : 'Not set.'}`,
+                ephemeral: false
+            })
+        } catch (error) {
+            console.error('Failed to get mod alert channel:', error)
+            return interaction.reply({ content: '❌ Failed to get mod alert channel.', ephemeral: true })
+        }
     }
 }

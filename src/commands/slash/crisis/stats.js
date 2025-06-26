@@ -23,7 +23,7 @@ export default {
     run: async (client, interaction) => {
         const user = interaction.options.getUser('user')
 
-        await interaction.deferReply({ ephemeral: true })
+        await interaction.deferReply()
 
         try {
             const stats = await getCrisisStats(user.id, client.db)

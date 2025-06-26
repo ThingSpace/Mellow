@@ -104,135 +104,90 @@ export default {
         const moderatorId = interaction.user.id
         const guildId = guild.id
 
-        if (sub === 'mute') {
-            const user = interaction.options.getUser('user')
-            const member = await guild.members.fetch(user.id).catch(() => null)
-
-            if (!member) {
-                return interaction.reply({
-                    content: 'User not found in this server.',
-                    ephemeral: true
-                })
-            }
-
-            await member.timeout(10 * 60 * 1000, 'Muted by mod command')
-
-            await client.db.modActions.log({
-                guildId,
-                moderatorId,
-                targetUserId: user.id,
-                action: 'mute',
-                reason: '10 min timeout'
-            })
-
-            return interaction.reply({
-                content: `${user.tag} has been muted for 10 minutes.`,
-                ephemeral: true
-            })
-        }
-
-        if (sub === 'ban') {
-            const user = interaction.options.getUser('user')
-            const reason = interaction.options.getString('reason') || 'No reason provided.'
-
-            await guild.members.ban(user.id, { reason })
-
-            await client.db.modActions.log({
-                guildId,
-                moderatorId,
-                targetUserId: user.id,
-                action: 'ban',
-                reason
-            })
-
-            return interaction.reply({
-                content: `${user.tag} has been banned. Reason: ${reason}`,
-                ephemeral: true
-            })
-        }
-
-        if (sub === 'unban') {
-            const user = interaction.options.getUser('user')
-            await guild.bans.remove(user.id)
-
-            await client.db.modActions.log({
-                guildId,
-                moderatorId,
-                targetUserId: user.id,
-                action: 'unban'
-            })
-
-            return interaction.reply({
-                content: `${user.tag} has been unbanned.`,
-                ephemeral: true
-            })
-        }
-
-        if (sub === 'role') {
-            const user = interaction.options.getUser('user')
-            const role = interaction.options.getRole('role')
-            const action = interaction.options.getString('action')
-
-            const member = await guild.members.fetch(user.id).catch(() => null)
-
-            if (!member) {
-                return interaction.reply({
-                    content: 'User not found in this server.',
-                    ephemeral: true
-                })
-            }
-
-            if (action === 'assign') {
-                await member.roles.add(role)
-
+        switch (sub) {
+            case 'mute': {
+                const user = interaction.options.getUser('user')
+                const member = await guild.members.fetch(user.id).catch(() => null)
+                if (!member) {
+                    return interaction.reply({ content: 'User not found in this server.', ephemeral: true })
+                }
+                await member.timeout(10 * 60 * 1000, 'Muted by mod command')
                 await client.db.modActions.log({
-                    guildId,
-                    moderatorId,
-                    targetUserId: user.id,
-                    action: 'role-assign',
-                    roleId: role.id
+                    guildId: BigInt(guildId),
+                    moderatorId: BigInt(moderatorId),
+                    targetUserId: BigInt(user.id),
+                    action: 'mute',
+                    reason: '10 min timeout'
                 })
-
-                return interaction.reply({
-                    content: `Role ${role.name} assigned to ${user.tag}.`,
-                    ephemeral: true
-                })
+                return interaction.reply({ content: `${user.tag} has been muted for 10 minutes.` })
             }
-
-            await member.roles.remove(role)
-
-            await client.db.modActions.log({
-                guildId,
-                moderatorId,
-                targetUserId: user.id,
-                action: 'role-remove',
-                roleId: role.id
-            })
-
-            return interaction.reply({
-                content: `Role ${role.name} removed from ${user.tag}.`,
-                ephemeral: true
-            })
-        }
-
-        if (sub === 'logs') {
-            const actions = await client.db.modActions.getRecentForGuild(guildId, 10)
-
-            if (!actions.length) {
-                return interaction.reply({
-                    content: 'No moderation actions found for this server.',
-                    ephemeral: true
+            case 'ban': {
+                const user = interaction.options.getUser('user')
+                const reason = interaction.options.getString('reason') || 'No reason provided.'
+                await guild.members.ban(user.id, { reason })
+                await client.db.modActions.log({
+                    guildId: BigInt(guildId),
+                    moderatorId: BigInt(moderatorId),
+                    targetUserId: BigInt(user.id),
+                    action: 'ban',
+                    reason
                 })
+                return interaction.reply({ content: `${user.tag} has been banned. Reason: ${reason}` })
             }
-
-            const lines = actions.map(
-                a =>
-                    `• <t:${Math.floor(new Date(a.createdAt).getTime() / 1000)}:R> [${a.action}] <@${a.targetUserId}> by <@${a.moderatorId}>${a.reason ? ` — ${a.reason}` : ''}${a.roleId ? ` (role: <@&${a.roleId}>)` : ''}`
-            )
-            return interaction.reply({
-                content: `Recent moderation actions:\n${lines.join('\n')}`,
-                ephemeral: true
-            })
+            case 'unban': {
+                const user = interaction.options.getUser('user')
+                await guild.bans.remove(user.id)
+                await client.db.modActions.log({
+                    guildId: BigInt(guildId),
+                    moderatorId: BigInt(moderatorId),
+                    targetUserId: BigInt(user.id),
+                    action: 'unban'
+                })
+                return interaction.reply({ content: `${user.tag} has been unbanned.` })
+            }
+            case 'role': {
+                const user = interaction.options.getUser('user')
+                const role = interaction.options.getRole('role')
+                const action = interaction.options.getString('action')
+                const member = await guild.members.fetch(user.id).catch(() => null)
+                if (!member) {
+                    return interaction.reply({ content: 'User not found in this server.', ephemeral: true })
+                }
+                if (action === 'assign') {
+                    await member.roles.add(role)
+                    await client.db.modActions.log({
+                        guildId: BigInt(guildId),
+                        moderatorId: BigInt(moderatorId),
+                        targetUserId: BigInt(user.id),
+                        action: 'role-assign',
+                        roleId: BigInt(role.id)
+                    })
+                    return interaction.reply({ content: `Role ${role.name} assigned to ${user.tag}.` })
+                }
+                await member.roles.remove(role)
+                await client.db.modActions.log({
+                    guildId: BigInt(guildId),
+                    moderatorId: BigInt(moderatorId),
+                    targetUserId: BigInt(user.id),
+                    action: 'role-remove',
+                    roleId: BigInt(role.id)
+                })
+                return interaction.reply({ content: `Role ${role.name} removed from ${user.tag}.` })
+            }
+            case 'logs': {
+                const actions = await client.db.modActions.getRecentForGuild(BigInt(guildId), 10)
+                if (!actions.length) {
+                    return interaction.reply({ content: 'No moderation actions found for this server.' })
+                }
+                const lines = actions.map(
+                    a =>
+                        `• <t:${Math.floor(new Date(a.createdAt).getTime() / 1000)}:R> [${a.action}] <@${a.targetUserId}> by <@${a.moderatorId}>${a.reason ? ` — ${a.reason}` : ''}${a.roleId ? ` (role: <@&${a.roleId}>)` : ''}`
+                )
+                return interaction.reply({ content: `Recent moderation actions:\n${lines.join('\n')}` })
+            }
+            default: {
+                return interaction.reply({ content: 'Unknown moderation subcommand.', ephemeral: true })
+            }
         }
     }
 }

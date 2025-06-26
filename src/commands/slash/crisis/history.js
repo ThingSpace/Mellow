@@ -32,15 +32,14 @@ export default {
         const user = interaction.options.getUser('user')
         const limit = interaction.options.getInteger('limit') || 5
 
-        await interaction.deferReply({ ephemeral: true })
+        await interaction.deferReply()
 
         try {
             const events = await getRecentCrisisEvents(user.id, client.db, limit)
 
             if (events.length === 0) {
                 return interaction.editReply({
-                    content: `✅ **${user.username}** has no recent crisis events.`,
-                    ephemeral: true
+                    content: `✅ **${user.username}** has no recent crisis events.`
                 })
             }
 

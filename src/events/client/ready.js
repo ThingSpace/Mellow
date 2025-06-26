@@ -20,20 +20,20 @@ export default {
 
             log('Syncing client settings please wait......')
 
-            await client.db.mellow.get().catch(err => {
-                return log(`Failed to sync client settings: ${err.message}`, 'error')
-            })
+            const mellow = await client.db.mellow.get()
 
-            log('Client settings synced successfully!')
+            log('Client settings fetched/synced successfully!')
 
             // Initialize AI service with database configuration
             log('Initializing AI service with database configuration...')
+
             await aiService.initialize().catch(err => {
                 return log(`Failed to initialize AI service: ${err.message}`, 'error')
             })
 
             // Validate AI configuration
             const validation = await aiService.validateConfig()
+
             if (!validation.isValid) {
                 log(`AI Configuration validation issues: ${validation.issues.join(', ')}`, 'warn')
             } else {
@@ -41,6 +41,24 @@ export default {
             }
 
             log('All services initialized successfully!', 'done')
+
+            const system = await client.channels.cache.get(String(mellow.logId))
+
+            console.log(mellow)
+
+            system.send({
+                embeds: [
+                    new client.Gateway.EmbedBuilder()
+                        .setTitle('[SYSTEM]: Mellow is Online!')
+                        .setColor(client.colors.primary)
+                        .setDescription('Hey there, i have started up and am ready for interactions')
+                        .setTimestamp()
+                        .setFooter({
+                            text: client.footer,
+                            iconURL: client.logo
+                        })
+                ]
+            })
         } catch (error) {
             log(`${error.message}`, 'error')
         }
