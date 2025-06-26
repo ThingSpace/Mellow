@@ -44,8 +44,6 @@ export default {
 
             const system = await client.channels.cache.get(String(mellow.logId))
 
-            console.log(mellow)
-
             system.send({
                 embeds: [
                     new client.Gateway.EmbedBuilder()

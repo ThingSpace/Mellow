@@ -1,53 +1,42 @@
+import { cmdTypes } from '../../../configs/cmdTypes.config.js'
+import { moodChoices, moodIntensities, moodEmojis } from '../../../configs/mood.config.js'
+
 export default {
     structure: {
         name: 'checkin',
         category: 'Check-In',
         description: 'Log your current mood and reflect on how you are feeling.',
         handlers: {
-            cooldown: 300,
-            requiredRoles: []
+            cooldown: 15000,
+            requiredRoles: [],
+            requiredPerms: []
         },
         options: [
             {
                 name: 'mood',
                 description: 'How are you feeling right now?',
                 required: true,
-                type: 3, // STRING
-                choices: [
-                    { name: '😊 Happy', value: 'happy' },
-                    { name: '😌 Calm', value: 'calm' },
-                    { name: '😐 Neutral', value: 'neutral' },
-                    { name: '😔 Sad', value: 'sad' },
-                    { name: '😟 Anxious', value: 'anxious' },
-                    { name: '😤 Frustrated', value: 'frustrated' },
-                    { name: '😴 Tired', value: 'tired' },
-                    { name: '🤔 Confused', value: 'confused' }
-                ]
+                type: cmdTypes.STRING,
+                choices: moodChoices
             },
             {
                 name: 'intensity',
                 description: 'How strong is this mood? (1-5)',
                 required: false,
-                type: 4, // INTEGER
-                choices: [
-                    { name: '1 (Very Low)', value: 1 },
-                    { name: '2 (Low)', value: 2 },
-                    { name: '3 (Moderate)', value: 3 },
-                    { name: '4 (High)', value: 4 },
-                    { name: '5 (Very High)', value: 5 }
-                ]
+                type: cmdTypes.INTEGER,
+                choices: moodIntensities
             },
             {
                 name: 'activity',
                 description: 'What are you doing right now?',
                 required: false,
-                type: 3 // STRING
+                type: cmdTypes.STRING
             },
             {
                 name: 'note',
                 description: 'Anything else you want to add?',
                 required: false,
-                type: 3 // STRING
+                type: cmdTypes.STRING
             }
         ]
     },
@@ -58,7 +47,26 @@ export default {
         const note = interaction.options.getString('note')
         const userId = interaction.user.id
 
-        // Get or create user preferences for check-in interval
+        // 12-hour check-in cooldown logic
+        const lastCheckInArr = await client.db.moodCheckIns.getAllForUser(userId, 1)
+        if (lastCheckInArr.length > 0) {
+            const lastCheckIn = lastCheckInArr[0]
+            const lastTime = new Date(lastCheckIn.createdAt)
+            const now = new Date()
+            const diffMs = now - lastTime
+            const hours12 = 12 * 60 * 60 * 1000
+            if (diffMs < hours12) {
+                const remainingMs = hours12 - diffMs
+                const remainingHours = Math.floor(remainingMs / (60 * 60 * 1000))
+                const remainingMinutes = Math.floor((remainingMs % (60 * 60 * 1000)) / (60 * 1000))
+                return interaction.reply({
+                    content: `You can only check in once every 12 hours. Please wait ${remainingHours}h ${remainingMinutes}m before checking in again.`,
+                    ephemeral: true
+                })
+            }
+        }
+
+        // Get or create user preferences for check-in
         const prefs = await client.db.users.findById(userId, {
             include: { preferences: true }
         })
@@ -67,14 +75,14 @@ export default {
 
         if (!prefs?.preferences) {
             const createdPrefs = await client.db.userPreferences.upsert(userId, {
-                checkInInterval: 720, // 12 hours default
+                checkInInterval: prefs?.preferences?.checkInInterval || 720, // Default to 12 hours
                 nextCheckIn: new Date(Date.now() + 720 * 60 * 1000)
             })
 
             nextCheckInTime = createdPrefs.nextCheckIn
         } else {
-            // Update nextCheckIn to now + interval
             const checkInInterval = prefs.preferences.checkInInterval ?? 720
+
             const updatedPrefs = await client.db.userPreferences.upsert(userId, {
                 nextCheckIn: new Date(Date.now() + checkInInterval * 60 * 1000)
             })
@@ -82,44 +90,39 @@ export default {
             nextCheckInTime = updatedPrefs.nextCheckIn
         }
 
-        // Add the check-in (no nextCheckIn field)
-        await client.db.moodCheckIns.add(userId, mood, note, intensity, activity)
+        await client.db.moodCheckIns.create(userId, {
+            mood,
+            note,
+            intensity,
+            activity
+        })
+
         const recent = await client.db.moodCheckIns.getAllForUser(userId, 5)
 
-        // Format history with emojis and intensity
         const history = recent
             .map(c => {
-                const moodEmoji =
-                    {
-                        happy: '😊',
-                        calm: '😌',
-                        neutral: '😐',
-                        sad: '😔',
-                        anxious: '😟',
-                        frustrated: '😤',
-                        tired: '😴',
-                        confused: '🤔'
-                    }[c.mood] || '❓'
-
-                return `• ${moodEmoji} **${c.mood}** (${c.intensity}/5)${c.activity ? ` — ${c.activity}` : ''}${c.note ? `\n  _${c.note}_` : ''} <t:${Math.floor(new Date(c.createdAt).getTime() / 1000)}:R>`
+                const moodEmoji = moodEmojis[c.mood] || '❓'
+                return `- ${moodEmoji} **${c.mood}** (${c.intensity}/5) ${c.activity ? ` — ${c.activity}` : ''} ${c.note ? `\n  _${c.note}_` : ''} <t:${Math.floor(new Date(c.createdAt).getTime() / 1000)}:R>`
             })
             .join('\n')
 
-        await interaction.reply({
+        return interaction.reply({
             embeds: [
                 new client.Gateway.EmbedBuilder()
-                    .setTitle('Mood Check-In Complete!')
+                    .setTitle('Check-In Complete')
+                    .setColor(client.colors.primary)
+                    .setThumbnail(client.logo)
                     .setDescription(
                         `Thank you for checking in.\n\n` +
-                            `**Current Mood:** ${mood} (${intensity}/5)` +
-                            `${activity ? `\n**Activity:** ${activity}` : ''}` +
-                            `${note ? `\n**Note:** ${note}` : ''}` +
-                            `\n\nI'll remind you to check in again <t:${Math.floor(new Date(nextCheckInTime).getTime() / 1000)}:R>.`
+                            `- **Current Mood:** ${moodEmojis[mood] || '❓'} ${mood} (${intensity}/5)` +
+                            `- ${activity ? `- **Activity:** ${activity}\n` : ''}` +
+                            `- ${note ? `- **Note:** ${note}\n\n` : ''}` +
+                            `\n\nIf you have reminders enabled i'll remind you to check in again <t:${Math.floor(new Date(nextCheckInTime).getTime() / 1000)}:R>.`
                     )
-                    .addFields({ name: 'Recent Check-Ins', value: history || 'No recent check-ins.' })
-                    .setColor(client.colors.primary)
-                    .setTimestamp()
-                    .setFooter({ text: client.footer, iconURL: client.logo })
+                    .addFields({
+                        name: 'Recent Check-Ins',
+                        value: history
+                    })
             ]
         })
     }
