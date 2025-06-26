@@ -9,10 +9,9 @@ export default {
     once: false,
     run: async (client, member) => {
         // Upsert the user in the database
-        await db.prisma.user.upsert({
-            where: { id: BigInt(member.id) },
-            update: { username: member.user.username },
-            create: { id: BigInt(member.id), username: member.user.username }
+        await db.users.upsert({
+            id: member.id,
+            username: member.user.username
         })
 
         if (member.guild.id === SUPPORT_SERVER_ID && !member.user.bot && !member.roles.cache.has(MEMBERS_ROLE_ID)) {

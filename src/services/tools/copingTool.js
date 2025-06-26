@@ -1,78 +1,86 @@
-// CopingTool: Builds a rich AI prompt for coping support
+/**
+ * BUILD A RICH AI PROMPT FOR COPING SUPPORT
+ * @param tool The tool to use for the prompt (breathing, affirmations etc)
+ * @param feeling The users current mood/feelings (helps with response gen)
+ * @param userId The Discord ID of the user making the request
+ * @param db The database client (attached for ease of use)
+ * @param goal The users current coping goal(s)
+ */
 export async function buildCopingPrompt({ tool, feeling, userId, db, goal }) {
     let prompt = 'A Discord user is seeking mental health support.'
 
-    if (tool) prompt += `\n- Selected tool: ${tool}`
-    if (feeling) prompt += `\n- Described feeling: ${feeling}`
+    if (tool) prompt += `\n - Selected tool: ${tool}`
+    if (feeling) prompt += `\n Described feeling: ${feeling}`
 
     // Recent mood history
     let moodHistory = []
+
     if (userId && db && db.moodCheckIns) {
         const recent = await db.moodCheckIns.getAllForUser(userId, 3)
+
         if (recent && recent.length) {
             moodHistory = recent.map(c => `${c.mood}${c.note ? ` (${c.note})` : ''}`)
         }
     }
+
     if (moodHistory.length) prompt += `\n- Recent moods: ${moodHistory.join(', ')}`
 
-    // Streaks
+    // Mood Trends/Streaks
     if (userId && db && db.copingToolUsage) {
-        const usages = await db.copingToolUsage.findMany({ where: { userId }, orderBy: { usedAt: 'asc' } })
+        const usages = await db.copingToolUsage.findMany({
+            where: { userId },
+            orderBy: { usedAt: 'asc' }
+        })
 
         let streak = 0,
             lastDate = null
 
         for (const usage of usages) {
             const date = usage.usedAt.toISOString().slice(0, 10)
-            if (lastDate && new Date(date) - new Date(lastDate) === 86400000) {
-                streak++
-            } else if (lastDate !== date) {
-                streak = 1
-            }
+
+            if (lastDate && new Date(date) - new Date(lastDate) === 84600000) streak++
+
+            if (lastDate !== date) streak = 1
+
             lastDate = date
         }
+
         if (streak > 1) prompt += `\n- Current coping streak: ${streak} days`
     }
 
     // Toolbox favorites
-    if (userId && db && db.favoriteCopingTool) {
-        const favorites = await db.favoriteCopingTool.findMany({ where: { userId } })
-        if (favorites.length) {
-            prompt += `\n- Favorite coping tools: ${favorites.map(f => f.tool).join(', ')}`
-        }
-    }
-
-    // Recent gratitude
-    if (userId && db && db.gratitudeEntry) {
-        const gratitude = await db.gratitudeEntry.findMany({
+    if (userId && db && db.gratitudeEntries) {
+        const entry = await db.gratitudeEntries.findMany({
             where: { userId },
             orderBy: { createdAt: 'desc' },
             take: 1
         })
-        if (gratitude.length) {
-            prompt += `\n- Recent gratitude: ${gratitude[0].item}`
-        }
+
+        if (entry.length) prompt += `\n- Recent gratitude: ${gratitude[0].item}`
     }
 
-    // Recent journal
-    if (userId && db && db.journalEntry) {
-        const journal = await db.journalEntry.findMany({ where: { userId }, orderBy: { createdAt: 'desc' }, take: 1 })
-        if (journal.length) {
-            prompt += `\n- Recent journal entry: ${journal[0].content}`
-        }
+    // Recent journal entry
+    if (userId && db && db.journalEntries) {
+        const entry = await db.journalEntries.findMany({
+            where: { userId },
+            orderBy: { createdAt: 'desc' },
+            take: 1
+        })
+
+        if (entry.length) prompt += `- Recent journal entry: ${journal[0].content}`
     }
 
-    // Time of day
+    // Current time of day
     const hour = new Date().getHours()
-    if (hour < 12) prompt += `\n- It is currently morning for the user.`
-    else if (hour < 18) prompt += `\n- It is currently afternoon for the user.`
-    else prompt += `\n- It is currently evening for the user.`
+
+    if (hour < 12) prompt += `\n- It is currently morning time.`
+    else if (hour < 18) prompt += `\n- It is currently the afternoon.`
+    else prompt += `\n- It is currently evening time.`
 
     // Goal/intent
-    if (goal) prompt += `\n- User's goal: ${goal}`
+    if (goal) prompt += `\n- Current goal: ${goal}`
 
-    prompt +=
-        '\nRespond with a gentle, step-by-step coping exercise or supportive message, tailored to their needs. Use a warm, empathetic tone. If no tool is selected, suggest one based on their feeling or context.'
+    prompt += `\n- Respond with a gentle, step-by-step coping exercise or supportive message, tailored to their needs. Use a warm, empathetic tone. If no tool is selected, suggest one based on their feeling or context.`
 
     return prompt
 }

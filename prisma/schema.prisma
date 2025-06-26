@@ -132,6 +132,7 @@ model JournalEntry {
     user      User     @relation(fields: [userId], references: [id])
     userId    BigInt
     content   String
+    private   Boolean  @default(true)
     createdAt DateTime @default(now())
 }
 

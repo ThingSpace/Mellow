@@ -49,7 +49,7 @@ export default {
 
             await interaction.deferReply({ ephemeral: isPrivate })
 
-            await client.db.prisma.gratitudeEntry.create({ data: { userId, item } })
+            await client.db.gratitudeEntries.create({ userId, item })
 
             const gratitude = await client.ai.getCopingResponse({
                 tool: 'gratitude',
@@ -58,10 +58,10 @@ export default {
             })
 
             return interaction.editReply({ content: gratitude })
-        } else if (sub === 'view') {
+        }
 
-        /** VIEW A GRATITUDE ENTRY */
-            const entries = await client.db.prisma.gratitudeEntry.findMany({
+        if (sub === 'view') {
+            const entries = await client.db.gratitudeEntries.findMany({
                 where: { userId },
                 orderBy: { createdAt: 'desc' },
                 take: 5
