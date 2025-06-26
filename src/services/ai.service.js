@@ -1,27 +1,98 @@
-import { aiConfig } from '../configs/ai.config.js'
 import { PerformanceTool } from './tools/performance.js'
 import { buildCopingPrompt } from './tools/copingTool.js'
 import { MessageFormattingTool } from './tools/messageFormatting.js'
-import { analyzeMessageContent } from './tools/crisisTool.js'
-import { analyzeContent } from './tools/moderationTool.js'
 import { db } from '../database/client.js'
 import { openai } from '@ai-sdk/openai'
 import { generateText } from 'ai'
+import { log } from '../functions/logger.js'
 
 export class AIService {
     constructor() {
-        this.config = this.normalizeConfig(aiConfig)
         this.messageFormatting = new MessageFormattingTool()
         this.performance = new PerformanceTool()
-
-        this.model = openai.chat(this.config.model, { compatibility: 'strict' })
+        this.model = null // Will be initialized dynamically
+        this.config = null // Will be loaded from database
     }
 
-    normalizeConfig(config) {
-        return {
-            ...config,
-            systemPrompt:
-                typeof config.systemPrompt === 'string' ? config.systemPrompt : JSON.stringify(config.systemPrompt)
+    /**
+     * Initialize the AI service with database configuration
+     * This should be called after the database is ready
+     */
+    async initialize() {
+        try {
+            await this.loadConfig()
+            log('AI Service initialized with database configuration', 'done')
+        } catch (error) {
+            console.error('Failed to initialize AI Service:', error)
+            throw error
+        }
+    }
+
+    /**
+     * Load configuration from the database
+     */
+    async loadConfig() {
+        try {
+            const mellowConfig = await db.mellow.getAIConfig()
+
+            this.config = {
+                model: mellowConfig.model,
+                temperature: mellowConfig.temperature,
+                maxTokens: mellowConfig.maxTokens,
+                presencePenalty: mellowConfig.presencePenalty,
+                frequencyPenalty: mellowConfig.frequencyPenalty,
+                systemPrompt: mellowConfig.prompt
+            }
+
+            // Reinitialize the model with new configuration
+            this.model = openai.chat(this.config.model, { compatibility: 'strict' })
+
+            return this.config
+        } catch (error) {
+            console.error('Failed to load AI configuration:', error)
+            throw error
+        }
+    }
+
+    /**
+     * Check if Mellow is enabled before processing requests
+     */
+    async isEnabled() {
+        try {
+            return await db.mellow.isEnabled()
+        } catch (error) {
+            console.error('Failed to check if Mellow is enabled:', error)
+            return false
+        }
+    }
+
+    /**
+     * Validate current configuration
+     */
+    async validateConfig() {
+        try {
+            const validation = await db.mellow.validateConfig()
+            if (!validation.isValid) {
+                console.warn('AI Configuration validation issues:', validation.issues)
+            }
+            return validation
+        } catch (error) {
+            console.error('Failed to validate AI configuration:', error)
+            return { isValid: false, issues: ['Failed to validate configuration'] }
+        }
+    }
+
+    /**
+     * Reload configuration from database (useful for hot reloading)
+     */
+    async reloadConfig() {
+        try {
+            await this.loadConfig()
+            console.log('AI configuration reloaded successfully')
+            return this.config
+        } catch (error) {
+            console.error('Failed to reload AI configuration:', error)
+            throw error
         }
     }
 
@@ -34,6 +105,17 @@ export class AIService {
         const perfId = `resp-${Date.now()}-${userId}`
 
         try {
+            // Check if Mellow is enabled
+            const isEnabled = await this.isEnabled()
+            if (!isEnabled) {
+                throw new Error('Mellow AI is currently disabled')
+            }
+
+            // Ensure we have fresh configuration
+            if (!this.config) {
+                await this.loadConfig()
+            }
+
             this.performance.startTracking(perfId)
 
             const historyRecords = await db.conversationHistory.getAllForUser(userId, 50)
@@ -43,7 +125,7 @@ export class AIService {
                 content: msg.content
             }))
 
-            // Build enhanced prompt
+            // Build enhanced prompt from database
             let enhancedPrompt = this.config.systemPrompt
 
             if (typeof enhancedPrompt !== 'string') {
@@ -69,8 +151,8 @@ export class AIService {
                 messages,
                 temperature: this.config.temperature,
                 maxTokens: this.config.maxTokens,
-                presencePenalty: 0.6,
-                frequencyPenalty: 0.5
+                presencePenalty: this.config.presencePenalty,
+                frequencyPenalty: this.config.frequencyPenalty
             })
 
             // Save both the user message and AI response to history
@@ -92,27 +174,71 @@ export class AIService {
     }
 
     async getCopingResponse({ tool, feeling, userId }) {
-        const prompt = await buildCopingPrompt({ tool, feeling, userId, db })
+        try {
+            // Check if coping tools are enabled
+            const enabledFeatures = await db.mellow.getEnabledFeatures()
+            if (!enabledFeatures.includes('copingTools')) {
+                throw new Error('Coping tools are currently disabled')
+            }
 
-        const { text: aiResponse } = await generateText({
-            model: this.model,
-            messages: [
-                {
-                    role: 'system',
-                    content: this.config.systemPrompt
-                },
-                {
-                    role: 'user',
-                    content: prompt
-                }
-            ],
-            temperature: this.config.temperature,
-            maxTokens: this.config.maxTokens,
-            presencePenalty: 0.6,
-            frequencyPenalty: 0.5
-        })
+            // Ensure we have fresh configuration
+            if (!this.config) {
+                await this.loadConfig()
+            }
 
-        return this.messageFormatting.formatForDiscord(aiResponse)
+            const prompt = await buildCopingPrompt({ tool, feeling, userId, db })
+
+            const { text: aiResponse } = await generateText({
+                model: this.model,
+                messages: [
+                    {
+                        role: 'system',
+                        content: this.config.systemPrompt
+                    },
+                    {
+                        role: 'user',
+                        content: prompt
+                    }
+                ],
+                temperature: this.config.temperature,
+                maxTokens: this.config.maxTokens,
+                presencePenalty: this.config.presencePenalty,
+                frequencyPenalty: this.config.frequencyPenalty
+            })
+
+            return this.messageFormatting.formatForDiscord(aiResponse)
+        } catch (error) {
+            console.error('Error generating coping response:', error)
+            throw error
+        }
+    }
+
+    /**
+     * Get current AI configuration summary
+     */
+    async getConfigSummary() {
+        try {
+            return await db.mellow.getSettingsSummary()
+        } catch (error) {
+            console.error('Failed to get AI configuration summary:', error)
+            throw error
+        }
+    }
+
+    /**
+     * Update AI configuration
+     * @param {Object} configData - Configuration data to update
+     */
+    async updateConfig(configData) {
+        try {
+            await db.mellow.update(configData)
+            await this.loadConfig() // Reload configuration after update
+            console.log('AI configuration updated successfully')
+            return this.config
+        } catch (error) {
+            console.error('Failed to update AI configuration:', error)
+            throw error
+        }
     }
 }
 

@@ -1,6 +1,7 @@
 import { Events } from 'discord.js'
 import { log } from '../../functions/logger.js'
 import { ReminderTool } from '../../services/tools/reminderTool.js'
+import { aiService } from '../../services/ai.service.js'
 
 export default {
     event: Events.ClientReady,
@@ -24,6 +25,22 @@ export default {
             })
 
             log('Client settings synced successfully!')
+
+            // Initialize AI service with database configuration
+            log('Initializing AI service with database configuration...')
+            await aiService.initialize().catch(err => {
+                return log(`Failed to initialize AI service: ${err.message}`, 'error')
+            })
+
+            // Validate AI configuration
+            const validation = await aiService.validateConfig()
+            if (!validation.isValid) {
+                log(`AI Configuration validation issues: ${validation.issues.join(', ')}`, 'warn')
+            } else {
+                log('AI configuration validated successfully!', 'done')
+            }
+
+            log('All services initialized successfully!', 'done')
         } catch (error) {
             log(`${error.message}`, 'error')
         }

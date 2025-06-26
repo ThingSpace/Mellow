@@ -8,7 +8,7 @@ datasource db {
 }
 
 model Mellow {
-    id                 BigInt   @id @default(autoincrement())
+    id                 BigInt   @id @default(1)
     model              String?  @default("gpt-3.5-turbo")
     prompt             String?  @default("You are Mellow")
     temperature        Float    @default(0.6)
@@ -29,7 +29,7 @@ model Mellow {
 }
 
 model User {
-    id                       BigInt   @id @default(autoincrement()) // Discord user ID as BigInt
+    id                       BigInt   @id @default(autoincrement())
     username                 String
     role                     Role     @default(USER)
     createdAt                DateTime @default(now())
@@ -139,7 +139,7 @@ model ModAction {
 model UserPreferences {
     id                  BigInt    @id
     user                User      @relation(fields: [id], references: [id])
-    checkInInterval     Int       @default(720)  // minutes (12 hours default)
+    checkInInterval     Int       @default(720)
     lastReminder        DateTime?
     nextCheckIn         DateTime?
     remindersEnabled    Boolean   @default(true)
