@@ -16,6 +16,7 @@ import { GratitudeEntryModule } from './modules/gratitudeEntry.js'
 import { CopingPlanModule } from './modules/copingPlan.js'
 import { FavoriteCopingToolModule } from './modules/favoriteCopingTool.js'
 import { UserPreferencesModule } from './modules/userPreferences.js'
+import { MellowModule } from './modules/mellow.js'
 
 const prisma = new PrismaClient().$extends(withAccelerate())
 
@@ -41,6 +42,7 @@ class Database {
         this.copingPlans = new CopingPlanModule(this.prisma)
         this.favoriteCopingTools = new FavoriteCopingToolModule(this.prisma)
         this.userPreferences = new UserPreferencesModule(this.prisma)
+        this.mellow = new MellowModule(this.prisma)
 
         this.logs = {
             info: msg => log(msg, 'info'),

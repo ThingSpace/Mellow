@@ -16,6 +16,14 @@ export default {
             client.reminder.start()
 
             log(`${client.user.tag} is now online!`, 'done')
+
+            log('Syncing client settings please wait......')
+
+            await client.db.mellow.get().catch(err => {
+                return log(`Failed to sync client settings: ${err.message}`, 'error')
+            })
+
+            log('Client settings synced successfully!')
         } catch (error) {
             log(`${error.message}`, 'error')
         }

@@ -7,27 +7,48 @@ datasource db {
     url      = env("DATABASE_URL")
 }
 
+model Mellow {
+    id                 BigInt   @id @default(autoincrement())
+    model              String?  @default("gpt-3.5-turbo")
+    prompt             String?  @default("You are Mellow")
+    temperature        Float    @default(0.6)
+    presencePenalty    Float    @default(0.6)
+    frequencyPenalty   Float    @default(0.5)
+    maxTokens          Int      @default(300)
+    enabled            Boolean  @default(true)
+    checkInTools       Boolean  @default(true)
+    copingTools        Boolean  @default(true)
+    ghostTools         Boolean  @default(true)
+    owners             String[]
+    feedbackLogs       BigInt?
+    reportLogs         BigInt?
+    serverId           BigInt?
+    adminId            BigInt?
+    modId              BigInt?
+    logId              BigInt? 
+}
+
 model User {
-    id        BigInt   @id @default(autoincrement()) // Discord user ID as BigInt
-    username  String
-    role      Role     @default(USER)
-    createdAt DateTime @default(now())
-    isBanned  Boolean  @default(false)
-    bannedUntil DateTime?
-    banReason String?
-    history   ConversationHistory[]
-    checkIns  MoodCheckIn[]
-    ghostLetters GhostLetter[]
-    copingToolUsages CopingToolUsage[]
-    crisisEvents CrisisEvent[]
-    modActionsAsModerator ModAction[] @relation("ModActionModerator")
-    preferences UserPreferences?
-    feedback  Feedback[]
-    reports   Report[]
-    journalEntries JournalEntry[]
-    gratitudeEntries GratitudeEntry[]
-    copingPlans CopingPlan[]
-    favoriteCopingTools FavoriteCopingTool[]
+    id                       BigInt   @id @default(autoincrement()) // Discord user ID as BigInt
+    username                 String
+    role                     Role     @default(USER)
+    createdAt                DateTime @default(now())
+    isBanned                 Boolean  @default(false)
+    bannedUntil              DateTime?
+    banReason                String?
+    history                  ConversationHistory[]
+    checkIns                 MoodCheckIn[]
+    ghostLetters             GhostLetter[]
+    copingToolUsages         CopingToolUsage[]
+    crisisEvents             CrisisEvent[]
+    modActionsAsModerator    ModAction[] @relation("ModActionModerator")
+    preferences              UserPreferences?
+    feedback                 Feedback[]
+    reports                  Report[]
+    journalEntries           JournalEntry[]
+    gratitudeEntries         GratitudeEntry[]
+    copingPlans              CopingPlan[]
+    favoriteCopingTools      FavoriteCopingTool[]
 }
 
 model Guild {
