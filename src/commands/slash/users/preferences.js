@@ -100,34 +100,63 @@ export default {
                     })
                 }
 
-                const embed = {
-                    title: 'Your Preferences',
-                    color: client.colors.primary,
-                    fields: [
-                        { name: 'Check-in Interval', value: `${settings.checkInInterval / 60} hours`, inline: true },
-                        {
-                            name: 'Reminders Enabled',
-                            value: settings.remindersEnabled ? '✅ Yes' : '❌ No',
-                            inline: true
-                        },
-                        { name: 'Reminder Method', value: settings.reminderMethod || 'dm', inline: true },
-                        {
-                            name: 'Journal Privacy',
-                            value: settings.journalPrivacy ? 'Private' : 'Public',
-                            inline: true
-                        },
-                        { name: 'AI Personality', value: settings.aiPersonality || 'gentle', inline: true },
-                        { name: 'Profile Theme', value: settings.profileTheme || 'blue', inline: true },
-                        { name: 'Language', value: settings.language || 'en', inline: true },
-                        { name: 'Timezone', value: settings.timezone || 'Not set', inline: true }
-                    ],
-                    timestamp: new Date().toISOString(),
-                    footer: {
-                        text: 'Use /preferences update to change your settings.'
-                    }
-                }
-
-                return interaction.reply({ embeds: [embed], ephemeral: true })
+                return interaction.reply({
+                    embeds: [
+                        new client.Gateway.EmbedBuilder()
+                            .setTitle('User Preferences')
+                            .setColor(client.colors.primary)
+                            .setDescription('Here are your current preferences and settings:')
+                            .addFields(
+                                {
+                                    name: 'Check-In Interval',
+                                    value: settings.checkInInterval
+                                        ? `${settings.checkInInterval / 60} hours`
+                                        : 'Not set',
+                                    inline: true
+                                },
+                                {
+                                    name: 'Reminders Enabled',
+                                    value: settings.remindersEnabled ? '✅ Yes' : '❌ No',
+                                    inline: true
+                                },
+                                {
+                                    name: 'Reminder Method',
+                                    value: settings.reminderMethod || 'dm',
+                                    inline: true
+                                },
+                                {
+                                    name: 'Journal Privacy',
+                                    value: settings.journalPrivacy ? 'Private' : 'Public',
+                                    inline: true
+                                },
+                                {
+                                    name: 'AI Personality',
+                                    value: settings.aiPersonality || 'gentle',
+                                    inline: true
+                                },
+                                {
+                                    name: 'Profile Theme',
+                                    value: settings.profileTheme || 'blue',
+                                    inline: true
+                                },
+                                {
+                                    name: 'Language',
+                                    value: settings.language || 'en',
+                                    inline: true
+                                },
+                                {
+                                    name: 'Timezone',
+                                    value: settings.timezone || 'Not set',
+                                    inline: true
+                                }
+                            )
+                            .setTimestamp()
+                            .setFooter({
+                                text: 'Use /preferences update to change your settings.',
+                                iconURL: client.logo
+                            })
+                    ]
+                })
             }
 
             /** UPDATE A USERS PREFERENCES/SETTINGS */

@@ -8,7 +8,7 @@ export default {
         description: 'View crisis statistics for a user.',
         handlers: {
             cooldown: 15000,
-            requiredPerms: ['ManageMessages'],
+            requiredPerms: ['Administrator', 'ManageGuild', 'ManageMessages'],
             requiredRoles: []
         },
         options: [

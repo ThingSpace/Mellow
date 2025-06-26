@@ -13,25 +13,56 @@ export default {
         },
         options: [
             {
-                name: 'message',
-                description: 'The message to analyze for crisis indicators',
-                required: true,
-                type: cmdTypes.STRING
-            },
-            {
                 name: 'user',
                 description: 'The user who sent the message',
                 required: true,
                 type: cmdTypes.USER
+            },
+            {
+                name: 'message_id',
+                description: 'ID of the message to analyze (fetches content automatically)',
+                required: true,
+                type: cmdTypes.STRING
             }
         ]
     },
     run: async (client, interaction) => {
-        const message = interaction.options.getString('message')
+        // Only use message_id
+        const messageId = interaction.options.getString('message_id')
         const user = interaction.options.getUser('user')
         const guildId = interaction.guildId
 
         await interaction.deferReply()
+
+        if (!messageId) {
+            return interaction.editReply({
+                content: '❌ You must provide a message ID to analyze.',
+                ephemeral: true
+            })
+        }
+
+        // Fetch the message from the current channel
+        let message
+        try {
+            const channel = interaction.channel
+            const fetchedMsg = await channel.messages.fetch(messageId)
+            if (fetchedMsg) {
+                message = fetchedMsg.content
+            } else {
+                return interaction.editReply({
+                    content: '❌ Could not find a message with that ID in this channel.',
+                    ephemeral: true
+                })
+            }
+        } catch (err) {
+            return interaction.editReply({
+                content:
+                    '❌ Failed to fetch the message. Make sure the ID is correct and the message is in this channel.',
+                ephemeral: true
+            })
+        }
+
+        console.log(message)
 
         try {
             const result = await handleCrisis(user.id, guildId, message, client, client.db)

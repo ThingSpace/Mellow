@@ -51,6 +51,9 @@ export async function analyzeMessageContent(message) {
 
         const result = response.results[0]
 
+        // Log the raw category scores for debugging
+        console.log('OpenAI Moderation category_scores:', result.category_scores)
+
         // Enhance the result with support needs analysis
         const enhancedResult = {
             ...result,
@@ -85,15 +88,30 @@ export async function analyzeMessageContent(message) {
 function determineSeverityLevel(result) {
     const scores = result.category_scores
 
-    if (scores.self_harm > 0.8 || scores.violence > 0.8) {
+    if (
+        scores['self-harm'] > 0.8 ||
+        scores['self-harm/intent'] > 0.8 ||
+        scores['self-harm/instructions'] > 0.8 ||
+        scores['violence'] > 0.8
+    ) {
         return SEVERITY_LEVELS.CRITICAL
     }
 
-    if (scores.self_harm > 0.6 || scores.violence > 0.6) {
+    if (
+        scores['self-harm'] > 0.6 ||
+        scores['self-harm/intent'] > 0.6 ||
+        scores['self-harm/instructions'] > 0.6 ||
+        scores['violence'] > 0.6
+    ) {
         return SEVERITY_LEVELS.HIGH
     }
 
-    if (scores.self_harm > 0.4 || scores.violence > 0.4) {
+    if (
+        scores['self-harm'] > 0.4 ||
+        scores['self-harm/intent'] > 0.4 ||
+        scores['self-harm/instructions'] > 0.4 ||
+        scores['violence'] > 0.4
+    ) {
         return SEVERITY_LEVELS.MEDIUM
     }
 
@@ -109,22 +127,39 @@ function determineSupportLevel(result) {
     const scores = result.category_scores
 
     // Check for urgent support needs
-    if (scores.self_harm > 0.9) {
+    if (scores['self-harm'] > 0.9 || scores['self-harm/intent'] > 0.9 || scores['self-harm/instructions'] > 0.9) {
         return SUPPORT_LEVELS.URGENT
     }
 
     // Check for elevated risk combinations
-    if (scores.self_harm > 0.7 || scores.violence > 0.8) {
+    if (
+        scores['self-harm'] > 0.7 ||
+        scores['self-harm/intent'] > 0.7 ||
+        scores['self-harm/instructions'] > 0.7 ||
+        scores['violence'] > 0.8
+    ) {
         return SUPPORT_LEVELS.ELEVATED
     }
 
     // Check for moderate support needs
-    if (scores.self_harm > 0.5 || scores.violence > 0.6 || scores.harassment > 0.7) {
+    if (
+        scores['self-harm'] > 0.5 ||
+        scores['self-harm/intent'] > 0.5 ||
+        scores['self-harm/instructions'] > 0.5 ||
+        scores['violence'] > 0.6 ||
+        scores['harassment'] > 0.7
+    ) {
         return SUPPORT_LEVELS.MODERATE
     }
 
     // Check for mild support needs
-    if (scores.self_harm > 0.7 || scores.violence > 0.4 || scores.harassment > 0.5) {
+    if (
+        scores['self-harm'] > 0.3 ||
+        scores['self-harm/intent'] > 0.3 ||
+        scores['self-harm/instructions'] > 0.3 ||
+        scores['violence'] > 0.4 ||
+        scores['harassment'] > 0.5
+    ) {
         return SUPPORT_LEVELS.MILD
     }
 
