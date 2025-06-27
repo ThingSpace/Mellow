@@ -28,6 +28,7 @@ export default {
     run: async (client, interaction) => {
         const feeling = interaction.options.getString('feeling') ?? null
         const isPrivate = interaction.options.getBoolean('private') ?? true
+        const userId = BigInt(interaction.user.id)
 
         await interaction.deferReply({ ephemeral: isPrivate })
 

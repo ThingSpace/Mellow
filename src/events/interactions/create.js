@@ -146,10 +146,17 @@ export default {
         } catch (err) {
             log(`Failed to execute command: ${interaction.commandName}`, 'error')
             log(err, 'debug')
-            await interaction.reply({
-                ephemeral: true,
-                content: 'An error occurred while executing this command!'
-            })
+
+            if (!interaction.replied && !interaction.deferred) {
+                await interaction.reply({
+                    ephemeral: true,
+                    content: 'An error occurred while executing this command!'
+                })
+            } else if (interaction.deferred) {
+                await interaction.editReply({
+                    content: 'An error occurred while executing this command!'
+                })
+            }
         }
     }
 }

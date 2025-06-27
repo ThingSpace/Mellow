@@ -79,12 +79,16 @@ export default {
         ]
     },
     run: async (client, interaction) => {
+        const userId = BigInt(interaction.user.id)
+
         switch (interaction.options.getSubcommand()) {
             /** CREATE A NEW JOURNAL ENTRY */
             case 'write': {
                 const feeling = interaction.options.getString('mood')
                 const content = interaction.options.getString('entry')
                 const isPrivate = interaction.options.getBoolean('private')
+
+                await interaction.deferReply({ ephemeral: isPrivate })
 
                 await client.db.journalEntries.create({
                     userId: BigInt(interaction.user.id),
@@ -100,21 +104,22 @@ export default {
 
                 const fullResponse = `Your journal entry has been saved!\n\n${response}`
 
-                return interaction.reply({
-                    content: fullResponse,
-                    ephemeral: true
+                return interaction.editReply({
+                    content: fullResponse
                 })
             }
 
             /** LIST ALL JOURNAL ENTRIES */
             case 'list': {
-                const entries = await client.ai.journalEntries.findMany({
+                await interaction.deferReply({ ephemeral: false })
+
+                const entries = await client.db.journalEntries.findMany({
                     where: { userId: BigInt(interaction.user.id) },
                     orderBy: { createdAt: 'desc' }
                 })
 
                 if (!entries.length)
-                    return interaction.reply({
+                    return interaction.editReply({
                         content:
                             'You have no journal entries yet, you can create one using the `/journal write` command'
                     })
@@ -124,7 +129,7 @@ export default {
                         `- **ID:** \`${e.id}\` | *${e.createdAt.toLocaleString()}*${e.private ? ' 🔒' : ''}\n> ${e.content.slice(0, 50)}${e.content.length > 50 ? '...' : ''}`
                 )
 
-                return interaction.reply({
+                return interaction.editReply({
                     content:
                         'Here are your journal entries (showing ID, date, and a preview):\n\n' +
                         lines.join('\n\n') +
@@ -134,35 +139,36 @@ export default {
 
             /** VIEW A JOURNAL ENTRY */
             case 'view': {
+                await interaction.deferReply({ ephemeral: false })
+
                 const entryId = parseInt(interaction.options.getString('entry_id'), 10)
                 const entry = await client.db.journalEntries.findById(entryId)
 
-                if (!entry || (entry.private && entry.userId !== BigInt(interaction.user.id))) {
-                    return interaction.reply({
-                        content: 'Entry not found or you do not have permission to view it.',
-                        ephemeral: true
+                if (!entry || (entry.private && entry.userId !== userId)) {
+                    return interaction.editReply({
+                        content: 'Entry not found or you do not have permission to view it.'
                     })
                 }
 
-                return interaction.reply({
-                    content: `**ID:** \`${entry.id}\`\n*${entry.createdAt.toLocaleString()}*${entry.private ? ' 🔒' : ''}\n\n${entry.content}`,
-                    ephemeral: entry.private
+                return interaction.editReply({
+                    content: `**ID:** \`${entry.id}\`\n*${entry.createdAt.toLocaleString()}*${entry.private ? ' 🔒' : ''}\n\n${entry.content}`
                 })
             }
 
             /** VIEW RECENT JOURNAL ENTRIES */
             case 'recent': {
+                await interaction.deferReply({ ephemeral: true })
+
                 const entries = await client.db.journalEntries.findMany({
-                    where: { userId: BigInt(interaction.user.id) },
+                    where: { userId },
                     orderBy: { createdAt: 'desc' },
                     take: 5
                 })
 
                 if (!entries.length)
-                    return interaction.reply({
+                    return interaction.editReply({
                         content:
-                            'You have no recent journal entries, you can create one using the `/journal write` command',
-                        ephemeral: true
+                            'You have no recent journal entries, you can create one using the `/journal write` command'
                     })
 
                 const lines = entries.map(
@@ -170,36 +176,34 @@ export default {
                         `- **ID:** \`${e.id}\` | *${e.createdAt.toLocaleString()}*${e.private ? ' 🔒' : ''}\n> ${e.content.slice(0, 50)}${e.content.length > 50 ? '...' : ''}`
                 )
 
-                return interaction.reply({
-                    content: 'Here are your 5 most recent journal entries:\n\n' + lines.join('\n\n'),
-                    ephemeral: true
+                return interaction.editReply({
+                    content: 'Here are your 5 most recent journal entries:\n\n' + lines.join('\n\n')
                 })
             }
 
             /** DELETE A JOURNAL ENTRY */
             case 'delete': {
+                await interaction.deferReply({ ephemeral: false })
+
                 const entryId = parseInt(interaction.options.getString('entry_id'), 10)
                 const entry = await client.db.journalEntries.findById(entryId)
 
-                if (!entry || entry.userId !== BigInt(interaction.user.id)) {
-                    return interaction.reply({
-                        content: 'Entry not found or you do not have permission to delete it.',
-                        ephemeral: true
+                if (!entry || entry.userId !== userId) {
+                    return interaction.editReply({
+                        content: 'Entry not found or you do not have permission to delete it.'
                     })
                 }
 
                 await client.db.journalEntries.delete(entryId)
 
-                return interaction.reply({
-                    content: 'Journal entry deleted.',
-                    ephemeral: true
+                return interaction.editReply({
+                    content: 'Journal entry deleted.'
                 })
             }
 
             default: {
-                return interaction.reply({
-                    content: 'Please select a valid subcommand to continue!',
-                    ephemeral: true
+                return interaction.editReply({
+                    content: 'Please select a valid subcommand to continue!'
                 })
             }
         }

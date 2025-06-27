@@ -31,7 +31,8 @@ export default {
             if (commandHandled) return
 
             // 4. AI RESPONSE - Handle AI interactions
-            if (shouldTriggerAI(message, client)) {
+            const shouldRespond = await shouldTriggerAI(message, client)
+            if (shouldRespond) {
                 // For replies, verify it's actually to the bot
                 if (message.reference?.messageId) {
                     const isReply = await isReplyToBot(message, client)
@@ -45,7 +46,8 @@ export default {
 
             // Try to send a generic error response if possible
             try {
-                if (shouldTriggerAI(message, client)) {
+                const shouldRespond = await shouldTriggerAI(message, client)
+                if (shouldRespond) {
                     await message.reply({
                         content: "I'm experiencing some technical difficulties. Please try again later.",
                         allowedMentions: { repliedUser: true }

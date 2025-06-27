@@ -10,23 +10,23 @@ export async function handleAIResponse(message, client) {
         if (message.author.bot) return false
 
         // Check if Mellow is enabled globally
-        const mellowConfig = await client.database.mellow.get()
+        const mellowConfig = await client.db.mellow.get()
         if (!mellowConfig.enabled) return false
 
         // Check guild settings if in a guild
         if (message.guild) {
-            const guildSettings = await client.database.guild.findById(message.guild.id)
+            const guildSettings = await client.db.guilds.findById(message.guild.id)
             if (guildSettings?.isBanned) return false
         }
 
         // Get user preferences
-        const userPrefs = await client.database.userPreferences.findById(message.author.id)
+        const userPrefs = await client.db.userPreferences.findById(message.author.id)
 
         // Start typing indicator
         await message.channel.sendTyping()
 
         // Get AI configuration from database
-        const aiConfig = await client.database.mellow.getAIConfig()
+        const aiConfig = await client.db.mellow.getAIConfig()
 
         const aiResponse = await client.ai.generateResponse(message.content, message.author.id, {
             personality: userPrefs?.aiPersonality || 'gentle',
@@ -40,7 +40,7 @@ export async function handleAIResponse(message, client) {
         })
 
         // Log conversation to database
-        await client.database.conversationHistory.create({
+        await client.db.conversationHistory.create({
             data: {
                 userId: BigInt(message.author.id),
                 content: message.content,
@@ -48,7 +48,7 @@ export async function handleAIResponse(message, client) {
             }
         })
 
-        await client.database.conversationHistory.create({
+        await client.db.conversationHistory.create({
             data: {
                 userId: BigInt(message.author.id),
                 content: aiResponse,
@@ -85,16 +85,16 @@ export async function shouldTriggerAI(message, client) {
     if (message.author.bot) return false
 
     // Check if Mellow is enabled globally
-    const mellowConfig = await client.database.mellow.get()
+    const mellowConfig = await client.db.mellow.get()
     if (!mellowConfig.enabled) return false
 
     // Check if user is banned
-    const user = await client.database.user.findById(message.author.id)
+    const user = await client.db.users.findById(message.author.id)
     if (user?.isBanned) return false
 
     // Check guild settings if in a guild
     if (message.guild) {
-        const guildSettings = await client.database.guild.findById(message.guild.id)
+        const guildSettings = await client.db.guilds.findById(message.guild.id)
         if (guildSettings?.isBanned) return false
 
         // Check if guild has specific AI settings disabled

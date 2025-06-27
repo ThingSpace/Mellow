@@ -90,7 +90,8 @@ export default {
             nextCheckInTime = updatedPrefs.nextCheckIn
         }
 
-        await client.db.moodCheckIns.create(userId, {
+        await client.db.moodCheckIns.create({
+            userId,
             mood,
             note,
             intensity,

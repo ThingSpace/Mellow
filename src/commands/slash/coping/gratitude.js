@@ -53,7 +53,7 @@ export default {
 
             const gratitude = await client.ai.getCopingResponse({
                 tool: 'gratitude',
-                feeling,
+                feeling: null,
                 userId
             })
 
@@ -68,13 +68,15 @@ export default {
             })
 
             if (!entries.length) {
-                return interaction.editReply({
-                    content: 'You have no gratitude entries yet, You can create one using `/gratitude log`'
+                return interaction.reply({
+                    content: 'You have no gratitude entries yet, You can create one using `/gratitude log`',
+                    ephemeral: true
                 })
             }
 
-            return interaction.editReply({
-                content: entries.map(e => `• ${e.item} (*${e.createdAt.toLocaleString()}*)`)
+            return interaction.reply({
+                content: entries.map(e => `• ${e.item} (*${e.createdAt.toLocaleString()}*)`).join('\n'),
+                ephemeral: true
             })
         }
     }

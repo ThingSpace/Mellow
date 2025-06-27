@@ -319,7 +319,8 @@ export async function logCrisisEvent(userId, analysis, message, db) {
             escalated: analysis.crisisLevel === 'critical' || analysis.severity === 'high'
         }
 
-        const crisisEvent = await db.crisisEvents.add(userId, {
+        const crisisEvent = await db.crisisEvents.create({
+            userId: userId,
             details: JSON.stringify(details),
             escalated: details.escalated
         })
