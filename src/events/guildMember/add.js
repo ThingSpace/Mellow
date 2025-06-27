@@ -9,8 +9,7 @@ export default {
     once: false,
     run: async (client, member) => {
         // Upsert the user in the database
-        await db.users.upsert({
-            id: member.id,
+        await db.users.upsert(member.id, {
             username: member.user.username
         })
 

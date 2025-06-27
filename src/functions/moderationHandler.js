@@ -4,6 +4,7 @@ import {
     generateModerationReport,
     recordAction
 } from '../services/tools/moderationTool.js'
+import { PermissionFlagsBits } from 'discord.js'
 
 /**
  * Check if user should be exempt from moderation
@@ -22,7 +23,11 @@ export async function isExemptFromModeration(message, client) {
         // Check Discord permissions if in guild
         if (message.guild) {
             const member = await message.guild.members.fetch(message.author.id).catch(() => null)
-            if (member && (member.permissions.has('ADMINISTRATOR') || member.permissions.has('MANAGE_MEMBERS'))) {
+            if (
+                member &&
+                (member.permissions.has(PermissionFlagsBits.Administrator) ||
+                    member.permissions.has(PermissionFlagsBits.ManageMembers))
+            ) {
                 return true
             }
         }

@@ -8,8 +8,8 @@ export default {
         console.log(`Joined a new guild: ${guild.id}`)
 
         await db.guilds.upsert(
+            guild.id,
             {
-                id: guild.id,
                 name: guild.name,
                 ownerId: guild.ownerId,
                 joinedAt: new Date()
@@ -26,17 +26,9 @@ export default {
         for (const member of members.values()) {
             const userExists = await db.users.findById(member.id)
 
-            await db.users.upsert({
-                where: { id: BigInt(member.id) },
-                update: {
-                    username: member.user.username,
-                    role: userExists ? userExists.role : 'USER'
-                },
-                create: {
-                    id: BigInt(member.id),
-                    username: member.user.username,
-                    role: 'USER'
-                }
+            await db.users.upsert(member.id, {
+                username: member.user.username,
+                role: userExists ? userExists.role : 'USER'
             })
         }
 
