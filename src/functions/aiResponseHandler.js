@@ -27,14 +27,8 @@ export async function handleAIResponse(message, client) {
         // Start typing indicator
         await message.channel.sendTyping()
 
-        // Get AI configuration from database
-        const aiConfig = await client.db.mellow.getAIConfig()
-
-        const aiResponse = await client.ai.generateResponse(message.content, message.author.id, {
-            personality: userPrefs?.aiPersonality || 'gentle',
-            language: userPrefs?.language || message.guild?.preferredLocale || 'en',
-            ...aiConfig
-        })
+        // Generate AI response with user's personality preference
+        const aiResponse = await client.ai.generateResponse(message.content, message.author.id)
 
         await message.reply({
             content: aiResponse,
@@ -44,6 +38,16 @@ export async function handleAIResponse(message, client) {
         // Log conversation to database - Fix: use correct method signature
         await client.db.conversationHistory.add(message.author.id, message.content, false)
         await client.db.conversationHistory.add(message.author.id, aiResponse, true)
+
+        // Log AI interaction to system logger
+        if (client.systemLogger) {
+            await client.systemLogger.logUserEvent(
+                message.author.id,
+                message.author.username,
+                'ai_conversation',
+                `User had AI conversation in ${message.guild ? message.guild.name : 'DM'}`
+            )
+        }
 
         return true
     } catch (error) {

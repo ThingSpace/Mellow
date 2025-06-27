@@ -25,22 +25,31 @@ Implement commands and handlers for Mellow's unique features.
     -   [x] Scaffold `/coping` command
     -   [x] Implement toolbox logic (grounding, breathing, etc.)
     -   [x] Create CopingTool service for AI-powered suggestions
+    -   [x] Create `/toolbox` command for favorite coping tools
+    -   [x] Create `/plan` command for personalized coping plans
+    -   [x] Create `/music` command for calming music suggestions
+    -   [x] Create `/support` command for crisis resources
+    -   [x] Create `/streaks` command for coping tool usage tracking
     -   [ ] **[PLANNED] Enhanced AI-powered coping tools and personalized suggestions**
 -   [x] Crisis Routing
     -   [x] Implement distress keyword detection
     -   [x] Scaffold mod alert/help suggestion logic
     -   [x] AI-powered crisis detection and escalation
+    -   [x] Crisis detection in message handler
+    -   [x] Comprehensive crisis analysis and response system
 -   [x] Late-Night Companion Mode
     -   [ ] Implement night-time presence/response logic
     -   [ ] **[PLANNED] AI-powered late-night support and check-ins**
 -   [x] Moderation Capabilities
     -   [x] Scaffold `/mod` command group
-    -   [x] Implement user mute/ban/unban commands
+    -   [x] Implement user timeout/untimeout commands (using Discord's native timeout)
+    -   [x] Implement user ban/unban commands
     -   [x] Implement role assignment/removal commands
     -   [x] Implement view/delete logs command
     -   [x] Add mod-only permission checks (in interaction handler)
     -   [x] Auto-assign role when a user joins the guild
     -   [x] Implement moderation action logging (ModAction)
+    -   [x] Enhanced moderation logging with user-specific filters
 
 ## Additional Items to Add
 
@@ -48,7 +57,7 @@ Implement commands and handlers for Mellow's unique features.
 -   [x] Create `/checkin` command with mood tracking
 -   [x] Create `/ghostletter` command with private storage
 -   [x] Create `/coping` command with tools library
--   [ ] Implement crisis detection in message handler
+-   [x] Implement crisis detection in message handler
 -   [ ] Add late-night mode detection and responses
 -   [x] Update help command to reflect new bot name
 -   [x] Update message handler to use "Mellow" branding
@@ -63,6 +72,20 @@ Implement commands and handlers for Mellow's unique features.
     -   [x] Add intensity tracking and averages
     -   [x] Add activity variety tracking
     -   [x] Create visual mood representation with emojis
+-   [x] **Comprehensive Guild Settings System**
+    -   [x] Create `/guildsettings` command with all configuration options
+    -   [x] Channel configuration (crisis alerts, mod logs, check-ins, etc.)
+    -   [x] Feature toggles (check-ins, ghost letters, crisis alerts, system logs)
+    -   [x] Auto-moderation configuration with sensitivity levels
+    -   [x] Role assignment for moderators and system roles
+-   [x] **System Logging and Monitoring**
+    -   [x] Implement SystemLogger class for comprehensive logging
+    -   [x] Command usage tracking
+    -   [x] Guild join/leave event logging
+    -   [x] Crisis event logging
+    -   [x] Moderation action logging
+    -   [x] User event logging (preferences, profile access, etc.)
+    -   [x] Error logging with context
 -   [ ] **[DISCUSSION] Community/peer support features (opt-in, AI-moderated)**
 
 ## Recently Completed Features
@@ -78,6 +101,7 @@ Implement commands and handlers for Mellow's unique features.
     -   [x] UserPreferences database model
     -   [x] Configurable reminder intervals (1-72 hours)
     -   [x] Current settings display
+    -   [x] AI personality, theme, and language preferences
 -   [x] Automated Reminder System
     -   [x] ReminderTool service with 5-minute check intervals
     -   [x] DM notifications for due check-ins
@@ -90,31 +114,54 @@ Implement commands and handlers for Mellow's unique features.
     -   [x] Activity variety tracking
     -   [x] Most frequent mood identification
     -   [x] Visual representation with emojis
+-   [x] Comprehensive Coping Tools Suite
+    -   [x] `/toolbox` for managing favorite coping tools
+    -   [x] `/plan` for personalized coping plans
+    -   [x] `/music` for calming music suggestions
+    -   [x] `/support` for crisis resources and hotlines
+    -   [x] `/streaks` for tracking coping tool usage patterns
+-   [x] Enhanced Crisis Management
+    -   [x] OpenAI-powered crisis detection with severity levels
+    -   [x] Keyword-based backup detection
+    -   [x] Automated crisis response with appropriate resources
+    -   [x] Mod alert system for high-risk situations
+    -   [x] Crisis statistics and history tracking
 
 ## Currently Implemented Commands
 
 -   [x] `/help` - Basic help command
 -   [x] `/invite` - Bot invite link
--   [x] `/status` - Bot status
--   [x] `/profile` - User profile
+-   [x] `/about` - About Mellow information
+-   [x] `/status` - Bot status and performance metrics
+-   [x] `/profile` - Comprehensive user profile with wellness score
+-   [x] `/preferences` - User preference management (view/update/reset)
 -   [x] `/checkin` - Enhanced mood check-in with structured options
--   [x] `/preferences` - Check-in reminder settings
--   [x] `/insights` - Mood analysis and trends
--   [x] `/ghostletter` - Private venting
--   [x] `/coping` - Coping tools
--   [x] `/mod` - Moderation (mute, ban, unban, role, logs)
--   [x] `/guild` (private) - Guild management
--   [x] `/user` (private) - User management
--   [x] `/modaction` (private) - Moderation logs
+-   [x] `/insights` - Mood analysis and trends with timeframes
+-   [x] `/ghostletter` - Private venting system
+-   [x] `/coping` - Core coping tools (breathing, grounding, etc.)
+-   [x] `/toolbox` - Favorite coping tools management
+-   [x] `/plan` - Personalized coping plan creation
+-   [x] `/music` - Calming music suggestions
+-   [x] `/support` - Crisis resources and hotlines
+-   [x] `/streaks` - Coping tool usage streak tracking
+-   [x] `/mod` - Moderation (timeout, ban, unban, role, logs)
+-   [x] `/guildsettings` - Comprehensive guild configuration
+-   [x] `/guild` (private) - Guild management for admins
+-   [x] `/user` (private) - User management for admins
+-   [x] `/modaction` (private) - Moderation logs for admins
 
 ---
 
 **Outcome:**
 
--   All core Mellow features are accessible via Discord commands and DM interactions.
--   Enhanced mood tracking system with structured data collection and analysis.
--   Automated reminder system for consistent user engagement.
--   Comprehensive mood insights and trend analysis.
--   Moderators and admins have tools to manage the community and the bot safely and effectively.
--   All permissions are robustly enforced via Discord and database roles.
--   **Planned:** Enhanced AI-powered coping, crisis detection, late-night support, and community features.
+-   ✅ All core Mellow features are accessible via Discord commands and DM interactions.
+-   ✅ Enhanced mood tracking system with structured data collection and analysis.
+-   ✅ Automated reminder system for consistent user engagement.
+-   ✅ Comprehensive mood insights and trend analysis.
+-   ✅ Complete coping tools suite with personalization and tracking.
+-   ✅ Advanced crisis detection and intervention system.
+-   ✅ Comprehensive guild configuration and management.
+-   ✅ System-wide logging and monitoring capabilities.
+-   ✅ Moderators and admins have tools to manage the community and the bot safely and effectively.
+-   ✅ All permissions are robustly enforced via Discord and database roles.
+-   **Planned:** Enhanced AI-powered features, late-night support, and community features.

@@ -60,8 +60,7 @@ export default {
                 const remainingHours = Math.floor(remainingMs / (60 * 60 * 1000))
                 const remainingMinutes = Math.floor((remainingMs % (60 * 60 * 1000)) / (60 * 1000))
                 return interaction.reply({
-                    content: `You can only check in once every 12 hours. Please wait ${remainingHours}h ${remainingMinutes}m before checking in again.`,
-                    ephemeral: true
+                    content: `You can only check in once every 12 hours. Please wait ${remainingHours}h ${remainingMinutes}m before checking in again.`
                 })
             }
         }

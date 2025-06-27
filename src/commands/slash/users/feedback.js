@@ -29,6 +29,16 @@ export default {
                 message: message
             })
 
+            // Log feedback submission
+            if (client.systemLogger) {
+                await client.systemLogger.logUserEvent(
+                    userId,
+                    interaction.user.username,
+                    'feedback_submitted',
+                    'User submitted feedback'
+                )
+            }
+
             // Get Mellow configuration for feedback logging
             const mellowConfig = await client.db.mellow.get()
 
@@ -71,8 +81,7 @@ export default {
             }
 
             return interaction.reply({
-                content: '✅ Thank you for your feedback! Your message has been submitted to the development team.',
-                ephemeral: true
+                content: '✅ Thank you for your feedback! Your message has been submitted to the development team.'
             })
         } catch (error) {
             console.error('Error submitting feedback:', error)

@@ -96,6 +96,16 @@ export default {
                     private: isPrivate ? true : false
                 })
 
+                // Log journal entry creation
+                if (client.systemLogger) {
+                    await client.systemLogger.logUserEvent(
+                        interaction.user.id,
+                        interaction.user.username,
+                        'journal_entry_created',
+                        `Created ${isPrivate ? 'private' : 'public'} journal entry`
+                    )
+                }
+
                 const response = await client.ai.getCopingResponse({
                     tool: 'journal',
                     feeling,

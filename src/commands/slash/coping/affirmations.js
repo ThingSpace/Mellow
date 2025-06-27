@@ -39,6 +39,16 @@ export default {
             userId
         })
 
+        // Log affirmations usage
+        if (client.systemLogger) {
+            await client.systemLogger.logUserEvent(
+                interaction.user.id,
+                interaction.user.username,
+                'affirmations_used',
+                'User requested affirmations'
+            )
+        }
+
         return interaction.editReply({ content: affirmation })
     }
 }

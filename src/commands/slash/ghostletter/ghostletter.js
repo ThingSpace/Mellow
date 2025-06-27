@@ -51,15 +51,39 @@ export default {
         }
         if (action === 'clear') {
             await client.db.ghostLetters.clearForUser(userId)
+
+            // Log ghost letter clearing
+            if (client.systemLogger) {
+                await client.systemLogger.logUserEvent(
+                    userId,
+                    interaction.user.username,
+                    'ghost_letters_cleared',
+                    'User cleared all ghost letters'
+                )
+            }
+
             return interaction.reply({ content: 'All your ghost letters have been cleared.', ephemeral: true })
         }
         // Default: add a new ghost letter
         const message = interaction.options.getString('message')
-        await client.db.ghostLetters.add(userId, message)
+        await client.db.ghostLetters.create({
+            userId: userId,
+            content: message
+        })
+
+        // Log ghost letter creation
+        if (client.systemLogger) {
+            await client.systemLogger.logUserEvent(
+                userId,
+                interaction.user.username,
+                'ghost_letter_created',
+                'User created a ghost letter'
+            )
+        }
+
         return interaction.reply({
             content:
-                'Your ghost letter has been saved. Only you can view it. Use `/ghostletter action:view` to see your letters.',
-            ephemeral: true
+                'Your ghost letter has been saved. Only you can view it. Use `/ghostletter action:view` to see your letters.'
         })
     }
 }

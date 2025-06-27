@@ -33,11 +33,21 @@ export default {
 
         const userId = BigInt(interaction.user.id)
 
-        const breathing = await client.ai.getCopingResponse({
+        const breathing = await client.aiService.getCopingResponse({
             tool: 'breathing',
             feeling,
             userId
         })
+
+        // Log breathing exercise usage
+        if (client.systemLogger) {
+            await client.systemLogger.logUserEvent(
+                interaction.user.id,
+                interaction.user.username,
+                'breathing_exercise_used',
+                'User started breathing exercise'
+            )
+        }
 
         return interaction.editReply({ content: breathing })
     }

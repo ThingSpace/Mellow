@@ -38,6 +38,16 @@ export default {
             userId
         })
 
+        // Log challenge usage
+        if (client.systemLogger) {
+            await client.systemLogger.logUserEvent(
+                interaction.user.id,
+                interaction.user.username,
+                'coping_challenge_used',
+                'User requested a coping challenge'
+            )
+        }
+
         return interaction.editReply({ content: challenge })
     }
 }

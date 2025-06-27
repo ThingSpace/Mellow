@@ -120,21 +120,23 @@ export class AIService {
 
             this.performance.startTracking(perfId)
 
+            // Get user preferences for personality
+            const userPrefs = await db.userPreferences.findById(userId)
+            const personality = userPrefs?.aiPersonality || 'gentle'
+
             // Get chat history using the MessageHistoryTool
             const chatHistory = await this.messageHistory.getRecentHistory(userId, 50)
 
-            // Build enhanced prompt from database
+            // Build enhanced prompt from database with personality customization
             let enhancedPrompt = this.config.systemPrompt
+
+            // Add personality-specific instructions
+            enhancedPrompt += this.getPersonalityInstructions(personality)
 
             if (typeof enhancedPrompt !== 'string') {
                 console.error(`System prompt is not a valid string:`, enhancedPrompt)
                 enhancedPrompt =
                     'You are Mellow. You help users find moments of calm, safe conversations, and reminders that empathy matters, even online.'
-            }
-
-            // Validate prompt before sending
-            if (typeof enhancedPrompt !== 'string') {
-                throw new Error(`Invalid prompt: system prompt must be a valid string`)
             }
 
             // Prepare messages array with enhanced prompt and chat history
@@ -171,6 +173,71 @@ export class AIService {
         }
     }
 
+    /**
+     * Get personality-specific instructions to append to system prompt
+     * @param {string} personality - User's preferred AI personality
+     * @returns {string} - Additional instructions for the personality
+     */
+    getPersonalityInstructions(personality) {
+        const personalityInstructions = {
+            gentle: `
+
+**Personality: Gentle**
+- Use soft, comforting language
+- Be extra patient and understanding
+- Validate feelings frequently
+- Use gentle encouragement rather than direct advice
+- Speak in a calm, soothing tone`,
+
+            supportive: `
+
+**Personality: Supportive** 
+- Be encouraging and uplifting
+- Focus on strengths and positive aspects
+- Offer practical suggestions and resources
+- Use motivational language
+- Express confidence in the user's abilities`,
+
+            direct: `
+
+**Personality: Direct**
+- Be clear and straightforward in communication
+- Provide practical, actionable advice
+- Focus on solutions rather than just emotional support
+- Use concise, honest responses
+- Balance directness with empathy`,
+
+            playful: `
+
+**Personality: Playful**
+- Use light humor when appropriate (never about serious mental health issues)
+- Include gentle emojis and friendly language
+- Be more casual and conversational
+- Use metaphors and creative language
+- Keep the mood lighter while still being supportive`,
+
+            professional: `
+
+**Personality: Professional**
+- Use more formal, clinical language
+- Provide structured responses
+- Reference mental health best practices
+- Be informative and educational
+- Maintain professional boundaries while being caring`,
+
+            encouraging: `
+
+**Personality: Encouraging**
+- Focus on progress and growth
+- Celebrate small wins and efforts
+- Use positive, hopeful language
+- Emphasize resilience and capability
+- Be motivational and inspiring`
+        }
+
+        return personalityInstructions[personality] || personalityInstructions.gentle
+    }
+
     async getCopingResponse({ tool, feeling, userId }) {
         try {
             // Check if coping tools are enabled
@@ -184,14 +251,21 @@ export class AIService {
                 await this.loadConfig()
             }
 
+            // Get user preferences for personality
+            const userPrefs = await db.userPreferences.findById(userId)
+            const personality = userPrefs?.aiPersonality || 'gentle'
+
             const prompt = await buildCopingPrompt({ tool, feeling, userId, db })
+
+            // Enhance system prompt with personality
+            let systemPrompt = this.config.systemPrompt + this.getPersonalityInstructions(personality)
 
             const { text: aiResponse } = await generateText({
                 model: this.model,
                 messages: [
                     {
                         role: 'system',
-                        content: this.config.systemPrompt
+                        content: systemPrompt
                     },
                     {
                         role: 'user',
@@ -214,14 +288,10 @@ export class AIService {
     /**
      * Get AI-powered crisis support resources based on user context
      * @param {Object} context - User crisis context
-     * @param {string} context.situation - User's described situation
-     * @param {boolean} context.hasRecentCrisis - Whether user has recent crisis events
-     * @param {string} context.crisisTrend - Trend of crisis events (increasing/decreasing/stable)
-     * @param {number} context.recentEvents - Number of recent crisis events
-     * @param {number} context.escalatedEvents - Number of escalated events
+     * @param {string} userId - User ID for personality preferences
      * @returns {Promise<Object>} - Structured crisis resources
      */
-    async getCrisisResources(context) {
+    async getCrisisResources(context, userId = null) {
         try {
             // Check if crisis tools are enabled
             const enabledFeatures = await db.mellow.getEnabledFeatures()
@@ -232,6 +302,14 @@ export class AIService {
             // Ensure we have fresh configuration
             if (!this.config) {
                 await this.loadConfig()
+            }
+
+            // Get user preferences for personality if userId provided
+            let personalityInstructions = ''
+            if (userId) {
+                const userPrefs = await db.userPreferences.findById(userId)
+                const personality = userPrefs?.aiPersonality || 'gentle'
+                personalityInstructions = this.getPersonalityInstructions(personality)
             }
 
             // Build crisis resources prompt
@@ -252,13 +330,16 @@ LONGTERM: [Long-term support options and recommendations]
 
 Be compassionate, practical, and provide specific, actionable resources. Focus on safety first, then support.`
 
+            const systemPrompt =
+                'You are a compassionate crisis support specialist. Provide practical, actionable resources while maintaining a warm, supportive tone. Always prioritize safety and provide specific contact information for crisis services.' +
+                personalityInstructions
+
             const { text: aiResponse } = await generateText({
                 model: this.model,
                 messages: [
                     {
                         role: 'system',
-                        content:
-                            'You are a compassionate crisis support specialist. Provide practical, actionable resources while maintaining a warm, supportive tone. Always prioritize safety and provide specific contact information for crisis services.'
+                        content: systemPrompt
                     },
                     {
                         role: 'user',

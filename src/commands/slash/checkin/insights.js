@@ -140,5 +140,15 @@ export default {
                     .setFooter({ text: client.footer, iconURL: client.logo })
             ]
         })
+
+        // Log insights access
+        if (client.systemLogger) {
+            await client.systemLogger.logUserEvent(
+                interaction.user.id,
+                interaction.user.username,
+                'mood_insights_accessed',
+                `Viewed ${timeframeText.toLowerCase()} mood insights`
+            )
+        }
     }
 }

@@ -601,7 +601,7 @@ export async function handleCrisis(userId, guildId, message, client, db) {
         // Log the crisis event
         const crisisEvent = await logCrisisEvent(userId, combinedAnalysis, message, db)
 
-        // Log to system channels
+        // Log to system logger
         if (client.systemLogger) {
             await client.systemLogger.logCrisisEvent(userId, guildId, combinedAnalysis.crisisLevel, true)
         }

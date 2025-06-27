@@ -73,14 +73,14 @@ export default {
                         required: false,
                         type: cmdTypes.STRING,
                         choices: languageChoices
-                    },
-                    {
-                        name: 'timezone',
-                        description: 'Your timezone (e.g., America/New_York)',
-                        required: false,
-                        type: cmdTypes.STRING
                     }
                 ]
+            },
+            {
+                name: 'reset',
+                type: cmdTypes.SUB_COMMAND,
+                description: 'Reset all preferences to default values',
+                options: []
             }
         ]
     },
@@ -88,14 +88,13 @@ export default {
         const userId = interaction.user.id
 
         switch (interaction.options.getSubcommand()) {
-            /** VIEW A USERS PREFERENCES/SETTINGS */
             case 'view': {
                 const settings = await client.db.userPreferences.findById(userId)
 
                 if (!settings) {
                     return interaction.reply({
                         content:
-                            'Whoops, I was unable to locate your preferences. If this issue continues please contact my support team!',
+                            "You don't have any preferences set yet. Use `/preferences update` to configure your settings!",
                         ephemeral: true
                     })
                 }
@@ -103,51 +102,37 @@ export default {
                 return interaction.reply({
                     embeds: [
                         new client.Gateway.EmbedBuilder()
-                            .setTitle('User Preferences')
+                            .setTitle('Your Preferences')
                             .setColor(client.colors.primary)
                             .setDescription('Here are your current preferences and settings:')
                             .addFields(
                                 {
-                                    name: 'Check-In Interval',
-                                    value: settings.checkInInterval
-                                        ? `${settings.checkInInterval / 60} hours`
-                                        : 'Not set',
+                                    name: 'Check-In Settings',
+                                    value: [
+                                        `**Interval:** ${settings.checkInInterval ? `${settings.checkInInterval / 60} hours` : 'Not set'}`,
+                                        `**Reminders:** ${settings.remindersEnabled ? '✅ Enabled' : '❌ Disabled'}`,
+                                        `**Method:** ${settings.reminderMethod || 'dm'}`,
+                                        `**Next Check-In:** ${settings.nextCheckIn ? `<t:${Math.floor(settings.nextCheckIn.getTime() / 1000)}:R>` : 'Not scheduled'}`
+                                    ].join('\n'),
                                     inline: true
                                 },
                                 {
-                                    name: 'Reminders Enabled',
-                                    value: settings.remindersEnabled ? '✅ Yes' : '❌ No',
+                                    name: 'Personal Settings',
+                                    value: [
+                                        `**AI Personality:** ${settings.aiPersonality || 'gentle'}`,
+                                        `**Theme:** ${settings.profileTheme || 'blue'}`,
+                                        `**Language:** ${settings.language || 'en'}`,
+                                        `**Journal Privacy:** ${settings.journalPrivacy ? '🔒 Private' : '🌐 Public'}`
+                                    ].join('\n'),
                                     inline: true
                                 },
                                 {
-                                    name: 'Reminder Method',
-                                    value: settings.reminderMethod || 'dm',
-                                    inline: true
-                                },
-                                {
-                                    name: 'Journal Privacy',
-                                    value: settings.journalPrivacy ? 'Private' : 'Public',
-                                    inline: true
-                                },
-                                {
-                                    name: 'AI Personality',
-                                    value: settings.aiPersonality || 'gentle',
-                                    inline: true
-                                },
-                                {
-                                    name: 'Profile Theme',
-                                    value: settings.profileTheme || 'blue',
-                                    inline: true
-                                },
-                                {
-                                    name: 'Language',
-                                    value: settings.language || 'en',
-                                    inline: true
-                                },
-                                {
-                                    name: 'Timezone',
-                                    value: settings.timezone || 'Not set',
-                                    inline: true
+                                    name: 'Account Info',
+                                    value: [
+                                        `**Created:** <t:${Math.floor(settings.createdAt.getTime() / 1000)}:R>`,
+                                        `**Updated:** <t:${Math.floor(settings.updatedAt.getTime() / 1000)}:R>`
+                                    ].join('\n'),
+                                    inline: false
                                 }
                             )
                             .setTimestamp()
@@ -155,72 +140,69 @@ export default {
                                 text: 'Use /preferences update to change your settings.',
                                 iconURL: client.logo
                             })
-                    ]
+                    ],
+                    ephemeral: true
                 })
             }
 
-            /** UPDATE A USERS PREFERENCES/SETTINGS */
             case 'update': {
-                // Gather all possible fields
                 const updates = {}
 
                 const checkinInterval = interaction.options.getInteger('checkin_interval')
-
                 if (checkinInterval !== null) {
                     updates.checkInInterval = checkinInterval * 60 // store as minutes
                 }
 
                 const remindersEnabled = interaction.options.getBoolean('reminders_enabled')
-
                 if (remindersEnabled !== null) {
                     updates.remindersEnabled = remindersEnabled
                 }
 
                 const reminderMethod = interaction.options.getString('reminder_method')
-
                 if (reminderMethod) {
                     updates.reminderMethod = reminderMethod
                 }
 
                 const journalPrivacy = interaction.options.getBoolean('journal_privacy')
-
                 if (journalPrivacy !== null) {
                     updates.journalPrivacy = journalPrivacy
                 }
 
                 const aiPersonality = interaction.options.getString('ai_personality')
-
                 if (aiPersonality) {
                     updates.aiPersonality = aiPersonality
                 }
 
                 const profileTheme = interaction.options.getString('profile_theme')
-
                 if (profileTheme) {
                     updates.profileTheme = profileTheme
                 }
 
                 const language = interaction.options.getString('language')
-
                 if (language) {
                     updates.language = language
                 }
 
-                const timezone = interaction.options.getString('timezone')
-
-                if (timezone) {
-                    updates.timezone = timezone
-                }
-
                 if (Object.keys(updates).length === 0) {
                     return interaction.reply({
-                        content: 'Please specify at least one setting to update.',
+                        content: '❌ No settings provided to update.',
                         ephemeral: true
                     })
                 }
 
                 try {
                     await client.db.userPreferences.upsert(userId, updates)
+
+                    // Log preference changes
+                    if (client.systemLogger) {
+                        const changes = Object.keys(updates).join(', ')
+                        await client.systemLogger.logUserEvent(
+                            interaction.user.id,
+                            interaction.user.username,
+                            'preferences_updated',
+                            `Updated: ${changes}`
+                        )
+                    }
 
                     return interaction.reply({
                         content: '✅ Your preferences have been updated!',
@@ -231,6 +213,34 @@ export default {
 
                     return interaction.reply({
                         content: '❌ Failed to update your preferences. Please try again later.',
+                        ephemeral: true
+                    })
+                }
+            }
+
+            case 'reset': {
+                try {
+                    await client.db.userPreferences.delete(userId)
+
+                    // Log preference reset
+                    if (client.systemLogger) {
+                        await client.systemLogger.logUserEvent(
+                            userId,
+                            interaction.user.username,
+                            'preferences_reset',
+                            'All preferences reset to defaults'
+                        )
+                    }
+
+                    return interaction.reply({
+                        content: '✅ Your preferences have been reset to default values!',
+                        ephemeral: true
+                    })
+                } catch (error) {
+                    console.error('Failed to reset preferences:', error)
+
+                    return interaction.reply({
+                        content: '❌ Failed to reset your preferences. Please try again later.',
                         ephemeral: true
                     })
                 }

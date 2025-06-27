@@ -75,8 +75,10 @@ export async function handleMessageModeration(message, client) {
         const contentAnalysis = await analyzeContent(message.content)
         const behaviorAnalysis = trackUserBehavior(message.author.id, message.content, message.createdTimestamp)
 
-        // Apply guild-specific auto-mod level (1-5 scale)
+        // Apply guild-specific auto-mod level (1-5 scale) with proper fallback
         const autoModLevel = guildSettings.autoModLevel || 3
+        console.log(`Auto-mod level for guild ${message.guild.id}: ${autoModLevel}`)
+
         const shouldTakeAction = shouldModerate(contentAnalysis, behaviorAnalysis, autoModLevel)
 
         if (!shouldTakeAction) {
@@ -107,13 +109,13 @@ export async function handleMessageModeration(message, client) {
  * @returns {boolean} Whether to take moderation action
  */
 function shouldModerate(contentAnalysis, behaviorAnalysis, autoModLevel) {
-    // Adjust thresholds based on auto-mod level
+    // Adjust thresholds based on auto-mod level (1=lenient, 5=strict)
     const thresholds = {
-        1: { content: 0.9, behavior: 0.9 }, // Very lenient
-        2: { content: 0.8, behavior: 0.8 }, // Lenient
-        3: { content: 0.6, behavior: 0.6 }, // Moderate (default)
-        4: { content: 0.4, behavior: 0.4 }, // Strict
-        5: { content: 0.2, behavior: 0.2 } // Very strict
+        1: { content: 0.95, behavior: 15 }, // Very lenient - almost no action
+        2: { content: 0.85, behavior: 12 }, // Lenient - relaxed moderation
+        3: { content: 0.65, behavior: 10 }, // Moderate - balanced (default)
+        4: { content: 0.45, behavior: 8 }, // Strict - active moderation
+        5: { content: 0.25, behavior: 5 } // Very strict - zero tolerance
     }
 
     const threshold = thresholds[autoModLevel] || thresholds[3]
@@ -121,14 +123,20 @@ function shouldModerate(contentAnalysis, behaviorAnalysis, autoModLevel) {
     // Check if content exceeds threshold
     if (contentAnalysis.flagged) {
         const maxScore = Math.max(...Object.values(contentAnalysis.scores))
+        console.log(`Content score: ${maxScore}, threshold: ${threshold.content}, level: ${autoModLevel}`)
         if (maxScore > threshold.content) {
             return true
         }
     }
 
-    // Check if behavior exceeds threshold
-    if (behaviorAnalysis.isSpamming && behaviorAnalysis.messageFrequency > 15 - autoModLevel * 2) {
-        return true
+    // Check if behavior exceeds threshold (messages per minute)
+    if (behaviorAnalysis.isSpamming) {
+        console.log(
+            `Message frequency: ${behaviorAnalysis.messageFrequency}, threshold: ${threshold.behavior}, level: ${autoModLevel}`
+        )
+        if (behaviorAnalysis.messageFrequency > threshold.behavior) {
+            return true
+        }
     }
 
     return false

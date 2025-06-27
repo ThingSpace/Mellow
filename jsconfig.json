@@ -5,26 +5,38 @@
         "moduleResolution": "Node",
         "baseUrl": "./",
         "paths": {
-            "@/*": ["./*"],
-            "@client/*": ["src/class/client/*"],
-            "@classes/*": ["src/class/*"],
-            "@configs/*": ["src/configs/*"],
-            "@database/*": ["src/prisma/prisma.client/*"],
-            "@filters/*": ["src/filters/*"],
-            "@functions/*": ["src/functions/*"],
-            "@handlers/*": ["src/handlers/*"]
+            "@/*": [
+                "./*"
+            ],
+            "@client/*": [
+                "src/class/client/*"
+            ],
+            "@classes/*": [
+                "src/class/*"
+            ],
+            "@configs/*": [
+                "src/configs/*"
+            ],
+            "@database/*": [
+                "src/prisma/prisma.client/*"
+            ],
+            "@filters/*": [
+                "src/filters/*"
+            ],
+            "@functions/*": [
+                "src/functions/*"
+            ],
+            "@handlers/*": [
+                "src/handlers/*"
+            ]
         },
         "allowSyntheticDefaultImports": true,
         "esModuleInterop": true
     },
     "include": [
-        "src/**/*.js",
-        "ignored/breathing.js",
-        "ignored/music.js",
-        "src/commands/slash/coping/affirmations.js",
-        "ignored/support.js",
-        "ignored/journal.js",
-        "ignored/streaks.js"
+        "src/**/*.js"
     ],
-    "exclude": ["node_modules"]
+    "exclude": [
+        "node_modules"
+    ]
 }

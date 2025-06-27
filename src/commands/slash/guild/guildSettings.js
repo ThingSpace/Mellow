@@ -109,11 +109,16 @@ export default {
                     },
                     {
                         name: 'auto_mod_level',
-                        description: 'Auto-moderation sensitivity (1-5)',
+                        description: 'Auto-moderation sensitivity level',
                         type: 4, // INTEGER
                         required: false,
-                        min_value: 1,
-                        max_value: 5
+                        choices: [
+                            { name: '1 - Very Lenient (High tolerance)', value: 1 },
+                            { name: '2 - Lenient (Relaxed moderation)', value: 2 },
+                            { name: '3 - Moderate (Balanced - Default)', value: 3 },
+                            { name: '4 - Strict (Active moderation)', value: 4 },
+                            { name: '5 - Very Strict (Zero tolerance)', value: 5 }
+                        ]
                     },
                     {
                         name: 'moderator_role',
@@ -123,7 +128,7 @@ export default {
                     },
                     {
                         name: 'system_role',
-                        description: 'System role for bot permissions',
+                        description: 'Role automatically assigned to new members when they join',
                         type: 8, // ROLE
                         required: false
                     }
@@ -205,7 +210,7 @@ export default {
                                     `**Auto-Mod:** ${guild.autoModEnabled ? '✅' : '❌'}`,
                                     `**Auto-Mod Level:** ${guild.autoModLevel ? `${guild.autoModLevel}/5` : 'Not set'}`,
                                     `**Moderator Role:** ${guild.moderatorRoleId ? `<@&${guild.moderatorRoleId}>` : 'Not set'}`,
-                                    `**System Role:** ${guild.systemRoleId ? `<@&${guild.systemRoleId}>` : 'Not set'}`
+                                    `**Member Role:** ${guild.systemRoleId ? `<@&${guild.systemRoleId}>` : 'Not set'}`
                                 ].join('\n'),
                                 inline: true
                             },
@@ -256,15 +261,7 @@ export default {
                     // Debug: Log what we're trying to save
                     console.log('Updating guild with:', updates)
 
-                    // Include required fields for potential creation
-                    const updateData = {
-                        ...updates,
-                        name: interaction.guild.name,
-                        ownerId: interaction.guild.ownerId
-                    }
-
                     await client.db.guilds.upsert(guildId, {
-                        ...updates,
                         name: interaction.guild.name,
                         ownerId: interaction.guild.ownerId
                     })
@@ -277,23 +274,7 @@ export default {
                             updates,
                             interaction.user.id
                         )
-
-                        // Update system logger if system channel was changed
-                        if (updates.systemChannelId) {
-                            await client.systemLogger.addGuildChannel(guildId, updates.systemChannelId)
-                        }
                     }
-
-                    // Debug: Verify what was saved
-                    const updatedGuild = await client.db.guilds.findById(guildId)
-                    console.log(
-                        'After update:',
-                        JSON.stringify(
-                            updatedGuild,
-                            (key, value) => (typeof value === 'bigint' ? value.toString() : value),
-                            2
-                        )
-                    )
 
                     return interaction.reply({
                         content: `✅ **Channel settings updated:**\n${changes.join('\n')}`,
@@ -334,7 +315,21 @@ export default {
                         ownerId: interaction.guild.ownerId
                     }
 
-                    await client.db.guilds.upsert(guildId, updateData)
+                    await client.db.guilds.upsert(guildId, {
+                        ...updates,
+                        name: interaction.guild.name,
+                        ownerId: interaction.guild.ownerId
+                    })
+
+                    // Log guild settings update
+                    if (client.systemLogger) {
+                        await client.systemLogger.logGuildSettingsUpdate(
+                            guildId,
+                            interaction.guild.name,
+                            updates,
+                            interaction.user.id
+                        )
+                    }
 
                     return interaction.reply({
                         content: `✅ **Feature settings updated:**\n${changes.join('\n')}`,
@@ -368,7 +363,7 @@ export default {
 
                     if (systemRole) {
                         updates.systemRoleId = systemRole.id
-                        changes.push(`**System Role:** <@&${systemRole.id}>`)
+                        changes.push(`**Member Role:** <@&${systemRole.id}>`)
                     }
 
                     if (changes.length === 0) {
@@ -385,7 +380,21 @@ export default {
                         ownerId: interaction.guild.ownerId
                     }
 
-                    await client.db.guilds.upsert(guildId, updateData)
+                    await client.db.guilds.upsert(guildId, {
+                        ...updates,
+                        name: interaction.guild.name,
+                        ownerId: interaction.guild.ownerId
+                    })
+
+                    // Log guild settings update
+                    if (client.systemLogger) {
+                        await client.systemLogger.logGuildSettingsUpdate(
+                            guildId,
+                            interaction.guild.name,
+                            updates,
+                            interaction.user.id
+                        )
+                    }
 
                     return interaction.reply({
                         content: `✅ **Moderation settings updated:**\n${changes.join('\n')}`,
@@ -419,7 +428,21 @@ export default {
                         ownerId: interaction.guild.ownerId
                     }
 
-                    await client.db.guilds.upsert(guildId, updateData)
+                    await client.db.guilds.upsert(guildId, {
+                        ...updates,
+                        name: interaction.guild.name,
+                        ownerId: interaction.guild.ownerId
+                    })
+
+                    // Log guild settings update
+                    if (client.systemLogger) {
+                        await client.systemLogger.logGuildSettingsUpdate(
+                            guildId,
+                            interaction.guild.name,
+                            updates,
+                            interaction.user.id
+                        )
+                    }
 
                     return interaction.reply({
                         content: `✅ **General settings updated:**\n${changes.join('\n')}`,

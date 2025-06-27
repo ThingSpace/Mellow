@@ -49,6 +49,16 @@ export default {
                 message: `[${type.toUpperCase()}] ${message}${reportedUser ? ` | Reported User: ${reportedUser.tag} (${reportedUser.id})` : ''}`
             })
 
+            // Log report submission
+            if (client.systemLogger) {
+                await client.systemLogger.logUserEvent(
+                    reporterId,
+                    interaction.user.username,
+                    'report_submitted',
+                    `Submitted ${type} report`
+                )
+            }
+
             // Get Mellow configuration for report logging
             const mellowConfig = await client.db.mellow.get()
 
@@ -113,8 +123,7 @@ export default {
             }
 
             return interaction.reply({
-                content: '✅ Thank you for your report! It has been submitted to the moderation team for review.',
-                ephemeral: true
+                content: '✅ Thank you for your report! It has been submitted to the moderation team for review.'
             })
         } catch (error) {
             console.error('Error submitting report:', error)

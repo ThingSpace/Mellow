@@ -91,6 +91,16 @@ export async function buildCopingPrompt({ tool, feeling, userId, db, goal }) {
         }
     }
 
+    // Get user preferences for personalized responses
+    if (userId && db && db.userPreferences) {
+        const userPrefs = await db.userPreferences.findById(userId)
+        if (userPrefs) {
+            if (userPrefs.aiPersonality) prompt += `\n- User prefers ${userPrefs.aiPersonality} communication style`
+            if (userPrefs.language && userPrefs.language !== 'en')
+                prompt += `\n- User's preferred language: ${userPrefs.language}`
+        }
+    }
+
     // Current time of day
     const hour = new Date().getHours()
 
@@ -101,7 +111,7 @@ export async function buildCopingPrompt({ tool, feeling, userId, db, goal }) {
     // Goal/intent
     if (goal) prompt += `\n- Current goal: ${goal}`
 
-    prompt += `\n- Respond with a gentle, step-by-step coping exercise or supportive message, tailored to their needs. Use a warm, empathetic tone. If no tool is selected, suggest one based on their feeling or context.`
+    prompt += `\n- Respond with a gentle, step-by-step coping exercise or supportive message, tailored to their needs and communication preferences. Use a warm, empathetic tone. If no tool is selected, suggest one based on their feeling or context.`
 
     return prompt
 }

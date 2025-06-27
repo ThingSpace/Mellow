@@ -49,7 +49,20 @@ export default {
 
             await interaction.deferReply({ ephemeral: isPrivate })
 
-            await client.db.gratitudeEntries.create({ userId, item })
+            await client.db.gratitudeEntries.create({
+                userId,
+                item
+            })
+
+            // Log gratitude entry
+            if (client.systemLogger) {
+                await client.systemLogger.logUserEvent(
+                    interaction.user.id,
+                    interaction.user.username,
+                    'gratitude_entry_created',
+                    'User logged gratitude entry'
+                )
+            }
 
             const gratitude = await client.ai.getCopingResponse({
                 tool: 'gratitude',
@@ -69,14 +82,12 @@ export default {
 
             if (!entries.length) {
                 return interaction.reply({
-                    content: 'You have no gratitude entries yet, You can create one using `/gratitude log`',
-                    ephemeral: true
+                    content: 'You have no gratitude entries yet, You can create one using `/gratitude log`'
                 })
             }
 
             return interaction.reply({
-                content: entries.map(e => `• ${e.item} (*${e.createdAt.toLocaleString()}*)`).join('\n'),
-                ephemeral: true
+                content: entries.map(e => `• ${e.item} (*${e.createdAt.toLocaleString()}*)`).join('\n')
             })
         }
     }

@@ -29,16 +29,16 @@ export default {
             } catch (err) {}
         }
 
-        // Get guild settings to check for system role
+        // Get guild settings to check for member auto-assignment role
         const guildSettings = await db.guilds.findById(member.guild.id)
         if (guildSettings?.systemRoleId) {
-            const systemRole = member.guild.roles.cache.get(guildSettings.systemRoleId)
-            if (systemRole && !member.user.bot) {
+            const memberRole = member.guild.roles.cache.get(guildSettings.systemRoleId)
+            if (memberRole && !member.user.bot) {
                 try {
-                    await member.roles.add(systemRole)
-                    console.log(`Assigned system role to ${member.user.username} in ${member.guild.name}`)
+                    await member.roles.add(memberRole)
+                    console.log(`Assigned member role to ${member.user.username} in ${member.guild.name}`)
                 } catch (error) {
-                    console.error(`Failed to assign system role in ${member.guild.name}:`, error)
+                    console.error(`Failed to assign member role in ${member.guild.name}:`, error)
                 }
             }
         }
