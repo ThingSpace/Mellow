@@ -23,12 +23,20 @@ export async function isExemptFromModeration(message, client) {
         // Check Discord permissions if in guild
         if (message.guild) {
             const member = await message.guild.members.fetch(message.author.id).catch(() => null)
-            if (
-                member &&
-                (member.permissions.has(PermissionFlagsBits.Administrator) ||
-                    member.permissions.has(PermissionFlagsBits.ManageMessages))
-            ) {
-                return true
+            if (member) {
+                // Check Discord permissions
+                if (
+                    member.permissions.has(PermissionFlagsBits.Administrator) ||
+                    member.permissions.has(PermissionFlagsBits.ManageMessages)
+                ) {
+                    return true
+                }
+
+                // Check guild-specific moderator role
+                const guildSettings = await client.db.guilds.findById(message.guild.id)
+                if (guildSettings?.moderatorRoleId && member.roles.cache.has(guildSettings.moderatorRoleId)) {
+                    return true
+                }
             }
         }
 
@@ -169,8 +177,9 @@ async function executeModerationAction(message, report, client, guildSettings) {
  */
 async function sendModerationAlert(message, report, client, guildSettings) {
     try {
-        // Use modLogChannelId for routine moderation logs, modAlertChannelId is for crisis alerts
-        const modChannelId = guildSettings?.modLogChannelId || guildSettings?.modAlertChannelId
+        // Use modLogChannelId for auto-moderation logs, auditLogChannelId for audit logs, fallback to modAlertChannelId for urgent cases
+        const modChannelId =
+            guildSettings?.modLogChannelId || guildSettings?.auditLogChannelId || guildSettings?.modAlertChannelId
         if (!modChannelId) {
             console.log(`No moderation log channel configured for guild ${message.guild.id}`)
             return

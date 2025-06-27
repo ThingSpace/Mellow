@@ -23,11 +23,11 @@ export class GuildModule {
      *
      * @param {string|number} id - Discord guild ID
      * @param {Object} data - Guild data to create/update
-     * @param {boolean} [preserveState = true] - Whether to preserve the guilds ban state and settings
+     * @param {boolean} [preserveState] - Whether to preserve the guilds ban state and settings
      * @param {string} [data.name] - Guild name
      * @param {string|number} [data.ownerId] - Guild owner's Discord ID
-     * @param {string} [data.modAlertChannelId] - Channel ID for crisis alerts and serious moderation events
-     * @param {string} [data.modLogChannelId] - Channel ID for mod logs
+     * @param {string} [data.modAlertChannelId] - Channel ID for crisis alerts and urgent mental health situations
+     * @param {string} [data.modLogChannelId] - Channel ID for routine moderation logs and auto-mod actions
      * @param {string} [data.checkInChannelId] - Channel ID for check-in logs
      * @param {string} [data.copingToolLogId] - Channel ID for coping tool logs
      * @param {boolean} [data.enableCheckIns] - Whether check-ins are enabled
@@ -38,22 +38,20 @@ export class GuildModule {
      * @param {number} [data.autoModLevel] - Auto-moderation level (1-5)
      * @param {string} [data.language] - Preferred language for the guild
      * @returns {Promise<Object>} The created or updated guild record
-     *
-     * @example
-     * // Update guild name on rejoin (preserves ban state)
-     * await guildModule.upsert('123456789', {
-     *   name: 'New Server Name',
-     *   ownerId: '987654321'
-     * }, true)
-     *
-     * // Force update all fields (admin action)
-     * await guildModule.upsert('123456789', {
-     *   name: 'New Name',
-     *   isBanned: false,
-     *   banReason: null
-     * }, false)
      */
     async upsert(id, data, preserveState = true) {
+        // Convert ID to BigInt for database consistency
+        const guildId = BigInt(id)
+
+        // For creation, we need at minimum the guild name and owner ID
+        // These should ALWAYS be provided from Discord's guild object
+        const createData = {
+            id: guildId,
+            name: data.name, // Required - should come from guild.name
+            ownerId: data.ownerId, // Required - should come from guild.ownerId
+            ...data
+        }
+
         if (preserveState) {
             // Only update "safe" fields that can change on rejoin
             const safeFields = [
@@ -64,10 +62,14 @@ export class GuildModule {
                 'modLogChannelId',
                 'checkInChannelId',
                 'copingToolLogId',
+                'systemChannelId',
+                'auditLogChannelId',
                 'enableCheckIns',
                 'enableGhostLetters',
                 'enableCrisisAlerts',
+                'systemLogsEnabled',
                 'moderatorRoleId',
+                'systemRoleId',
                 'autoModEnabled',
                 'autoModLevel'
             ]
@@ -81,14 +83,14 @@ export class GuildModule {
             }
 
             return this.prisma.guild.upsert({
-                where: { id: BigInt(id) },
-                create: { id: BigInt(id), ...data },
+                where: { id: guildId },
+                create: createData,
                 update: safeData
             })
         } else {
             return this.prisma.guild.upsert({
-                where: { id: BigInt(id) },
-                create: { id: BigInt(id), ...data },
+                where: { id: guildId },
+                create: createData,
                 update: data
             })
         }

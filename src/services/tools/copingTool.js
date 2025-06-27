@@ -16,7 +16,11 @@ export async function buildCopingPrompt({ tool, feeling, userId, db, goal }) {
     let moodHistory = []
 
     if (userId && db && db.moodCheckIns) {
-        const recent = await db.moodCheckIns.getAllForUser(userId, 3)
+        const recent = await db.moodCheckIns.findMany({
+            where: { userId: BigInt(userId) },
+            orderBy: { createdAt: 'desc' },
+            take: 3
+        })
 
         if (recent && recent.length) {
             moodHistory = recent.map(c => `${c.mood}${c.note ? ` (${c.note})` : ''}`)

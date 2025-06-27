@@ -125,6 +125,18 @@ export default {
                     action: 'mute',
                     reason: '10 min timeout'
                 })
+
+                // Log to system channels
+                if (client.systemLogger) {
+                    await client.systemLogger.logModerationAction(
+                        'mute',
+                        user.id,
+                        moderatorId,
+                        guildId,
+                        '10 min timeout'
+                    )
+                }
+
                 return interaction.reply({ content: `${user.tag} has been muted for 10 minutes.` })
             }
             case 'ban': {

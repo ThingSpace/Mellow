@@ -2,6 +2,7 @@ import { Events } from 'discord.js'
 import { log } from '../../functions/logger.js'
 import { ReminderTool } from '../../services/tools/reminderTool.js'
 import { aiService } from '../../services/ai.service.js'
+import { SystemLogger } from '../../functions/systemLogger.js'
 
 export default {
     event: Events.ClientReady,
@@ -15,6 +16,10 @@ export default {
 
             client.reminder = new ReminderTool(client)
             client.reminder.start()
+
+            // Initialize system logger
+            client.systemLogger = new SystemLogger(client)
+            await client.systemLogger.initialize()
 
             log(`${client.user.tag} is now online!`, 'done')
 
@@ -42,23 +47,36 @@ export default {
 
             log('All services initialized successfully!', 'done')
 
-            const system = await client.channels.cache.get(String(mellow.logId))
+            // Log startup event using system logger
+            if (client.systemLogger) {
+                const embed = new client.Gateway.EmbedBuilder()
+                    .setTitle('🟢 Mellow Online')
+                    .setDescription('Mellow has started up and is ready for interactions')
+                    .setColor(client.colors.success)
+                    .addFields(
+                        {
+                            name: 'Guilds',
+                            value: client.guilds.cache.size.toString(),
+                            inline: true
+                        },
+                        {
+                            name: 'Users',
+                            value: client.users.cache.size.toString(),
+                            inline: true
+                        }
+                    )
+                    .setTimestamp()
+                    .setFooter({ text: client.footer, iconURL: client.logo })
 
-            system.send({
-                embeds: [
-                    new client.Gateway.EmbedBuilder()
-                        .setTitle('[SYSTEM]: Mellow is Online!')
-                        .setColor(client.colors.primary)
-                        .setDescription('Hey there, i have started up and am ready for interactions')
-                        .setTimestamp()
-                        .setFooter({
-                            text: client.footer,
-                            iconURL: client.logo
-                        })
-                ]
-            })
+                await client.systemLogger.sendToChannels(embed)
+            }
         } catch (error) {
             log(`${error.message}`, 'error')
+
+            // Log startup error
+            if (client.systemLogger) {
+                await client.systemLogger.logError(error, 'Client Startup')
+            }
         }
     }
 }

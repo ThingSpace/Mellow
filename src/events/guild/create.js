@@ -7,6 +7,11 @@ export default {
     run: async (client, guild) => {
         console.log(`Joined a new guild: ${guild.id}`)
 
+        // Log guild join event
+        if (client.systemLogger) {
+            await client.systemLogger.logGuildEvent(guild, 'join')
+        }
+
         await db.guilds.upsert(
             guild.id,
             {

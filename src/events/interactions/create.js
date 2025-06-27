@@ -149,9 +149,32 @@ export default {
         // Actually run the command
         try {
             await command.run(client, interaction)
+
+            // Log successful command usage
+            if (client.systemLogger) {
+                await client.systemLogger.logCommandUsage(
+                    interaction,
+                    interaction.commandName,
+                    command.structure.category || 'Unknown',
+                    true
+                )
+            }
         } catch (err) {
             log(`Failed to execute command: ${interaction.commandName}`, 'error')
             log(err, 'debug')
+
+            // Log failed command usage
+            if (client.systemLogger) {
+                await client.systemLogger.logCommandUsage(
+                    interaction,
+                    interaction.commandName,
+                    command.structure.category || 'Unknown',
+                    false
+                )
+
+                // Log the error details
+                await client.systemLogger.logError(err, `Command: ${interaction.commandName}`)
+            }
 
             // Only try to respond if the interaction hasn't been replied to yet
             if (!interaction.replied) {

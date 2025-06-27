@@ -75,7 +75,7 @@ export class ReminderTool {
                         // Send to shared guild's check-in channel if available
                         let reminderSent = false
 
-                        // Get all guilds the bot is in that have check-ins enabled
+                        // Get all guilds where the user is a member and check-ins are enabled
                         const enabledGuilds = await this.client.db.guilds.findMany({
                             where: {
                                 enableCheckIns: true,

@@ -67,7 +67,7 @@ export default {
         }
 
         // Get or create user preferences for check-in
-        const prefs = await client.db.users.findById(userId, {
+        const prefs = await client.db.users.findById(BigInt(userId), {
             include: { preferences: true }
         })
 
@@ -75,7 +75,7 @@ export default {
 
         if (!prefs?.preferences) {
             const createdPrefs = await client.db.userPreferences.upsert(userId, {
-                checkInInterval: prefs?.preferences?.checkInInterval || 720, // Default to 12 hours
+                checkInInterval: 720, // Default to 12 hours
                 nextCheckIn: new Date(Date.now() + 720 * 60 * 1000)
             })
 
@@ -91,14 +91,18 @@ export default {
         }
 
         await client.db.moodCheckIns.create({
-            userId,
+            userId: BigInt(userId),
             mood,
             note,
             intensity,
             activity
         })
 
-        const recent = await client.db.moodCheckIns.getAllForUser(userId, 5)
+        const recent = await client.db.moodCheckIns.findMany({
+            where: { userId: BigInt(userId) },
+            orderBy: { createdAt: 'desc' },
+            take: 5
+        })
 
         const history = recent
             .map(c => {
@@ -106,6 +110,33 @@ export default {
                 return `- ${moodEmoji} **${c.mood}** (${c.intensity}/5) ${c.activity ? ` — ${c.activity}` : ''} ${c.note ? `\n  _${c.note}_` : ''} <t:${Math.floor(new Date(c.createdAt).getTime() / 1000)}:R>`
             })
             .join('\n')
+
+        // Log check-in if in a guild and logging is enabled
+        if (interaction.guild) {
+            try {
+                const guildSettings = await client.db.guilds.findById(interaction.guild.id)
+                if (guildSettings?.checkInChannelId && guildSettings?.enableCheckIns) {
+                    const logChannel = await interaction.guild.channels
+                        .fetch(guildSettings.checkInChannelId)
+                        .catch(() => null)
+                    if (logChannel && logChannel.isTextBased()) {
+                        const moodEmoji = moodEmojis[mood] || '😐'
+                        const logEmbed = new client.Gateway.EmbedBuilder()
+                            .setTitle('📝 Mood Check-In')
+                            .setDescription(
+                                `**User:** <@${interaction.user.id}>\n**Mood:** ${moodEmoji} ${mood} (${intensity}/5)${activity ? `\n**Activity:** ${activity}` : ''}`
+                            )
+                            .setColor(client.colors.primary)
+                            .setTimestamp()
+                            .setFooter({ text: client.footer, iconURL: client.logo })
+
+                        await logChannel.send({ embeds: [logEmbed] })
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to log check-in:', error)
+            }
+        }
 
         return interaction.reply({
             embeds: [

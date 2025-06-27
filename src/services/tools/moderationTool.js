@@ -207,73 +207,6 @@ export function recordAction(userId, action) {
 }
 
 /**
- * Generates a moderation report for logging
- * @param {object} contentAnalysis - Content analysis result
- * @param {object} behaviorAnalysis - Behavior analysis result
- * @param {string} userId - User ID
- * @param {string} messageId - Message ID
- * @returns {object} Formatted moderation report
- */
-export function generateModerationReport(contentAnalysis, behaviorAnalysis, userId, messageId) {
-    return {
-        userId,
-        messageId,
-        timestamp: Date.now(),
-        content: {
-            flagged: contentAnalysis.flagged,
-            categories: contentAnalysis.categories,
-            recommendedAction: contentAnalysis.action
-        },
-        behavior: {
-            spamDetected: behaviorAnalysis.isSpamming,
-            messageFrequency: behaviorAnalysis.messageFrequency,
-            repetitionRatio: behaviorAnalysis.repetitionRatio,
-            recentInfractions: behaviorAnalysis.recentInfractions
-        },
-        finalAction: determineFinalAction(contentAnalysis, behaviorAnalysis)
-    }
-}
-
-/**
- * Determines final action based on both content and behavior analysis
- * @param {object} contentAnalysis - Content analysis result
- * @param {object} behaviorAnalysis - Behavior analysis result
- * @returns {string} Final recommended action
- */
-function determineFinalAction(contentAnalysis, behaviorAnalysis) {
-    // Escalate action for repeat offenders (but never kick for spam alone)
-    if (behaviorAnalysis.recentInfractions.warnings > 3 || behaviorAnalysis.recentInfractions.mutes > 1) {
-        return ACTION_LEVELS.MUTE // Only mute, never kick for spam
-    }
-
-    // Escalate for combined violations
-    if (contentAnalysis.action === ACTION_LEVELS.WARN && behaviorAnalysis.isSpamming) {
-        return ACTION_LEVELS.MUTE
-    }
-
-    // Use the more severe action between content and behavior analysis
-    if (behaviorAnalysis.isSpamming) {
-        return ACTION_LEVELS.WARN // Only warn for spam
-    }
-
-    return contentAnalysis.action
-}
-
-/**
- * Cleans up old data from the behavior cache
- * Should be called periodically (e.g., every hour)
- */
-export function cleanupBehaviorCache() {
-    const oneHourAgo = Date.now() - 3600000
-    for (const [userId, userData] of userBehaviorCache.entries()) {
-        userData.messages = userData.messages.filter(msg => msg.timestamp > oneHourAgo)
-        if (userData.messages.length === 0 && userData.lastWarning < oneHourAgo && userData.lastMute < oneHourAgo) {
-            userBehaviorCache.delete(userId)
-        }
-    }
-}
-
-/**
  * Log a moderation action to the database
  * @param {string} guildId - Discord guild ID
  * @param {string} moderatorId - Discord moderator ID
@@ -348,5 +281,25 @@ export async function getUserModActions(targetUserId, db, limit = 10) {
     } catch (error) {
         console.error('Failed to get user mod actions:', error)
         return []
+    }
+}
+
+/**
+ * Generate a comprehensive moderation report
+ * @param {object} contentAnalysis - Content analysis result
+ * @param {object} behaviorAnalysis - Behavior analysis result
+ * @param {string} userId - User ID
+ * @param {string} messageId - Message ID
+ * @returns {object} - Moderation report
+ */
+export function generateModerationReport(contentAnalysis, behaviorAnalysis, userId, messageId) {
+    return {
+        messageId,
+        userId,
+        timestamp: new Date().toISOString(),
+        content: contentAnalysis,
+        behavior: behaviorAnalysis,
+        finalAction: contentAnalysis.action,
+        confidence: Math.max(...Object.values(contentAnalysis.scores || {})) || 0
     }
 }

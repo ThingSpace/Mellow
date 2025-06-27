@@ -104,6 +104,31 @@ export default {
                 description: 'Reload configuration from database',
                 type: 1, // SUB_COMMAND
                 options: []
+            },
+            {
+                name: 'channels',
+                description: 'Configure system channels',
+                type: 1, // SUB_COMMAND
+                options: [
+                    {
+                        name: 'feedback_channel',
+                        description: 'Channel for feedback submissions',
+                        type: 7, // CHANNEL
+                        required: false
+                    },
+                    {
+                        name: 'report_channel',
+                        description: 'Channel for user reports',
+                        type: 7, // CHANNEL
+                        required: false
+                    },
+                    {
+                        name: 'log_channel',
+                        description: 'Main system log channel',
+                        type: 7, // CHANNEL
+                        required: false
+                    }
+                ]
             }
         ],
         handlers: {
@@ -141,6 +166,7 @@ export default {
             switch (subcommand) {
                 case 'view': {
                     const summary = await aiService.getConfigSummary()
+                    const mellowConfig = await client.db.mellow.get()
 
                     const embed = new client.Gateway.EmbedBuilder()
                         .setTitle('🤖 Mellow AI Configuration')
@@ -187,6 +213,15 @@ export default {
                                 value: Object.entries(summary.features)
                                     .map(([feature, status]) => `${feature}: ${status}`)
                                     .join('\n'),
+                                inline: false
+                            },
+                            {
+                                name: 'System Channels',
+                                value: [
+                                    `**Feedback:** ${mellowConfig.feedbackLogs ? `<#${mellowConfig.feedbackLogs}>` : 'Not set'}`,
+                                    `**Reports:** ${mellowConfig.reportLogs ? `<#${mellowConfig.reportLogs}>` : 'Not set'}`,
+                                    `**Logs:** ${mellowConfig.logId ? `<#${mellowConfig.logId}>` : 'Not set'}`
+                                ].join('\n'),
                                 inline: false
                             }
                         ])
@@ -344,6 +379,63 @@ export default {
                     const embed = new client.Gateway.EmbedBuilder()
                         .setTitle('Configuration Reloaded')
                         .setDescription('Mellow AI configuration has been reloaded from the database!')
+                        .setColor(client.colors.success)
+                        .setThumbnail(client.logo)
+                        .setTimestamp()
+                        .setFooter({
+                            text: client.footer,
+                            iconURL: client.logo
+                        })
+
+                    await interaction.editReply({ embeds: [embed] })
+                    break
+                }
+
+                case 'channels': {
+                    const feedbackChannel = interaction.options.getChannel('feedback_channel')
+                    const reportChannel = interaction.options.getChannel('report_channel')
+                    const logChannel = interaction.options.getChannel('log_channel')
+
+                    const updates = {}
+                    let changes = []
+
+                    if (feedbackChannel) {
+                        updates.feedbackLogs = BigInt(feedbackChannel.id)
+                        changes.push(`**Feedback Channel:** <#${feedbackChannel.id}>`)
+                    }
+
+                    if (reportChannel) {
+                        updates.reportLogs = BigInt(reportChannel.id)
+                        changes.push(`**Report Channel:** <#${reportChannel.id}>`)
+                    }
+
+                    if (logChannel) {
+                        updates.logId = BigInt(logChannel.id)
+                        changes.push(`**Log Channel:** <#${logChannel.id}>`)
+                    }
+
+                    if (changes.length === 0) {
+                        return interaction.editReply({
+                            embeds: [
+                                new client.Gateway.EmbedBuilder()
+                                    .setTitle('No Updates')
+                                    .setDescription('No channel settings provided to update.')
+                                    .setColor(client.colors.warning)
+                                    .setThumbnail(client.logo)
+                                    .setTimestamp()
+                                    .setFooter({
+                                        text: client.footer,
+                                        iconURL: client.logo
+                                    })
+                            ]
+                        })
+                    }
+
+                    await client.db.mellow.update(updates)
+
+                    const embed = new client.Gateway.EmbedBuilder()
+                        .setTitle('Channel Settings Updated')
+                        .setDescription(`System channels have been updated:\n\n${changes.join('\n')}`)
                         .setColor(client.colors.success)
                         .setThumbnail(client.logo)
                         .setTimestamp()

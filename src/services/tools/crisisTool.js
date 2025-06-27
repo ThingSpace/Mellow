@@ -320,7 +320,7 @@ export async function logCrisisEvent(userId, analysis, message, db) {
         }
 
         const crisisEvent = await db.crisisEvents.create({
-            userId: userId,
+            userId: BigInt(userId),
             details: JSON.stringify(details),
             escalated: details.escalated
         })
@@ -342,7 +342,11 @@ export async function logCrisisEvent(userId, analysis, message, db) {
  */
 export async function getRecentCrisisEvents(userId, db, limit = 5) {
     try {
-        return await db.crisisEvents.getAllForUser(userId, limit)
+        return await db.crisisEvents.findMany({
+            where: { userId: BigInt(userId) },
+            orderBy: { detectedAt: 'desc' },
+            take: limit
+        })
     } catch (error) {
         console.error('Failed to get crisis events:', error)
         return []
@@ -535,7 +539,11 @@ Remember that it's completely okay to ask for help when you need it. Is there an
  */
 export async function getCrisisStats(userId, db) {
     try {
-        const allEvents = await db.crisisEvents.getAllForUser(userId, 100)
+        const allEvents = await db.crisisEvents.findMany({
+            where: { userId: BigInt(userId) },
+            orderBy: { detectedAt: 'desc' },
+            take: 100
+        })
 
         const now = new Date()
         const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
@@ -592,6 +600,11 @@ export async function handleCrisis(userId, guildId, message, client, db) {
 
         // Log the crisis event
         const crisisEvent = await logCrisisEvent(userId, combinedAnalysis, message, db)
+
+        // Log to system channels
+        if (client.systemLogger) {
+            await client.systemLogger.logCrisisEvent(userId, guildId, combinedAnalysis.crisisLevel, true)
+        }
 
         // Determine actions based on severity
         const actions = {

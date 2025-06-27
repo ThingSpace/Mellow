@@ -166,6 +166,12 @@ export default {
                         })
                     }
 
+                    // Debug: Log the actual guild object
+                    console.log(
+                        'Guild data:',
+                        JSON.stringify(guild, (key, value) => (typeof value === 'bigint' ? value.toString() : value), 2)
+                    )
+
                     const embed = new client.Gateway.EmbedBuilder()
                         .setTitle(`🔧 Guild Settings for ${interaction.guild.name}`)
                         .setColor(client.colors.primary)
@@ -197,7 +203,7 @@ export default {
                                 name: '🛡️ Moderation',
                                 value: [
                                     `**Auto-Mod:** ${guild.autoModEnabled ? '✅' : '❌'}`,
-                                    `**Auto-Mod Level:** ${guild.autoModLevel || 'Not set'}`,
+                                    `**Auto-Mod Level:** ${guild.autoModLevel ? `${guild.autoModLevel}/5` : 'Not set'}`,
                                     `**Moderator Role:** ${guild.moderatorRoleId ? `<@&${guild.moderatorRoleId}>` : 'Not set'}`,
                                     `**System Role:** ${guild.systemRoleId ? `<@&${guild.systemRoleId}>` : 'Not set'}`
                                 ].join('\n'),
@@ -247,7 +253,47 @@ export default {
                         })
                     }
 
-                    await client.db.guilds.upsert(guildId, updates)
+                    // Debug: Log what we're trying to save
+                    console.log('Updating guild with:', updates)
+
+                    // Include required fields for potential creation
+                    const updateData = {
+                        ...updates,
+                        name: interaction.guild.name,
+                        ownerId: interaction.guild.ownerId
+                    }
+
+                    await client.db.guilds.upsert(guildId, {
+                        ...updates,
+                        name: interaction.guild.name,
+                        ownerId: interaction.guild.ownerId
+                    })
+
+                    // Log guild settings update
+                    if (client.systemLogger) {
+                        await client.systemLogger.logGuildSettingsUpdate(
+                            guildId,
+                            interaction.guild.name,
+                            updates,
+                            interaction.user.id
+                        )
+
+                        // Update system logger if system channel was changed
+                        if (updates.systemChannelId) {
+                            await client.systemLogger.addGuildChannel(guildId, updates.systemChannelId)
+                        }
+                    }
+
+                    // Debug: Verify what was saved
+                    const updatedGuild = await client.db.guilds.findById(guildId)
+                    console.log(
+                        'After update:',
+                        JSON.stringify(
+                            updatedGuild,
+                            (key, value) => (typeof value === 'bigint' ? value.toString() : value),
+                            2
+                        )
+                    )
 
                     return interaction.reply({
                         content: `✅ **Channel settings updated:**\n${changes.join('\n')}`,
@@ -281,7 +327,14 @@ export default {
                         })
                     }
 
-                    await client.db.guilds.upsert(guildId, updates)
+                    // Include required fields for potential creation
+                    const updateData = {
+                        ...updates,
+                        name: interaction.guild.name,
+                        ownerId: interaction.guild.ownerId
+                    }
+
+                    await client.db.guilds.upsert(guildId, updateData)
 
                     return interaction.reply({
                         content: `✅ **Feature settings updated:**\n${changes.join('\n')}`,
@@ -325,7 +378,14 @@ export default {
                         })
                     }
 
-                    await client.db.guilds.upsert(guildId, updates)
+                    // Include required fields for potential creation
+                    const updateData = {
+                        ...updates,
+                        name: interaction.guild.name,
+                        ownerId: interaction.guild.ownerId
+                    }
+
+                    await client.db.guilds.upsert(guildId, updateData)
 
                     return interaction.reply({
                         content: `✅ **Moderation settings updated:**\n${changes.join('\n')}`,
@@ -352,7 +412,14 @@ export default {
                         })
                     }
 
-                    await client.db.guilds.upsert(guildId, updates)
+                    // Include required fields for potential creation
+                    const updateData = {
+                        ...updates,
+                        name: interaction.guild.name,
+                        ownerId: interaction.guild.ownerId
+                    }
+
+                    await client.db.guilds.upsert(guildId, updateData)
 
                     return interaction.reply({
                         content: `✅ **General settings updated:**\n${changes.join('\n')}`,

@@ -92,6 +92,7 @@ export default {
         if (subcommand === 'ban') {
             const guildId = interaction.options.getString('guild')
             const reason = interaction.options.getString('reason') || 'No reason provided.'
+            // Don't include name/ownerId when banning - preserve state = false
             await client.db.guilds.upsert(
                 guildId,
                 {
