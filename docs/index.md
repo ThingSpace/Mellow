@@ -13,11 +13,16 @@ Welcome to the official documentation for **Mellow** - your AI-powered mental he
 Mellow is designed to be a gentle, empathetic, and private support bot for anyone who needs a moment of stillness, a safe conversation, or a reminder that empathy matters — even online. Built with privacy and safety at its core, Mellow provides 24/7 mental health support directly within Discord communities.
 
 ## Quick Start
+1. Use `/help` to see available commands
+2. Start with `/checkin` to begin your mental health journey
+3. Configure server settings with `/guildsettings`
 
-1. [Invite Mellow to your server](https://discord.com/oauth2/authorize?client_id=1386810331367608371)
-2. Use `/help` to see available commands
-3. Start with `/checkin` to begin your mental health journey
-4. Configure server settings with `/guildsettings`
+## Quick Links
+
+- **[Invite Mellow to Your Server](https://discord.com/oauth2/authorize?client_id=1386810331367608371)**
+- **[Join Support Server](https://discord.gg/qyTcK7VRva)**
+- **[View Source Code](https://github.com/ThingSpace/Mellow)**
+- **[Getting Started Guide](getting-started.md)**
 
 ## Key Features
 

@@ -1,0 +1,41 @@
+<!-- Mellow custom head elements -->
+<link rel="icon" type="image/x-icon" href="{{ '/assets/images/favicon.ico' | relative_url }}">
+<link rel="apple-touch-icon" sizes="180x180" href="{{ '/assets/images/apple-touch-icon.png' | relative_url }}">
+
+<!-- Custom CSS for enhanced styling -->
+<style>
+    .site-header {
+        background: linear-gradient(135deg, var(--mellow-primary), var(--mellow-secondary));
+        color: white;
+    }
+
+    .site-title {
+        color: white !important;
+        font-weight: 600;
+    }
+
+    .main-content h1 {
+        color: var(--mellow-primary);
+        border-bottom: 2px solid var(--mellow-accent);
+        padding-bottom: 0.5rem;
+    }
+
+    .main-content h2 {
+        color: var(--mellow-primary);
+    }
+
+    .highlight {
+        border-left: 4px solid var(--mellow-primary);
+        padding-left: 1rem;
+    }
+
+    .btn-primary {
+        background: var(--mellow-primary) !important;
+        border-color: var(--mellow-primary) !important;
+    }
+
+    .btn-primary:hover {
+        background: var(--mellow-secondary) !important;
+        border-color: var(--mellow-secondary) !important;
+    }
+</style>

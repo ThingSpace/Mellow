@@ -1,0 +1,43 @@
+//
+// Mellow custom color scheme
+//
+
+// Purple primary colors (matching Mellow branding)
+$purple-000: #f8f6ff;
+$purple-100: #e9e4ff;
+$purple-200: #d4c8ff;
+$purple-300: #b8a7ff;
+$purple-400: #9b85ff;
+$purple-500: #7c63f0; // Main Mellow purple
+$purple-600: #6347e6;
+$purple-700: #4a2fd9;
+$purple-800: #3219cc;
+$purple-900: #1d0dbf;
+
+// Assign colors to theme variables
+$blue-000: $purple-000;
+$blue-100: $purple-100;
+$blue-200: $purple-200;
+$blue-300: $purple-300;
+
+$link-color: $purple-600;
+$btn-primary-color: $purple-600;
+$base-button-color: $purple-100;
+
+$border-color: $purple-200;
+$table-background-color: $purple-000;
+$code-background-color: $purple-000;
+$search-background-color: $purple-000;
+
+// Navigation colors
+$nav-child-link-color: $purple-600;
+$search-result-preview-color: $purple-500;
+
+// Custom properties for mental health theme
+:root {
+    --mellow-primary: #{$purple-600};
+    --mellow-secondary: #{$purple-300};
+    --mellow-accent: #{$purple-100};
+    --mellow-text: #2c3e50;
+    --mellow-bg: #fafbfc;
+}

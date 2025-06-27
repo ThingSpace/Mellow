@@ -227,34 +227,51 @@ Write private messages for safe emotional venting.
 
 Configure server features and channels.
 
-**Usage:** `/guildsettings [category] [setting] [value]`
+**Usage:** `/guildsettings [subcommand] [options]`
 
-**Categories:**
+**Subcommands:**
 
-#### Channels
+#### `/guildsettings view`
+Display current server configuration and settings.
 
--   `crisis-alerts` - Channel for crisis notifications
--   `mod-logs` - Moderation action logging
--   `check-ins` - Mental health check-in channel
--   `system-logs` - System event logging
+#### `/guildsettings channels`
+Configure channel assignments for different bot features.
 
-#### Features
+**Options:**
+- `mod_alert_channel` - Channel for crisis alerts and serious moderation events
+- `mod_log_channel` - Channel for moderation action logs
+- `checkin_channel` - Channel for mental health check-in logs
+- `coping_tool_log` - Channel for coping tool usage logs
+- `system_channel` - Channel for system notifications
+- `audit_log_channel` - Channel for audit logs
 
--   `check-ins` - Enable/disable mood tracking
--   `ghost-letters` - Allow private venting
--   `crisis-alerts` - Monitor and alert on distress
--   `system-logs` - Log system events
+#### `/guildsettings features`
+Enable or disable bot features for your server.
 
-#### Moderation
+**Options:**
+- `check_ins` - Enable/disable mood tracking and check-ins
+- `ghost_letters` - Enable/disable private venting feature
+- `crisis_alerts` - Enable/disable crisis detection and alerts
+- `system_logs` - Enable/disable system event logging
 
--   `auto-mod` - Automatic moderation features
--   `sensitivity` - Crisis detection sensitivity
--   `timeout-role` - Role for timed-out users
+#### `/guildsettings moderation`
+Configure auto-moderation and role settings.
 
-#### Roles
+**Options:**
+- `auto_mod_enabled` - Enable/disable automatic moderation
+- `auto_mod_level` - Set moderation sensitivity (1-5 scale)
+- `moderator_role` - Assign mental health moderator role
+- `system_role` - Role automatically assigned to new members
 
--   `moderator` - Mental health moderator role
--   `admin` - Server admin role for Mellow
+#### `/guildsettings general`
+Configure general server preferences.
+
+**Options:**
+- `language` - Set default server language (English, Spanish, French, German)
+
+**Permission Requirements:**
+- Server Administrator or Manage Guild permissions required
+- Changes are logged to audit channels when configured
 
 ---
 

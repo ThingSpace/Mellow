@@ -1,24 +1,62 @@
 title: Mellow Documentation
 description: Your AI-Powered Mental Health Companion for Discord
-baseurl: '/Mellow'
+baseurl: '/mellow'
 url: 'https://thingspace.github.io'
 
 markdown: kramdown
 highlighter: rouge
-theme: minima
+theme: just-the-docs
 
 plugins:
     - jekyll-feed
     - jekyll-sitemap
 
-header_pages:
-    - index.md
-    - getting-started.md
-    - commands.md
-    - privacy-policy.md
-    - terms-of-service.md
-    - contributing.md
-    - api.md
+# Just the Docs theme configuration
+search_enabled: true
+search:
+  heading_level: 2
+  previews: 2
+  preview_words_before: 3
+  preview_words_after: 3
+  tokenizer_separator: /[\s/]+/
+  rel_url: true
+  button: false
+
+# Navigation structure
+nav_sort: order
+nav_fold: true
+
+# Color scheme
+color_scheme: mellow
+
+# Logo and favicon
+logo: "/assets/images/mellow-logo.png"
+favicon_ico: "/assets/images/favicon.ico"
+
+# Footer content
+footer_content: "Copyright &copy; 2025 Mellow. Mental health support for Discord communities."
+
+# Back to top link
+back_to_top: true
+back_to_top_text: "Back to top"
+
+# External links
+aux_links:
+  "Mellow on GitHub":
+    - "https://github.com/ThingSpace/Mellow"
+  "Invite to Discord":
+    - "https://discord.com/oauth2/authorize?client_id=1088267111259533312&permissions=1394015504448&integration_type=0&scope=bot+applications.commands"
+  "Support Server":
+    - "https://discord.gg/qyTcK7VRva"
+
+aux_links_new_tab: true
 
 exclude:
     - README.md
+    - node_modules/
+    - .sass-cache/
+    - .jekyll-cache/
+    - gemfiles/
+    - Gemfile
+    - Gemfile.lock
+    - vendor/

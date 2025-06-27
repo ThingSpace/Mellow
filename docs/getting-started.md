@@ -14,7 +14,7 @@ This guide will help you set up and start using Mellow in your Discord server or
 
 1. **Invite the Bot**
 
-    - Use the [official invite link](https://discord.com/oauth2/authorize?client_id=YOUR_CLIENT_ID&permissions=8&scope=bot%20applications.commands)
+    - Use the [official invite link](https://discord.com/oauth2/authorize?client_id=1386810331367608371)
     - Select your server and authorize the required permissions
 
 2. **Initial Setup**
@@ -79,25 +79,28 @@ Set up Mellow for your community:
 #### Channel Configuration
 
 ```
-/guildsettings channels crisis-alerts #crisis-channel
-/guildsettings channels mod-logs #mod-logs
-/guildsettings channels check-ins #mental-health
+/guildsettings channels mod_alert_channel:#crisis-alerts
+/guildsettings channels mod_log_channel:#mod-logs
+/guildsettings channels checkin_channel:#mental-health
+/guildsettings channels system_channel:#system-logs
 ```
 
 #### Feature Toggles
 
 ```
-/guildsettings features check-ins true
-/guildsettings features crisis-alerts true
-/guildsettings features ghost-letters true
+/guildsettings features check_ins:true
+/guildsettings features crisis_alerts:true
+/guildsettings features ghost_letters:true
+/guildsettings features system_logs:true
 ```
 
 #### Moderation Setup
 
 ```
-/guildsettings moderation auto-mod true
-/guildsettings moderation sensitivity medium
-/guildsettings roles moderator @Mental Health Mod
+/guildsettings moderation auto_mod_enabled:true
+/guildsettings moderation auto_mod_level:3
+/guildsettings moderation moderator_role:@Mental Health Moderator
+/guildsettings moderation system_role:@Member
 ```
 
 ## Key Commands Overview
