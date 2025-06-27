@@ -120,12 +120,8 @@ export class AIService {
 
             this.performance.startTracking(perfId)
 
-            const historyRecords = await db.conversationHistory.getAllForUser(userId, 50)
-
-            const chatHistory = historyRecords.map(msg => ({
-                role: msg.isAiResponse ? 'assistant' : 'user',
-                content: msg.content
-            }))
+            // Get chat history using the MessageHistoryTool
+            const chatHistory = await this.messageHistory.getRecentHistory(userId, 50)
 
             // Build enhanced prompt from database
             let enhancedPrompt = this.config.systemPrompt
@@ -158,8 +154,8 @@ export class AIService {
             })
 
             // Save both the user message and AI response to history
-            await db.conversationHistory.add(userId, message, false)
-            await db.conversationHistory.add(userId, fullResponse, true)
+            await this.messageHistory.saveMessage(userId, message, false)
+            await this.messageHistory.saveMessage(userId, fullResponse, true)
 
             return this.messageFormatting.formatForDiscord(fullResponse)
         } catch (error) {

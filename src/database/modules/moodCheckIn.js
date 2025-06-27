@@ -1,8 +1,9 @@
 /**
- * MoodCheckInModule - Database operations for user mood check-ins
+ * MoodCheckInModule - Database operations for mood check-ins
  *
  * This module provides a flexible interface for managing mood check-in data in the database.
- * It handles mood tracking, reminders, and user mood history.
+ * It uses Prisma's upsert functionality to handle both creation and updates seamlessly.
+ * Respects Mellow configuration and user preferences for check-in features.
  *
  * @class MoodCheckInModule
  */
@@ -16,39 +17,49 @@ export class MoodCheckInModule {
     }
 
     /**
-     * Creates a new mood check-in record
+     * Creates a new mood check-in record if check-ins are enabled
      *
-     * @param {string|number} userId - Discord user ID
      * @param {Object} data - Mood check-in data
-     * @param {string} data.mood - User's mood (e.g., 'happy', 'sad', 'anxious')
-     * @param {number} [data.intensity] - Mood intensity on 1-5 scale (default: 3)
-     * @param {string} [data.activity] - Current activity or context
-     * @param {string} [data.note] - Additional notes about the mood
-     * @param {Date} [data.nextCheckIn] - Next scheduled check-in time
-     * @returns {Promise<Object>} The created mood check-in record
-     *
-     * @example
-     * // Create a basic mood check-in
-     * await moodCheckInModule.create('123456789', {
-     *   mood: 'happy',
-     *   intensity: 4,
-     *   activity: 'working on projects'
-     * })
-     *
-     * // Create check-in with next reminder
-     * const nextCheckIn = new Date(Date.now() + 12 * 60 * 60 * 1000) // 12 hours
-     * await moodCheckInModule.create('123456789', {
-     *   mood: 'stressed',
-     *   intensity: 3,
-     *   note: 'Feeling overwhelmed with work',
-     *   nextCheckIn: nextCheckIn
-     * })
+     * @param {string|number} data.userId - Discord user ID
+     * @param {string} data.mood - User's mood
+     * @param {number} [data.intensity] - Mood intensity (1-5)
+     * @param {string} [data.activity] - Current activity
+     * @param {string} [data.note] - Additional notes
+     * @param {Date} [data.nextCheckIn] - Next scheduled check-in
+     * @returns {Promise<Object|null>} Created mood check-in record or null if disabled
      */
-    async create(userId, data) {
+    async create(data) {
+        // Check if check-in tools are enabled in Mellow config
+        const mellowConfig = await this.prisma.mellow.findUnique({
+            where: { id: 1 },
+            select: { enabled: true, checkInTools: true }
+        })
+
+        if (!mellowConfig?.enabled || !mellowConfig?.checkInTools) {
+            return null // Check-ins are disabled
+        }
+
+        // Get user preferences for check-in settings
+        const userPrefs = await this.prisma.userPreferences.findUnique({
+            where: { id: BigInt(data.userId) },
+            select: { checkInInterval: true, timezone: true }
+        })
+
+        // Calculate next check-in time based on user preferences
+        let nextCheckIn = data.nextCheckIn
+        if (!nextCheckIn && userPrefs?.checkInInterval) {
+            nextCheckIn = new Date()
+            nextCheckIn.setMinutes(nextCheckIn.getMinutes() + userPrefs.checkInInterval)
+        }
+
         return this.prisma.moodCheckIn.create({
             data: {
-                userId: BigInt(userId),
-                ...data
+                userId: BigInt(data.userId),
+                mood: data.mood,
+                intensity: data.intensity || 3,
+                activity: data.activity,
+                note: data.note,
+                nextCheckIn
             }
         })
     }
@@ -200,6 +211,67 @@ export class MoodCheckInModule {
             },
             orderBy: {
                 nextCheckIn: 'asc'
+            }
+        })
+    }
+
+    /**
+     * Gets users who need reminder check-ins based on their preferences
+     *
+     * @returns {Promise<Array>} Users who need check-in reminders
+     */
+    async getUsersNeedingReminders() {
+        // Only proceed if check-ins are enabled
+        const mellowConfig = await this.prisma.mellow.findUnique({
+            where: { id: 1 },
+            select: { enabled: true, checkInTools: true }
+        })
+
+        if (!mellowConfig?.enabled || !mellowConfig?.checkInTools) {
+            return []
+        }
+
+        const now = new Date()
+
+        return this.prisma.userPreferences.findMany({
+            where: {
+                remindersEnabled: true,
+                nextCheckIn: {
+                    lte: now
+                }
+            },
+            include: {
+                user: {
+                    select: { id: true, username: true }
+                }
+            }
+        })
+    }
+
+    /**
+     * Updates next check-in time based on user preferences
+     *
+     * @param {string|number} userId - Discord user ID
+     * @returns {Promise<Object|null>} Updated preferences or null
+     */
+    async scheduleNextCheckIn(userId) {
+        const userPrefs = await this.prisma.userPreferences.findUnique({
+            where: { id: BigInt(userId) },
+            select: { checkInInterval: true, remindersEnabled: true }
+        })
+
+        if (!userPrefs?.remindersEnabled) {
+            return null
+        }
+
+        const nextCheckIn = new Date()
+        nextCheckIn.setMinutes(nextCheckIn.getMinutes() + (userPrefs.checkInInterval || 720))
+
+        return this.prisma.userPreferences.update({
+            where: { id: BigInt(userId) },
+            data: {
+                nextCheckIn,
+                lastReminder: new Date()
             }
         })
     }

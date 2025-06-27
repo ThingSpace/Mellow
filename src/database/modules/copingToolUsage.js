@@ -1,8 +1,9 @@
 /**
- * CopingToolUsageModule - Database operations for coping tool usage
+ * CopingToolUsageModule - Database operations for coping tool usage tracking
  *
  * This module provides a flexible interface for managing coping tool usage data in the database.
- * It handles tracking when users use different coping tools and provides usage statistics.
+ * It tracks when users interact with various coping tools and mechanisms.
+ * Respects Mellow configuration for coping tool features.
  *
  * @class CopingToolUsageModule
  */
@@ -16,32 +17,28 @@ export class CopingToolUsageModule {
     }
 
     /**
-     * Creates a new coping tool usage record
+     * Records coping tool usage if coping tools are enabled
      *
-     * @param {string|number} userId - Discord user ID
      * @param {Object} data - Coping tool usage data
+     * @param {string|number} data.userId - Discord user ID
      * @param {string} data.toolName - Name of the coping tool used
-     * @param {Date} [data.usedAt] - When the tool was used (default: current time)
-     * @returns {Promise<Object>} The created coping tool usage record
-     *
-     * @example
-     * // Log usage of breathing exercise
-     * await copingToolUsageModule.create('123456789', {
-     *   toolName: 'breathing'
-     * })
-     *
-     * // Log usage with specific timestamp
-     * await copingToolUsageModule.create('123456789', {
-     *   toolName: 'journaling',
-     *   usedAt: new Date('2024-01-15T10:30:00Z')
-     * })
+     * @returns {Promise<Object|null>} Created usage record or null if disabled
      */
-    async create(userId, data) {
+    async create(data) {
+        // Check if coping tools are enabled in Mellow config
+        const mellowConfig = await this.prisma.mellow.findUnique({
+            where: { id: 1 },
+            select: { enabled: true, copingTools: true }
+        })
+
+        if (!mellowConfig?.enabled || !mellowConfig?.copingTools) {
+            return null // Coping tools are disabled
+        }
+
         return this.prisma.copingToolUsage.create({
             data: {
-                userId: BigInt(userId),
-                usedAt: new Date(),
-                ...data
+                userId: BigInt(data.userId),
+                toolName: data.toolName
             }
         })
     }
@@ -159,6 +156,48 @@ export class CopingToolUsageModule {
             where: { userId: BigInt(userId) },
             orderBy: { usedAt: 'desc' },
             take: limit,
+            ...options
+        })
+    }
+
+    /**
+     * Checks if coping tools are available for a user
+     *
+     * @returns {Promise<boolean>} Whether coping tools are available
+     */
+    async isAvailable() {
+        const mellowConfig = await this.prisma.mellow.findUnique({
+            where: { id: 1 },
+            select: { enabled: true, copingTools: true }
+        })
+
+        return mellowConfig?.enabled && mellowConfig?.copingTools
+    }
+
+    /**
+     * Gets usage statistics respecting user preferences
+     *
+     * @param {string|number} userId - Discord user ID
+     * @param {Object} [options={}] - Query options
+     * @returns {Promise<Array|null>} Usage statistics or null if disabled
+     */
+    async getUserStats(userId, options = {}) {
+        if (!(await this.isAvailable())) {
+            return null
+        }
+
+        // Check user privacy preferences
+        const userPrefs = await this.prisma.userPreferences.findUnique({
+            where: { id: BigInt(userId) },
+            select: { journalPrivacy: true }
+        })
+
+        // If user has privacy enabled, only return basic stats
+        const selectFields = userPrefs?.journalPrivacy ? { toolName: true, usedAt: true } : undefined
+
+        return this.prisma.copingToolUsage.findMany({
+            where: { userId: BigInt(userId) },
+            select: selectFields,
             ...options
         })
     }

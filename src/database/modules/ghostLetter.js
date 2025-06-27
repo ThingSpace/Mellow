@@ -2,7 +2,8 @@
  * GhostLetterModule - Database operations for ghost letters
  *
  * This module provides a flexible interface for managing ghost letter data in the database.
- * It handles anonymous letter creation, retrieval, and user-specific operations.
+ * Ghost letters are therapeutic writing exercises where users can express feelings privately.
+ * Respects Mellow configuration for ghost letter features.
  *
  * @class GhostLetterModule
  */
@@ -16,23 +17,28 @@ export class GhostLetterModule {
     }
 
     /**
-     * Creates a new ghost letter record
+     * Creates a new ghost letter record if ghost tools are enabled
      *
-     * @param {string|number} userId - Discord user ID
      * @param {Object} data - Ghost letter data
-     * @param {string} data.content - Letter content
-     * @returns {Promise<Object>} The created ghost letter record
-     *
-     * @example
-     * await ghostLetterModule.create('123456789', {
-     *   content: 'I want to tell you how much you mean to me...'
-     * })
+     * @param {string|number} data.userId - Discord user ID
+     * @param {string} data.content - Ghost letter content
+     * @returns {Promise<Object|null>} Created ghost letter record or null if disabled
      */
-    async create(userId, data) {
+    async create(data) {
+        // Check if ghost tools are enabled in Mellow config
+        const mellowConfig = await this.prisma.mellow.findUnique({
+            where: { id: 1 },
+            select: { enabled: true, ghostTools: true }
+        })
+
+        if (!mellowConfig?.enabled || !mellowConfig?.ghostTools) {
+            return null // Ghost letters are disabled
+        }
+
         return this.prisma.ghostLetter.create({
             data: {
-                userId: BigInt(userId),
-                ...data
+                userId: BigInt(data.userId),
+                content: data.content
             }
         })
     }
@@ -167,5 +173,20 @@ export class GhostLetterModule {
         return this.prisma.ghostLetter.deleteMany({
             where: { userId: BigInt(userId) }
         })
+    }
+
+    /**
+     * Checks if ghost letters are available for a user
+     *
+     * @param {string|number} userId - Discord user ID
+     * @returns {Promise<boolean>} Whether ghost letters are available
+     */
+    async isAvailable(userId) {
+        const mellowConfig = await this.prisma.mellow.findUnique({
+            where: { id: 1 },
+            select: { enabled: true, ghostTools: true }
+        })
+
+        return mellowConfig?.enabled && mellowConfig?.ghostTools
     }
 }

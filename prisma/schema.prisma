@@ -8,95 +8,95 @@ datasource db {
 }
 
 model Mellow {
-    id                 BigInt   @id @default(1)
-    model              String?  @default("gpt-3.5-turbo")
-    prompt             String?  @default("You are Mellow")
-    temperature        Float    @default(0.6)
-    presencePenalty    Float    @default(0.6)
-    frequencyPenalty   Float    @default(0.5)
-    maxTokens          Int      @default(300)
-    enabled            Boolean  @default(true)
-    checkInTools       Boolean  @default(true)
-    copingTools        Boolean  @default(true)
-    ghostTools         Boolean  @default(true)
-    crisisTools        Boolean  @default(true)
-    owners             String[]
-    feedbackLogs       BigInt?
-    reportLogs         BigInt?
-    serverId           BigInt?
-    adminId            BigInt?
-    modId              BigInt?
-    logId              BigInt? 
+    id               BigInt   @id @default(1)
+    model            String?  @default("gpt-3.5-turbo")
+    prompt           String?  @default("You are Mellow")
+    temperature      Float    @default(0.6)
+    presencePenalty  Float    @default(0.6)
+    frequencyPenalty Float    @default(0.5)
+    maxTokens        Int      @default(300)
+    enabled          Boolean  @default(true)
+    checkInTools     Boolean  @default(true)
+    copingTools      Boolean  @default(true)
+    ghostTools       Boolean  @default(true)
+    crisisTools      Boolean  @default(true)
+    owners           String[]
+    feedbackLogs     BigInt?
+    reportLogs       BigInt?
+    serverId         BigInt?
+    adminId          BigInt?
+    modId            BigInt?
+    logId            BigInt?
 }
 
 model User {
-    id                       BigInt   @id @default(autoincrement())
-    username                 String
-    role                     Role     @default(USER)
-    createdAt                DateTime @default(now())
-    isBanned                 Boolean  @default(false)
-    bannedUntil              DateTime?
-    banReason                String?
-    history                  ConversationHistory[]
-    checkIns                 MoodCheckIn[]
-    ghostLetters             GhostLetter[]
-    copingToolUsages         CopingToolUsage[]
-    crisisEvents             CrisisEvent[]
-    modActionsAsModerator    ModAction[] @relation("ModActionModerator")
-    preferences              UserPreferences?
-    feedback                 Feedback[]
-    reports                  Report[]
-    journalEntries           JournalEntry[]
-    gratitudeEntries         GratitudeEntry[]
-    copingPlans              CopingPlan[]
-    favoriteCopingTools      FavoriteCopingTool[]
+    id                    BigInt                @id @default(autoincrement())
+    username              String
+    role                  Role                  @default(USER)
+    createdAt             DateTime              @default(now())
+    isBanned              Boolean               @default(false)
+    bannedUntil           DateTime?
+    banReason             String?
+    history               ConversationHistory[]
+    checkIns              MoodCheckIn[]
+    ghostLetters          GhostLetter[]
+    copingToolUsages      CopingToolUsage[]
+    crisisEvents          CrisisEvent[]
+    modActionsAsModerator ModAction[]           @relation("ModActionModerator")
+    preferences           UserPreferences?
+    feedback              Feedback[]
+    reports               Report[]
+    journalEntries        JournalEntry[]
+    gratitudeEntries      GratitudeEntry[]
+    copingPlans           CopingPlan[]
+    favoriteCopingTools   FavoriteCopingTool[]
 }
 
 model Guild {
-    id                    BigInt   @id
-    name                  String
-    ownerId               BigInt
-    joinedAt              DateTime @default(now())
-    isBanned              Boolean  @default(false)
-    bannedUntil           DateTime? 
-    banReason             String?
-    systemRoleId          String?
-    systemChannelId       String?
-    systemLogsEnabled     Boolean  @default(false)
-    auditLogChannelId     String?
-    modAlertChannelId     String?
-    modLogChannelId       String?
-    checkInChannelId      String?
-    copingToolLogId       String?
-    enableCheckIns        Boolean  @default(true)
-    enableGhostLetters    Boolean  @default(true)
-    enableCrisisAlerts    Boolean  @default(true)
-    moderatorRoleId       String?
-    autoModEnabled        Boolean  @default(false)
-    autoModLevel          Int?
-    language              String?  @default("en")
-    modActions            ModAction[]
+    id                 BigInt      @id
+    name               String
+    ownerId            BigInt
+    joinedAt           DateTime    @default(now())
+    isBanned           Boolean     @default(false)
+    bannedUntil        DateTime?
+    banReason          String?
+    systemRoleId       String?
+    systemChannelId    String?
+    systemLogsEnabled  Boolean     @default(false)
+    auditLogChannelId  String?
+    modAlertChannelId  String?
+    modLogChannelId    String?
+    checkInChannelId   String?
+    copingToolLogId    String?
+    enableCheckIns     Boolean     @default(true)
+    enableGhostLetters Boolean     @default(true)
+    enableCrisisAlerts Boolean     @default(true)
+    moderatorRoleId    String?
+    autoModEnabled     Boolean     @default(false)
+    autoModLevel       Int?
+    language           String?     @default("en")
+    modActions         ModAction[]
 }
 
 model ConversationHistory {
-    id        Int      @id @default(autoincrement())
-    user      User     @relation(fields: [userId], references: [id])
-    userId    BigInt
-    content   String
+    id           Int      @id @default(autoincrement())
+    user         User     @relation(fields: [userId], references: [id])
+    userId       BigInt
+    content      String
     isAiResponse Boolean
-    timestamp DateTime @default(now())
+    timestamp    DateTime @default(now())
 }
 
 model MoodCheckIn {
-    id        Int      @id @default(autoincrement())
-    user      User     @relation(fields: [userId], references: [id])
-    userId    BigInt
-    mood      String
-    intensity Int?     @default(3)  // 1-5 scale
-    activity  String?
-    note      String?
+    id          Int       @id @default(autoincrement())
+    user        User      @relation(fields: [userId], references: [id])
+    userId      BigInt
+    mood        String
+    intensity   Int?      @default(3) // 1-5 scale
+    activity    String?
+    note        String?
     nextCheckIn DateTime?
-    createdAt DateTime @default(now())
+    createdAt   DateTime  @default(now())
 }
 
 model GhostLetter {
@@ -108,20 +108,20 @@ model GhostLetter {
 }
 
 model CopingToolUsage {
-    id        Int      @id @default(autoincrement())
-    user      User     @relation(fields: [userId], references: [id])
-    userId    BigInt
-    toolName  String
-    usedAt    DateTime @default(now())
+    id       Int      @id @default(autoincrement())
+    user     User     @relation(fields: [userId], references: [id])
+    userId   BigInt
+    toolName String
+    usedAt   DateTime @default(now())
 }
 
 model CrisisEvent {
-    id        Int      @id @default(autoincrement())
-    user      User     @relation(fields: [userId], references: [id])
-    userId    BigInt
+    id         Int      @id @default(autoincrement())
+    user       User     @relation(fields: [userId], references: [id])
+    userId     BigInt
     detectedAt DateTime @default(now())
-    details   String?
-    escalated Boolean  @default(false)
+    details    String?
+    escalated  Boolean  @default(false)
 }
 
 model ModAction {
@@ -138,20 +138,20 @@ model ModAction {
 }
 
 model UserPreferences {
-    id                  BigInt    @id
-    user                User      @relation(fields: [id], references: [id])
-    checkInInterval     Int       @default(720)
-    lastReminder        DateTime?
-    nextCheckIn         DateTime?
-    remindersEnabled    Boolean   @default(true)
-    reminderMethod      String?   @default("dm")
-    journalPrivacy      Boolean   @default(true)
-    aiPersonality       String?   @default("gentle")
-    profileTheme        String?   @default("blue")
-    language            String?   @default("en")
-    timezone            String? 
-    createdAt           DateTime  @default(now())
-    updatedAt           DateTime  @updatedAt
+    id               BigInt    @id
+    user             User      @relation(fields: [id], references: [id])
+    checkInInterval  Int       @default(720)
+    lastReminder     DateTime?
+    nextCheckIn      DateTime?
+    remindersEnabled Boolean   @default(true)
+    reminderMethod   String?   @default("dm")
+    journalPrivacy   Boolean   @default(true)
+    aiPersonality    String?   @default("gentle")
+    profileTheme     String?   @default("blue")
+    language         String?   @default("en")
+    timezone         String?
+    createdAt        DateTime  @default(now())
+    updatedAt        DateTime  @updatedAt
 }
 
 model Feedback {

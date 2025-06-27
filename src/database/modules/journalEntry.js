@@ -2,7 +2,7 @@
  * JournalEntryModule - Database operations for journal entries
  *
  * This module provides a flexible interface for managing journal entry data in the database.
- * It handles personal journaling, privacy settings, and user reflection tracking.
+ * It respects user preferences for privacy and journal settings.
  *
  * @class JournalEntryModule
  */
@@ -16,31 +16,31 @@ export class JournalEntryModule {
     }
 
     /**
-     * Creates a new journal entry record
+     * Creates a new journal entry respecting user privacy preferences
      *
      * @param {Object} data - Journal entry data
      * @param {string|number} data.userId - Discord user ID
-     * @param {string} data.content - Journal entry content
-     * @param {boolean} [data.private] - Whether the entry is private (default: true)
-     * @returns {Promise<Object>} The created journal entry record
-     *
-     * @example
-     * // Create a private journal entry
-     * await journalEntryModule.create({
-     *   userId: '123456789',
-     *   content: 'Today I felt overwhelmed with work...',
-     *   private: true
-     * })
-     *
-     * // Create a public journal entry
-     * await journalEntryModule.create({
-     *   userId: '123456789',
-     *   content: 'I\'m grateful for my supportive friends',
-     *   private: false
-     * })
+     * @param {string} data.content - Journal content
+     * @param {boolean} [data.private] - Override privacy setting
+     * @returns {Promise<Object>} Created journal entry record
      */
     async create(data) {
-        return this.prisma.journalEntry.create({ data })
+        // Get user privacy preferences
+        const userPrefs = await this.prisma.userPreferences.findUnique({
+            where: { id: BigInt(data.userId) },
+            select: { journalPrivacy: true }
+        })
+
+        // Use user preference or provided privacy setting
+        const isPrivate = data.private !== undefined ? data.private : (userPrefs?.journalPrivacy ?? true)
+
+        return this.prisma.journalEntry.create({
+            data: {
+                userId: BigInt(data.userId),
+                content: data.content,
+                private: isPrivate
+            }
+        })
     }
 
     /**
@@ -132,6 +132,51 @@ export class JournalEntryModule {
     async delete(id) {
         return this.prisma.journalEntry.delete({
             where: { id }
+        })
+    }
+
+    /**
+     * Retrieves journal entries respecting privacy settings
+     *
+     * @param {string|number} userId - Discord user ID
+     * @param {string|number} [requesterId] - ID of user requesting entries
+     * @param {Object} [options={}] - Additional query options
+     * @returns {Promise<Array>} Journal entries the requester can access
+     */
+    async findByUserId(userId, requesterId = null, options = {}) {
+        const isOwner = !requesterId || BigInt(userId) === BigInt(requesterId)
+
+        // Non-owners can only see public entries
+        const whereClause = isOwner ? { userId: BigInt(userId) } : { userId: BigInt(userId), private: false }
+
+        return this.prisma.journalEntry.findMany({
+            where: whereClause,
+            orderBy: { createdAt: 'desc' },
+            ...options
+        })
+    }
+
+    /**
+     * Updates journal entry privacy respecting user preferences
+     *
+     * @param {number} entryId - Journal entry ID
+     * @param {string|number} userId - User ID (for ownership verification)
+     * @param {Object} data - Update data
+     * @returns {Promise<Object|null>} Updated entry or null if unauthorized
+     */
+    async updatePrivacy(entryId, userId, data) {
+        // Verify ownership
+        const entry = await this.prisma.journalEntry.findFirst({
+            where: { id: entryId, userId: BigInt(userId) }
+        })
+
+        if (!entry) {
+            return null // Not found or not owned by user
+        }
+
+        return this.prisma.journalEntry.update({
+            where: { id: entryId },
+            data: { private: data.private }
         })
     }
 }

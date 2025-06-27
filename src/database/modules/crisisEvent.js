@@ -2,7 +2,8 @@
  * CrisisEventModule - Database operations for crisis events
  *
  * This module provides a flexible interface for managing crisis event data in the database.
- * It handles crisis detection, escalation tracking, and support needs analysis.
+ * Crisis events are serious situations that require immediate attention and escalation.
+ * Respects Mellow configuration for crisis detection and alert features.
  *
  * @class CrisisEventModule
  */
@@ -16,34 +17,30 @@ export class CrisisEventModule {
     }
 
     /**
-     * Creates a new crisis event record
+     * Creates a new crisis event record if crisis tools are enabled
      *
-     * @param {string|number} userId - Discord user ID
      * @param {Object} data - Crisis event data
-     * @param {string} [data.details] - Details about the crisis event
-     * @param {boolean} [data.escalated] - Whether the event has been escalated (default: false)
-     * @param {Date} [data.detectedAt] - When the crisis was detected (default: current time)
-     * @returns {Promise<Object>} The created crisis event record
-     *
-     * @example
-     * // Create a basic crisis event
-     * await crisisEventModule.add('123456789', {
-     *   details: 'User expressed suicidal thoughts',
-     *   escalated: false
-     * })
-     *
-     * // Create escalated crisis event
-     * await crisisEventModule.add('123456789', {
-     *   details: 'Immediate intervention required',
-     *   escalated: true
-     * })
+     * @param {string|number} data.userId - Discord user ID
+     * @param {string} [data.details] - Details about the crisis
+     * @param {boolean} [data.escalated] - Whether the crisis was escalated
+     * @returns {Promise<Object|null>} Created crisis event record or null if disabled
      */
-    async add(userId, data) {
+    async create(data) {
+        // Check if crisis tools are enabled in Mellow config
+        const mellowConfig = await this.prisma.mellow.findUnique({
+            where: { id: 1 },
+            select: { enabled: true, crisisTools: true }
+        })
+
+        if (!mellowConfig?.enabled || !mellowConfig?.crisisTools) {
+            return null // Crisis tools are disabled
+        }
+
         return this.prisma.crisisEvent.create({
             data: {
-                userId: BigInt(userId),
-                detectedAt: new Date(),
-                ...data
+                userId: BigInt(data.userId),
+                details: data.details,
+                escalated: data.escalated || false
             }
         })
     }
@@ -162,6 +159,57 @@ export class CrisisEventModule {
             orderBy: { detectedAt: 'desc' },
             take: limit,
             ...options
+        })
+    }
+
+    /**
+     * Checks if crisis detection is available
+     *
+     * @returns {Promise<boolean>} Whether crisis tools are available
+     */
+    async isAvailable() {
+        const mellowConfig = await this.prisma.mellow.findUnique({
+            where: { id: 1 },
+            select: { enabled: true, crisisTools: true }
+        })
+
+        return mellowConfig?.enabled && mellowConfig?.crisisTools
+    }
+
+    /**
+     * Gets crisis events that need escalation based on guild settings
+     *
+     * @param {string|number} guildId - Discord guild ID
+     * @returns {Promise<Array>} Crisis events needing escalation
+     */
+    async getEventsNeedingEscalation(guildId) {
+        if (!(await this.isAvailable())) {
+            return []
+        }
+
+        // Check if crisis alerts are enabled for the guild
+        const guild = await this.prisma.guild.findUnique({
+            where: { id: BigInt(guildId) },
+            select: { enableCrisisAlerts: true }
+        })
+
+        if (!guild?.enableCrisisAlerts) {
+            return []
+        }
+
+        return this.prisma.crisisEvent.findMany({
+            where: {
+                escalated: false,
+                // Add time-based criteria for escalation
+                detectedAt: {
+                    gte: new Date(Date.now() - 15 * 60 * 1000) // Last 15 minutes
+                }
+            },
+            include: {
+                user: {
+                    select: { id: true, username: true }
+                }
+            }
         })
     }
 }

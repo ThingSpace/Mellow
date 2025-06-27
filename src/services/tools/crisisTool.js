@@ -51,9 +51,6 @@ export async function analyzeMessageContent(message) {
 
         const result = response.results[0]
 
-        // Log the raw category scores for debugging
-        console.log('OpenAI Moderation category_scores:', result.category_scores)
-
         // Enhance the result with support needs analysis
         const enhancedResult = {
             ...result,

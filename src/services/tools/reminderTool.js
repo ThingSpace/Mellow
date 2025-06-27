@@ -60,8 +60,7 @@ export class ReminderTool {
                         .setTitle('Time for a Mood Check-in!')
                         .setDescription(
                             "Hey there! 👋 It's time for your mood check-in.\n\n" +
-                                'How are you feeling right now? Use `/checkin` to let me know!\n' +
-                                'You can adjust your reminder settings with `/preferences`.'
+                                'How are you feeling right now? Use `/checkin` to let me know! You can adjust your reminder settings with `/preferences`.'
                         )
                         .setColor(this.client.colors.primary)
                         .setFooter({ text: this.client.footer, iconURL: this.client.logo })
@@ -73,31 +72,51 @@ export class ReminderTool {
                         // Send DM reminder
                         await discordUser.send({ embeds: [embed] })
                     } else if (reminderMethod === 'channel') {
-                        // Send to guild's check-in channel if available
-                        const guilds = await this.client.db.guilds.findMany({
+                        // Send to shared guild's check-in channel if available
+                        let reminderSent = false
+
+                        // Get all guilds the bot is in that have check-ins enabled
+                        const enabledGuilds = await this.client.db.guilds.findMany({
                             where: {
                                 enableCheckIns: true,
                                 checkInChannelId: { not: null }
                             }
                         })
 
-                        for (const guild of guilds) {
+                        for (const guildData of enabledGuilds) {
                             try {
-                                const guildInstance = await this.client.guilds.fetch(guild.id.toString())
-                                const member = await guildInstance.members.fetch(pref.id.toString())
+                                // Check if bot is still in the guild and user is a member
+                                const guildInstance = await this.client.guilds.fetch(guildData.id.toString())
+                                if (!guildInstance) continue
 
-                                if (member) {
-                                    const channel = await guildInstance.channels.fetch(guild.checkInChannelId)
-                                    if (channel && channel.isTextBased()) {
-                                        await channel.send({
-                                            content: `<@${pref.id}>`,
-                                            embeds: [embed]
-                                        })
-                                        break
-                                    }
-                                }
+                                const member = await guildInstance.members.fetch(pref.id.toString()).catch(() => null)
+                                if (!member) continue
+
+                                const channel = await guildInstance.channels
+                                    .fetch(guildData.checkInChannelId)
+                                    .catch(() => null)
+                                if (!channel || !channel.isTextBased()) continue
+
+                                // Send reminder to the channel
+                                await channel.send({
+                                    content: `<@${pref.id}>`,
+                                    embeds: [embed]
+                                })
+
+                                reminderSent = true
+                                break // Only send to the first available channel
                             } catch (err) {
-                                console.error(`Failed to send channel reminder in guild ${guild.id}:`, err)
+                                console.error(`Failed to send channel reminder in guild ${guildData.id}:`, err)
+                            }
+                        }
+
+                        // Fallback to DM if no channel reminder was sent
+                        if (!reminderSent) {
+                            try {
+                                await discordUser.send({ embeds: [embed] })
+                                console.log(`Fallback: Sent DM reminder to user ${pref.id} (channel method failed)`)
+                            } catch (dmErr) {
+                                console.error(`Failed to send fallback DM to user ${pref.id}:`, dmErr)
                             }
                         }
                     }
