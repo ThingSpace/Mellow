@@ -12,14 +12,12 @@ export default {
     },
 
     run: async (client, interaction) => {
-        await interaction.deferReply()
-
         try {
             const report = aiService.performance.formatMetricsReport()
-            await interaction.editReply({ content: report })
+            await interaction.reply({ content: report })
         } catch (error) {
             console.error('Error getting performance metrics:', error)
-            await interaction.editReply({
+            await interaction.reply({
                 embeds: [
                     new client.Gateway.EmbedBuilder()
                         .setTitle('Error')

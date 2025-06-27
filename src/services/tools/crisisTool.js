@@ -372,16 +372,16 @@ export async function sendModeratorAlert(guildId, userId, analysis, message, cli
         const user = await db.users.findById(userId)
         const username = user?.username || 'Unknown User'
 
-        // Get alert channel
+        // Get alert channel - used for crisis alerts and serious moderation events
         const alertChannelId = guild.modAlertChannelId
         if (!alertChannelId) {
-            console.log(`No mod alert channel configured for guild ${guildId}`)
+            console.log(`No crisis alert channel configured for guild ${guildId}`)
             return false
         }
 
-        const channel = client.channels.cache.get(alertChannelId)
+        const channel = await client.channels.fetch(alertChannelId).catch(() => null)
         if (!channel) {
-            console.error(`Mod alert channel not found: ${alertChannelId}`)
+            console.error(`Crisis alert channel not found: ${alertChannelId}`)
             return false
         }
 

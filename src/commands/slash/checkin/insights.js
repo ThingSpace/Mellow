@@ -25,8 +25,6 @@ export default {
         const userId = interaction.user.id
         const timeframe = interaction.options.getString('timeframe') || 'week'
 
-        await interaction.deferReply()
-
         // Get check-ins based on timeframe
         const now = new Date()
         const timeframeDate = new Date(now)

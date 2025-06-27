@@ -26,7 +26,7 @@ export async function isExemptFromModeration(message, client) {
             if (
                 member &&
                 (member.permissions.has(PermissionFlagsBits.Administrator) ||
-                    member.permissions.has(PermissionFlagsBits.ManageMembers))
+                    member.permissions.has(PermissionFlagsBits.ManageMessages))
             ) {
                 return true
             }
@@ -57,16 +57,30 @@ export async function handleMessageModeration(message, client) {
             return null
         }
 
+        // Check if auto-moderation is enabled for this guild
+        const guildSettings = await client.db.guilds.findById(message.guild.id)
+        if (!guildSettings?.autoModEnabled) {
+            return null
+        }
+
         // Analyze message content and user behavior
         const contentAnalysis = await analyzeContent(message.content)
         const behaviorAnalysis = trackUserBehavior(message.author.id, message.content, message.createdTimestamp)
+
+        // Apply guild-specific auto-mod level (1-5 scale)
+        const autoModLevel = guildSettings.autoModLevel || 3
+        const shouldTakeAction = shouldModerate(contentAnalysis, behaviorAnalysis, autoModLevel)
+
+        if (!shouldTakeAction) {
+            return null
+        }
 
         // Generate moderation report
         const report = generateModerationReport(contentAnalysis, behaviorAnalysis, message.author.id, message.id)
 
         // Take action if needed
         if (report.finalAction !== 'none') {
-            await executeModerationAction(message, report, client)
+            await executeModerationAction(message, report, client, guildSettings)
             return report
         }
 
@@ -78,18 +92,54 @@ export async function handleMessageModeration(message, client) {
 }
 
 /**
- * Execute moderation action based on report
+ * Determine if moderation action should be taken based on guild settings
+ * @param {Object} contentAnalysis - Content analysis result
+ * @param {Object} behaviorAnalysis - Behavior analysis result
+ * @param {number} autoModLevel - Guild auto-mod level (1-5)
+ * @returns {boolean} Whether to take moderation action
+ */
+function shouldModerate(contentAnalysis, behaviorAnalysis, autoModLevel) {
+    // Adjust thresholds based on auto-mod level
+    const thresholds = {
+        1: { content: 0.9, behavior: 0.9 }, // Very lenient
+        2: { content: 0.8, behavior: 0.8 }, // Lenient
+        3: { content: 0.6, behavior: 0.6 }, // Moderate (default)
+        4: { content: 0.4, behavior: 0.4 }, // Strict
+        5: { content: 0.2, behavior: 0.2 } // Very strict
+    }
+
+    const threshold = thresholds[autoModLevel] || thresholds[3]
+
+    // Check if content exceeds threshold
+    if (contentAnalysis.flagged) {
+        const maxScore = Math.max(...Object.values(contentAnalysis.scores))
+        if (maxScore > threshold.content) {
+            return true
+        }
+    }
+
+    // Check if behavior exceeds threshold
+    if (behaviorAnalysis.isSpamming && behaviorAnalysis.messageFrequency > 15 - autoModLevel * 2) {
+        return true
+    }
+
+    return false
+}
+
+/**
+ * Execute moderation action based on report and guild settings
  * @param {Object} message - Discord message object
  * @param {Object} report - Moderation report
  * @param {Object} client - Discord client
+ * @param {Object} guildSettings - Guild settings
  */
-async function executeModerationAction(message, report, client) {
+async function executeModerationAction(message, report, client, guildSettings) {
     try {
         // Record the action
         recordAction(message.author.id, report.finalAction)
 
-        // Send mod alert
-        await sendModerationAlert(message, report, client)
+        // Send mod alert to configured channel
+        await sendModerationAlert(message, report, client, guildSettings)
 
         // Execute the action
         switch (report.finalAction) {
@@ -100,7 +150,7 @@ async function executeModerationAction(message, report, client) {
                 await message.member?.kick({ reason: 'Auto-moderation: Serious violation' })
                 break
             case 'mute':
-                await applyMuteRole(message, client)
+                await applyMuteRole(message, client, guildSettings)
                 break
             case 'warn':
                 await sendWarning(message, client)
@@ -115,14 +165,22 @@ async function executeModerationAction(message, report, client) {
 }
 
 /**
- * Send moderation alert to mod channel
+ * Send moderation alert to configured mod channel
  */
-async function sendModerationAlert(message, report, client) {
+async function sendModerationAlert(message, report, client, guildSettings) {
     try {
-        const modChannelId = await client.db.guilds.getModAlertChannel(message.guild.id)
-        const modChannel = modChannelId ? message.guild.channels.cache.get(modChannelId) : null
+        // Use modLogChannelId for routine moderation logs, modAlertChannelId is for crisis alerts
+        const modChannelId = guildSettings?.modLogChannelId || guildSettings?.modAlertChannelId
+        if (!modChannelId) {
+            console.log(`No moderation log channel configured for guild ${message.guild.id}`)
+            return
+        }
 
-        if (!modChannel) return
+        const modChannel = await message.guild.channels.fetch(modChannelId).catch(() => null)
+        if (!modChannel || !modChannel.isTextBased()) {
+            console.error(`Moderation channel not found or not text-based: ${modChannelId}`)
+            return
+        }
 
         const modEmbed = new client.Gateway.EmbedBuilder()
             .setTitle('🛡️ Auto-Moderation Action')
@@ -170,11 +228,20 @@ async function sendModerationAlert(message, report, client) {
 }
 
 /**
- * Apply mute role to user
+ * Apply mute role respecting guild moderator role settings
  */
-async function applyMuteRole(message, client) {
+async function applyMuteRole(message, client, guildSettings) {
     try {
-        const mutedRole = message.guild.roles.cache.find(r => r.name === 'Muted')
+        // Try to use configured moderator role or fall back to "Muted" role
+        let mutedRole = null
+
+        if (guildSettings?.moderatorRoleId) {
+            // Don't use moderator role for muting, that would be backwards
+            // Instead, look for a dedicated mute role
+        }
+
+        mutedRole = message.guild.roles.cache.find(r => r.name === 'Muted' || r.name === 'Timeout')
+
         if (mutedRole && message.member) {
             await message.member.roles.add(mutedRole)
 

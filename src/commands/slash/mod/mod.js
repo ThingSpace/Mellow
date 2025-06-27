@@ -1,4 +1,5 @@
 import { cmdTypes } from '../../../configs/cmdTypes.config.js'
+import { PermissionFlagsBits } from 'discord.js'
 
 export default {
     structure: {
@@ -8,7 +9,12 @@ export default {
         handlers: {
             cooldown: 15000,
             requiredRoles: [],
-            requiredPerms: ['ADMINISTRATOR', 'MODERATE_MEMBERS', 'BAN_MEMBERS', 'KICK_MEMBERS']
+            requiredPerms: [
+                PermissionFlagsBits.Administrator,
+                PermissionFlagsBits.ModerateMembers,
+                PermissionFlagsBits.BanMembers,
+                PermissionFlagsBits.KickMembers
+            ]
         },
         options: [
             {
@@ -175,7 +181,7 @@ export default {
                 return interaction.reply({ content: `Role ${role.name} removed from ${user.tag}.` })
             }
             case 'logs': {
-                const actions = await client.db.modActions.getRecentForGuild(BigInt(guildId), 10)
+                const actions = await client.db.modActions.getRecentForGuild(guildId, 10)
                 if (!actions.length) {
                     return interaction.reply({ content: 'No moderation actions found for this server.' })
                 }

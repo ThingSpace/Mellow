@@ -23,7 +23,7 @@ export default {
             return interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true })
         }
         if (sub === 'logs') {
-            const guildId = interaction.options.getInteger('guild')
+            const guildId = interaction.options.getString('guild')
             const actions = await client.db.modActions.getRecentForGuild(guildId, 20)
             if (!actions.length) {
                 return interaction.reply({ content: 'No moderation actions found for this guild.', ephemeral: true })

@@ -1,4 +1,4 @@
-import { Events } from 'discord.js'
+import { Events, PermissionFlagsBits } from 'discord.js'
 import { log } from '../../functions/logger.js'
 
 const cooldown = new Map()
@@ -23,7 +23,13 @@ export default {
         // Discord permissions check
         if (requiredDiscordPermissions.length > 0 && interaction.guild) {
             const member = await interaction.guild.members.fetch(interaction.user.id)
-            if (!requiredDiscordPermissions.some(perm => member.permissions.has(perm))) {
+            const hasPermission = requiredDiscordPermissions.some(perm => {
+                // Convert string permission names to PermissionFlagsBits
+                const permFlag = typeof perm === 'string' ? PermissionFlagsBits[perm] : perm
+                return permFlag && member.permissions.has(permFlag)
+            })
+
+            if (!hasPermission) {
                 return interaction.reply({
                     ephemeral: true,
                     embeds: [
@@ -147,15 +153,16 @@ export default {
             log(`Failed to execute command: ${interaction.commandName}`, 'error')
             log(err, 'debug')
 
-            if (!interaction.replied && !interaction.deferred) {
-                await interaction.reply({
-                    ephemeral: true,
-                    content: 'An error occurred while executing this command!'
-                })
-            } else if (interaction.deferred) {
-                await interaction.editReply({
-                    content: 'An error occurred while executing this command!'
-                })
+            // Only try to respond if the interaction hasn't been replied to yet
+            if (!interaction.replied) {
+                try {
+                    await interaction.reply({
+                        ephemeral: true,
+                        content: 'An error occurred while executing this command!'
+                    })
+                } catch (replyError) {
+                    console.error('Failed to send error reply:', replyError)
+                }
             }
         }
     }

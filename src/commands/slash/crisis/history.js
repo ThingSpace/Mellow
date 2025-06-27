@@ -1,5 +1,6 @@
 import { cmdTypes } from '../../../configs/cmdTypes.config.js'
 import { getRecentCrisisEvents } from '../../../services/tools/crisisTool.js'
+import { PermissionFlagsBits } from 'discord.js'
 
 export default {
     structure: {
@@ -8,7 +9,7 @@ export default {
         description: 'View recent crisis events for a user.',
         handlers: {
             cooldown: 15000,
-            requiredPerms: ['ManageMessages'],
+            requiredPerms: [PermissionFlagsBits.ManageMessages],
             requiredRoles: []
         },
         options: [
@@ -31,8 +32,6 @@ export default {
     run: async (client, interaction) => {
         const user = interaction.options.getUser('user')
         const limit = interaction.options.getInteger('limit') || 5
-
-        await interaction.deferReply()
 
         try {
             const events = await getRecentCrisisEvents(user.id, client.db, limit)

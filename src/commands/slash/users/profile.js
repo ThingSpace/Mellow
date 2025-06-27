@@ -10,8 +10,6 @@ export default {
     },
 
     run: async (client, interaction) => {
-        await interaction.deferReply()
-
         const fetch = await client.db.users.findById(interaction.user.id, {
             include: {
                 checkIns: true,
@@ -22,7 +20,7 @@ export default {
         })
 
         if (!fetch) {
-            return interaction.editReply({
+            return interaction.reply({
                 content:
                     "You don't have a Mellow profile yet. Start by using `/checkin` to begin your mental health journey!"
             })
@@ -36,7 +34,7 @@ export default {
         // Get recent mood if available
         const recentCheckIn = fetch.checkIns.length > 0 ? fetch.checkIns[0] : null
 
-        return interaction.editReply({
+        return interaction.reply({
             embeds: [
                 new client.Gateway.EmbedBuilder()
                     .setTitle('Your Mellow Profile')

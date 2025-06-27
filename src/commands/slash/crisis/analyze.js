@@ -1,5 +1,6 @@
 import { cmdTypes } from '../../../configs/cmdTypes.config.js'
 import { handleCrisis } from '../../../services/tools/crisisTool.js'
+import { PermissionFlagsBits } from 'discord.js'
 
 export default {
     structure: {
@@ -8,7 +9,7 @@ export default {
         description: 'Analyze a message for crisis indicators and provide support.',
         handlers: {
             cooldown: 30000,
-            requiredPerms: ['ManageMessages'],
+            requiredPerms: [PermissionFlagsBits.ManageMessages],
             requiredRoles: []
         },
         options: [
@@ -27,15 +28,12 @@ export default {
         ]
     },
     run: async (client, interaction) => {
-        // Only use message_id
         const messageId = interaction.options.getString('message_id')
         const user = interaction.options.getUser('user')
         const guildId = interaction.guildId
 
-        await interaction.deferReply()
-
         if (!messageId) {
-            return interaction.editReply({
+            return interaction.reply({
                 content: '❌ You must provide a message ID to analyze.',
                 ephemeral: true
             })
@@ -49,13 +47,13 @@ export default {
             if (fetchedMsg) {
                 message = fetchedMsg.content
             } else {
-                return interaction.editReply({
+                return interaction.reply({
                     content: '❌ Could not find a message with that ID in this channel.',
                     ephemeral: true
                 })
             }
         } catch (err) {
-            return interaction.editReply({
+            return interaction.reply({
                 content:
                     '❌ Failed to fetch the message. Make sure the ID is correct and the message is in this channel.',
                 ephemeral: true
@@ -125,10 +123,10 @@ export default {
                 })
             }
 
-            return interaction.editReply({ embeds: [embed] })
+            return interaction.reply({ embeds: [embed] })
         } catch (error) {
             console.error('Error analyzing crisis:', error)
-            return interaction.editReply({
+            return interaction.reply({
                 content: '❌ Failed to analyze the message for crisis indicators.',
                 ephemeral: true
             })

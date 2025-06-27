@@ -93,7 +93,7 @@ export class ReminderTool {
                                 if (!member) continue
 
                                 const channel = await guildInstance.channels
-                                    .fetch(guildData.checkInChannelId)
+                                    .fetch(guildData.checkInChannelId.toString())
                                     .catch(() => null)
                                 if (!channel || !channel.isTextBased()) continue
 

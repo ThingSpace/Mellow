@@ -1,5 +1,6 @@
 import { cmdTypes } from '../../../configs/cmdTypes.config.js'
 import { getCrisisStats } from '../../../services/tools/crisisTool.js'
+import { PermissionFlagsBits } from 'discord.js'
 
 export default {
     structure: {
@@ -8,7 +9,11 @@ export default {
         description: 'View crisis statistics for a user.',
         handlers: {
             cooldown: 15000,
-            requiredPerms: ['Administrator', 'ManageGuild', 'ManageMessages'],
+            requiredPerms: [
+                PermissionFlagsBits.Administrator,
+                PermissionFlagsBits.ManageGuild,
+                PermissionFlagsBits.ManageMessages
+            ],
             requiredRoles: []
         },
         options: [
@@ -22,8 +27,6 @@ export default {
     },
     run: async (client, interaction) => {
         const user = interaction.options.getUser('user')
-
-        await interaction.deferReply()
 
         try {
             const stats = await getCrisisStats(user.id, client.db)

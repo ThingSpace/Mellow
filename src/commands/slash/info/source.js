@@ -10,10 +10,8 @@ export default {
     },
 
     run: async (client, interaction) => {
-        await interaction.deferReply()
-
         try {
-            return interaction.editReply({
+            return interaction.reply({
                 embeds: [
                     new client.Gateway.EmbedBuilder()
                         .setTitle('Mellow: Open Source Project')
@@ -64,7 +62,7 @@ export default {
             })
         } catch (error) {
             console.error('Error handling interaction:', error)
-            return interaction.editReply({
+            return interaction.reply({
                 embeds: [
                     new client.Gateway.EmbedBuilder()
                         .setTitle('ERROR: unknown error')

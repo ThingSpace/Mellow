@@ -66,7 +66,10 @@ export default {
         const subcommand = interaction.options.getSubcommand()
 
         if (subcommand === 'list') {
-            const guilds = await client.db.guilds.prisma.guild.findMany({ take: 20, orderBy: { joinedAt: 'desc' } })
+            const guilds = await client.db.guilds.findMany({
+                take: 20,
+                orderBy: { joinedAt: 'desc' }
+            })
             if (!guilds.length) {
                 return interaction.reply({ content: 'No guilds found.', ephemeral: true })
             }
@@ -89,13 +92,29 @@ export default {
         if (subcommand === 'ban') {
             const guildId = interaction.options.getString('guild')
             const reason = interaction.options.getString('reason') || 'No reason provided.'
-            await client.db.guilds.ban(guildId, reason)
+            await client.db.guilds.upsert(
+                guildId,
+                {
+                    isBanned: true,
+                    banReason: reason,
+                    bannedUntil: null
+                },
+                false
+            )
             return interaction.reply({ content: `Guild ${guildId} has been banned.`, ephemeral: true })
         }
 
         if (subcommand === 'unban') {
             const guildId = interaction.options.getString('guild')
-            await client.db.guilds.unban(guildId)
+            await client.db.guilds.upsert(
+                guildId,
+                {
+                    isBanned: false,
+                    banReason: null,
+                    bannedUntil: null
+                },
+                false
+            )
             return interaction.reply({ content: `Guild ${guildId} has been unbanned.`, ephemeral: true })
         }
     }

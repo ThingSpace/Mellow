@@ -26,7 +26,7 @@ export class GuildModule {
      * @param {boolean} [preserveState = true] - Whether to preserve the guilds ban state and settings
      * @param {string} [data.name] - Guild name
      * @param {string|number} [data.ownerId] - Guild owner's Discord ID
-     * @param {string} [data.modAlertChannelId] - Channel ID for mod alerts
+     * @param {string} [data.modAlertChannelId] - Channel ID for crisis alerts and serious moderation events
      * @param {string} [data.modLogChannelId] - Channel ID for mod logs
      * @param {string} [data.checkInChannelId] - Channel ID for check-in logs
      * @param {string} [data.copingToolLogId] - Channel ID for coping tool logs

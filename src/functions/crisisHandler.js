@@ -100,10 +100,24 @@ export async function sendCrisisModAlert(message, analysis, client) {
     try {
         if (!message.guild) return // No mod alerts for DMs
 
-        const modChannelId = await client.db.guilds.getModAlertChannel(message.guild.id)
-        const modChannel = modChannelId ? client.channels.cache.get(modChannelId) : null
+        // Get guild settings to check if crisis alerts are enabled
+        const guild = await client.db.guilds.findById(message.guild.id)
+        if (!guild || !guild.enableCrisisAlerts) {
+            console.log(`Crisis alerts disabled for guild ${message.guild.id}`)
+            return
+        }
 
-        if (!modChannel) return
+        const modChannelId = guild.modAlertChannelId
+        if (!modChannelId) {
+            console.log(`No crisis alert channel configured for guild ${message.guild.id}`)
+            return
+        }
+
+        const modChannel = await client.channels.fetch(modChannelId).catch(() => null)
+        if (!modChannel) {
+            console.error(`Crisis alert channel not found: ${modChannelId}`)
+            return
+        }
 
         const alertEmbed = new client.Gateway.EmbedBuilder()
             .setTitle('🚨 Crisis Alert Detected')
