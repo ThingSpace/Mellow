@@ -12,16 +12,17 @@ Technical documentation for developers working with Mellow's codebase.
 
 Mellow is built with modern Node.js technologies:
 
-- **Backend**: Node.js with Discord.js v14
-- **Database**: PostgreSQL with Prisma ORM
-- **AI Integration**: OpenAI API for crisis detection
-- **Deployment**: Docker-ready with environment configuration
+-   **Backend**: Node.js with Discord.js v14
+-   **Database**: PostgreSQL with Prisma ORM
+-   **AI Integration**: OpenAI API for crisis detection
+-   **Deployment**: Docker-ready with environment configuration
 
 ## 🗄️ Database Schema
 
 ### Core Models
 
 #### User
+
 ```prisma
 model User {
   id          BigInt   @id
@@ -31,7 +32,7 @@ model User {
   banReason   String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  
+
   // Relations
   preferences      UserPreferences?
   moodCheckIns     MoodCheckIn[]
@@ -43,6 +44,7 @@ model User {
 ```
 
 #### MoodCheckIn
+
 ```prisma
 model MoodCheckIn {
   id            String   @id @default(cuid())
@@ -53,12 +55,13 @@ model MoodCheckIn {
   notes         String?
   nextCheckIn   DateTime?
   createdAt     DateTime @default(now())
-  
+
   user User @relation(fields: [userId], references: [id])
 }
 ```
 
 #### UserPreferences
+
 ```prisma
 model UserPreferences {
   userId              BigInt   @id
@@ -69,7 +72,7 @@ model UserPreferences {
   journalVisibility   String   @default("private")
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
-  
+
   user User @relation(fields: [userId], references: [id])
 }
 ```
@@ -77,6 +80,7 @@ model UserPreferences {
 ### Guild Configuration
 
 #### Guild
+
 ```prisma
 model Guild {
   id                    BigInt   @id
@@ -85,20 +89,20 @@ model Guild {
   modLogsChannel        String?
   checkInsChannel       String?
   systemLogsChannel     String?
-  
+
   // Feature toggles
   checkInsEnabled       Boolean  @default(true)
   ghostLettersEnabled   Boolean  @default(true)
   crisisAlertsEnabled   Boolean  @default(true)
   systemLogsEnabled     Boolean  @default(false)
-  
+
   // Moderation settings
   autoModEnabled        Boolean  @default(false)
   crisisSensitivity     String   @default("medium")
   timeoutRole           String?
   moderatorRole         String?
   adminRole            String?
-  
+
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
 }
@@ -114,25 +118,25 @@ The AI service handles crisis detection and personalized responses.
 // filepath: src/services/ai.service.js
 
 class AIService {
-  /**
-   * Analyze message for crisis indicators
-   * @param {string} message - Message content
-   * @param {Object} user - User context
-   * @returns {Promise<Object>} Crisis analysis result
-   */
-  async analyzeCrisis(message, user) {
-    // Returns: { severity, confidence, resources, action }
-  }
-  
-  /**
-   * Generate personalized coping suggestions
-   * @param {string} mood - Current mood
-   * @param {Array} history - Recent check-ins
-   * @returns {Promise<Array>} Suggested coping tools
-   */
-  async suggestCopingTools(mood, history) {
-    // Returns array of personalized tool suggestions
-  }
+    /**
+     * Analyze message for crisis indicators
+     * @param {string} message - Message content
+     * @param {Object} user - User context
+     * @returns {Promise<Object>} Crisis analysis result
+     */
+    async analyzeCrisis(message, user) {
+        // Returns: { severity, confidence, resources, action }
+    }
+
+    /**
+     * Generate personalized coping suggestions
+     * @param {string} mood - Current mood
+     * @param {Array} history - Recent check-ins
+     * @returns {Promise<Array>} Suggested coping tools
+     */
+    async suggestCopingTools(mood, history) {
+        // Returns array of personalized tool suggestions
+    }
 }
 ```
 
@@ -144,32 +148,32 @@ Abstraction layer for database operations with user safety.
 // filepath: src/services/database.service.js
 
 class DatabaseService {
-  constructor(prisma) {
-    this.prisma = prisma
-    this.users = new UserRepository(prisma)
-    this.guilds = new GuildRepository(prisma)
-    this.moods = new MoodRepository(prisma)
-  }
+    constructor(prisma) {
+        this.prisma = prisma
+        this.users = new UserRepository(prisma)
+        this.guilds = new GuildRepository(prisma)
+        this.moods = new MoodRepository(prisma)
+    }
 }
 
 class UserRepository {
-  /**
-   * Find or create user with safety checks
-   * @param {BigInt} userId - Discord user ID
-   * @returns {Promise<User>} User object
-   */
-  async findOrCreate(userId) {
-    // Implements ban checking and user creation
-  }
-  
-  /**
-   * Ban user from using Mellow
-   * @param {BigInt} userId - User to ban
-   * @param {string} reason - Ban reason
-   */
-  async ban(userId, reason) {
-    // Implements user banning with logging
-  }
+    /**
+     * Find or create user with safety checks
+     * @param {BigInt} userId - Discord user ID
+     * @returns {Promise<User>} User object
+     */
+    async findOrCreate(userId) {
+        // Implements ban checking and user creation
+    }
+
+    /**
+     * Ban user from using Mellow
+     * @param {BigInt} userId - User to ban
+     * @param {string} reason - Ban reason
+     */
+    async ban(userId, reason) {
+        // Implements user banning with logging
+    }
 }
 ```
 
@@ -181,22 +185,22 @@ Automated check-in reminder system.
 // filepath: src/services/reminder.service.js
 
 class ReminderService {
-  /**
-   * Check for users needing reminders
-   * @returns {Promise<void>}
-   */
-  async checkReminders() {
-    // Runs every 5 minutes to send check-in reminders
-  }
-  
-  /**
-   * Send reminder to specific user
-   * @param {Object} user - User object
-   * @returns {Promise<boolean>} Success status
-   */
-  async sendReminder(user) {
-    // Sends DM reminder with error handling
-  }
+    /**
+     * Check for users needing reminders
+     * @returns {Promise<void>}
+     */
+    async checkReminders() {
+        // Runs every 5 minutes to send check-in reminders
+    }
+
+    /**
+     * Send reminder to specific user
+     * @param {Object} user - User object
+     * @returns {Promise<boolean>} Success status
+     */
+    async sendReminder(user) {
+        // Sends DM reminder with error handling
+    }
 }
 ```
 
@@ -213,19 +217,19 @@ export default {
         category: 'Category',
         description: 'Command description',
         handlers: {
-            cooldown: 15000,      // 15 seconds
-            requiredRoles: []     // Required Mellow roles
+            cooldown: 15000, // 15 seconds
+            requiredRoles: [] // Required Mellow roles
         },
         options: [
             {
                 name: 'option-name',
                 description: 'Option description',
                 required: false,
-                type: 3  // STRING type
+                type: 3 // STRING type
             }
         ]
     },
-    
+
     run: async (client, interaction) => {
         // Command implementation
     }
@@ -237,12 +241,14 @@ export default {
 Mellow implements a dual permission system:
 
 #### Discord Permissions
+
 ```javascript
 // Check Discord server permissions
 const hasPermission = interaction.member.permissions.has('MODERATE_MEMBERS')
 ```
 
 #### Mellow Role System
+
 ```javascript
 // Check Mellow database roles
 const user = await client.db.users.findById(interaction.user.id)
@@ -284,13 +290,13 @@ const CRISIS_LEVELS = {
 async function analyzeCrisis(content, context) {
     // Keyword detection
     const keywordMatch = detectCrisisKeywords(content)
-    
+
     // AI analysis
     const aiAnalysis = await aiService.analyzeCrisis(content, context)
-    
+
     // Combine results
     const severity = Math.max(keywordMatch.severity, aiAnalysis.severity)
-    
+
     return {
         severity,
         confidence: aiAnalysis.confidence,
@@ -314,7 +320,7 @@ async function analyzeCrisis(content, context) {
  */
 async function calculateMoodInsights(userId, timeframe) {
     const checkIns = await getMoodCheckIns(userId, timeframe)
-    
+
     return {
         totalCheckIns: checkIns.length,
         moodDistribution: calculateDistribution(checkIns),
@@ -341,13 +347,13 @@ function calculateWellnessScore(user) {
         moodStability: calculateMoodStability(user.moodCheckIns),
         engagementLevel: calculateEngagement(user)
     }
-    
+
     // Weighted average of factors
     return Math.round(
         factors.checkInConsistency * 0.3 +
-        factors.copingToolUsage * 0.25 +
-        factors.moodStability * 0.25 +
-        factors.engagementLevel * 0.2
+            factors.copingToolUsage * 0.25 +
+            factors.moodStability * 0.25 +
+            factors.engagementLevel * 0.2
     )
 }
 ```
@@ -374,14 +380,14 @@ const encryptedContent = await encrypt(sensitiveData, process.env.ENCRYPTION_KEY
 function checkDataAccess(requesterId, targetId, dataType) {
     // Self-access always allowed
     if (requesterId === targetId) return true
-    
+
     // Admin access for moderation
     const requester = await getUser(requesterId)
     if (['ADMIN', 'OWNER'].includes(requester.role)) return true
-    
+
     // Private data types restricted
     if (['ghost_letters', 'detailed_moods'].includes(dataType)) return false
-    
+
     return false
 }
 ```
@@ -395,11 +401,11 @@ const COOLDOWNS = new Map()
 function checkCooldown(userId, commandName, cooldownMs) {
     const key = `${userId}-${commandName}`
     const lastUsed = COOLDOWNS.get(key)
-    
+
     if (lastUsed && Date.now() - lastUsed < cooldownMs) {
         return false // Still on cooldown
     }
-    
+
     COOLDOWNS.set(key, Date.now())
     return true // Cooldown passed
 }
@@ -411,15 +417,15 @@ function checkCooldown(userId, commandName, cooldownMs) {
 
 ```javascript
 // Message handling with crisis detection
-client.on('messageCreate', async (message) => {
+client.on('messageCreate', async message => {
     if (message.author.bot) return
-    
+
     // Crisis detection
     const analysis = await analyzeCrisis(message.content, {
         user: message.author,
         guild: message.guild
     })
-    
+
     if (analysis.severity >= 3) {
         await handleCrisisResponse(message, analysis)
     }
@@ -461,7 +467,7 @@ class SystemLogger {
             }
         })
     }
-    
+
     /**
      * Log crisis events
      * @param {Object} context - Crisis context
@@ -538,9 +544,9 @@ describe('Mood Analysis', () => {
             { mood: 'sad', intensity: 2 },
             { mood: 'happy', intensity: 5 }
         ]
-        
+
         const distribution = calculateMoodDistribution(checkIns)
-        
+
         expect(distribution.happy).toBe(66.67)
         expect(distribution.sad).toBe(33.33)
     })
@@ -555,7 +561,7 @@ describe('Crisis Detection', () => {
     test('should detect high-risk messages', async () => {
         const message = "I can't take this anymore..."
         const analysis = await analyzeCrisis(message, mockContext)
-        
+
         expect(analysis.severity).toBeGreaterThan(3)
         expect(analysis.action).toBe('immediate_help')
     })
@@ -564,4 +570,4 @@ describe('Crisis Detection', () => {
 
 ---
 
-*This API reference is continuously updated as the project evolves. For the latest information, check the source code and inline documentation.*
+_This API reference is continuously updated as the project evolves. For the latest information, check the source code and inline documentation._

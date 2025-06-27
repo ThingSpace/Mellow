@@ -4,13 +4,13 @@ This directory contains the complete documentation for Mellow, hosted via GitHub
 
 ## 📚 Documentation Structure
 
-- **[index.md](index.md)** - Main documentation homepage
-- **[getting-started.md](getting-started.md)** - Setup and initial configuration guide
-- **[commands.md](commands.md)** - Complete command reference
-- **[privacy-policy.md](privacy-policy.md)** - Privacy policy and data handling
-- **[terms-of-service.md](terms-of-service.md)** - Terms of service
-- **[contributing.md](contributing.md)** - Contribution guidelines
-- **[api.md](api.md)** - Technical API reference
+-   **[index.md](index.md)** - Main documentation homepage
+-   **[getting-started.md](getting-started.md)** - Setup and initial configuration guide
+-   **[commands.md](commands.md)** - Complete command reference
+-   **[privacy-policy.md](privacy-policy.md)** - Privacy policy and data handling
+-   **[terms-of-service.md](terms-of-service.md)** - Terms of service
+-   **[contributing.md](contributing.md)** - Contribution guidelines
+-   **[api.md](api.md)** - Technical API reference
 
 ## 🌐 Accessing Documentation
 
@@ -61,13 +61,13 @@ Custom styles can be added by creating `assets/css/style.scss`:
 ---
 ---
 
-@import "minima";
+@import 'minima';
 
 /* Custom styles here */
 ```
 
 ## 🔗 Links and References
 
-- [Jekyll Documentation](https://jekyllrb.com/docs/)
-- [GitHub Pages Documentation](https://docs.github.com/pages)
-- [Markdown Guide](https://www.markdownguide.org/)
+-   [Jekyll Documentation](https://jekyllrb.com/docs/)
+-   [GitHub Pages Documentation](https://docs.github.com/pages)
+-   [Markdown Guide](https://www.markdownguide.org/)

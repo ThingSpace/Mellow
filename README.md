@@ -12,10 +12,10 @@
 
 **Complete documentation is available at: [thingspace.github.io/Mellow](https://thingspace.github.io/Mellow)**
 
-- [Getting Started Guide](https://thingspace.github.io/Mellow/getting-started.html)
-- [Command Reference](https://thingspace.github.io/Mellow/commands.html)
-- [API Documentation](https://thingspace.github.io/Mellow/api.html)
-- [Contributing Guide](https://thingspace.github.io/Mellow/contributing.html)
+-   [Getting Started Guide](https://thingspace.github.io/Mellow/getting-started.html)
+-   [Command Reference](https://thingspace.github.io/Mellow/commands.html)
+-   [API Documentation](https://thingspace.github.io/Mellow/api.html)
+-   [Contributing Guide](https://thingspace.github.io/Mellow/contributing.html)
 
 ---
 
@@ -304,6 +304,6 @@ We chose AGPL-3.0 to ensure that:
 
 **Made with 💜 for mental health awareness and support**
 
-*Remember: You are not alone, and your feelings are valid.*
+_Remember: You are not alone, and your feelings are valid._
 
 </div>
