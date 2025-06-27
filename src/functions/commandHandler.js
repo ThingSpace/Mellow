@@ -3,7 +3,11 @@
  */
 const COMMANDS = {
     help: ['help', 'h'],
-    about: ['about', 'info']
+    about: ['about', 'info'],
+    support: ['support', 'crisis'],
+    stats: ['stats', 'statistics'],
+    status: ['status', 'ping'],
+    source: ['source', 'github', 'code']
 }
 
 /**
@@ -45,6 +49,23 @@ export async function handleTextCommand(message, client) {
             case 'about':
             case 'info':
                 await client.msgHandler.send.about(message)
+                break
+            case 'support':
+            case 'crisis':
+                await client.msgHandler.send.support(message)
+                break
+            case 'stats':
+            case 'statistics':
+                await client.msgHandler.send.stats(message)
+                break
+            case 'status':
+            case 'ping':
+                await client.msgHandler.send.status(message)
+                break
+            case 'source':
+            case 'github':
+            case 'code':
+                await client.msgHandler.send.source(message)
                 break
             default:
                 return false

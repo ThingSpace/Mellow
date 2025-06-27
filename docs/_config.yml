@@ -1,0 +1,24 @@
+title: Mellow Documentation
+description: Your AI-Powered Mental Health Companion for Discord
+baseurl: "/Mellow"
+url: "https://thingspace.github.io"
+
+markdown: kramdown
+highlighter: rouge
+theme: minima
+
+plugins:
+  - jekyll-feed
+  - jekyll-sitemap
+
+header_pages:
+  - index.md
+  - getting-started.md
+  - commands.md
+  - privacy-policy.md
+  - terms-of-service.md
+  - contributing.md
+  - api.md
+
+exclude:
+  - README.md

@@ -1,48 +1,309 @@
-# Mellow — Your AI-Powered Mental Health Companion for Discord
+# Mellow 🌸 — Your AI-Powered Mental Health Companion for Discord
+
+[![Discord](https://img.shields.io/badge/Discord-7289DA?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/C3ZuXPP7Hc)
+[![License](https://img.shields.io/badge/License-AGPL--3.0-blue?style=for-the-badge)](LICENSE)
+[![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
+[![OpenAI](https://img.shields.io/badge/OpenAI-412991?style=for-the-badge&logo=openai&logoColor=white)](https://openai.com/)
+[![Documentation](https://img.shields.io/badge/Documentation-GitHub%20Pages-blue?style=for-the-badge)](https://thingspace.github.io/Mellow)
 
 **Mellow** is an AI-powered mental health companion that lives right inside Discord. It's not a therapist — but it _is_ a safe, supportive presence you can talk to when things feel heavy, confusing, or just too much.
 
----
+## 📚 Documentation
 
-## About Mellow
+**Complete documentation is available at: [thingspace.github.io/Mellow](https://thingspace.github.io/Mellow)**
 
-Mellow is designed to be a gentle, empathetic, and private support bot for anyone who needs a moment of stillness, a safe conversation, or a reminder that empathy matters — even online.
-
-**Key Features:**
-
--   **Emotional Check-Ins:** Track your mood and reflect on how you're really doing.
--   **Ghost Letter Mode:** Vent privately with messages only you can see.
--   **Coping Tools & Prompts:** Access grounding techniques, breathing guides, and more.
--   **Crisis Routing:** Gently recommend professional help or alert moderators if someone is in distress.
--   **Late-Night Companion Mode:** Always available for calm, quiet support at any hour.
+- [Getting Started Guide](https://thingspace.github.io/Mellow/getting-started.html)
+- [Command Reference](https://thingspace.github.io/Mellow/commands.html)
+- [API Documentation](https://thingspace.github.io/Mellow/api.html)
+- [Contributing Guide](https://thingspace.github.io/Mellow/contributing.html)
 
 ---
 
-## Usage
+## 🌟 About Mellow
 
-Invite Mellow to your server or DM it directly. Use slash commands like `/checkin`, `/ghostletter`, or `/coping` to access its features.
+Mellow is designed to be a gentle, empathetic, and private support bot for anyone who needs a moment of stillness, a safe conversation, or a reminder that empathy matters — even online. Built with privacy and safety at its core, Mellow provides 24/7 mental health support directly within Discord communities.
+
+### ✨ Key Features
+
+#### 🎭 **Mood Tracking & Insights**
+
+-   **Daily Check-Ins:** Track your mood with structured options and intensity ratings
+-   **Trend Analysis:** View mood patterns and insights over time (weekly, monthly, all-time)
+-   **Personalized Reminders:** Configurable check-in intervals (1-24 hours)
+-   **Activity Correlation:** Connect your mood with daily activities
+
+#### 👻 **Ghost Letter Mode**
+
+-   **Private Venting:** Write messages only you can see for safe emotional release
+-   **No Judgment:** Express feelings without fear of being seen or judged
+-   **Therapeutic Writing:** Use writing as a tool for processing emotions
+
+#### 🧰 **Comprehensive Coping Tools**
+
+-   **Guided Techniques:** Breathing exercises, grounding techniques, progressive muscle relaxation
+-   **Personalized Toolbox:** Save your favorite coping strategies for quick access
+-   **Coping Plans:** Create personalized crisis management plans
+-   **Music Therapy:** Calming music suggestions for relaxation
+-   **Usage Tracking:** Monitor coping tool streaks and progress
+
+#### 🚨 **Crisis Detection & Support**
+
+-   **AI-Powered Analysis:** Real-time detection of distress signals in messages
+-   **Multi-Level Response:** Appropriate responses based on crisis severity (5 levels)
+-   **Resource Provision:** Immediate access to crisis hotlines and professional help
+-   **Moderator Alerts:** Automatic notifications to server staff for high-risk situations
+-   **24/7 Availability:** Always ready to provide support when needed
+
+#### 🛡️ **Server Management & Safety**
+
+-   **Comprehensive Moderation:** Timeout, ban, role management with logging
+-   **Guild Settings:** Full server configuration with channel assignments and feature toggles
+-   **Privacy Controls:** User preference management and data protection
+-   **System Logging:** Complete audit trail for administrative oversight
 
 ---
 
-## Important Note
+## 🚀 Getting Started
 
-Mellow is **not** a replacement for therapy or professional help. It's here for support, reflection, and companionship — not diagnosis or treatment.
+### For Users
+
+1.  **Invite Mellow** to your server or DM it directly
+2.  **Start with `/checkin`** to begin tracking your mental health journey
+3.  **Explore features** like `/coping`, `/ghostletter`, and `/preferences`
+4.  **Set up reminders** to maintain consistent check-ins
+
+### For Server Administrators
+
+1.  **Configure channels** with `/guildsettings channels`
+2.  **Set up features** using `/guildsettings features`
+3.  **Configure moderation** with `/guildsettings moderation`
+4.  **Review settings** anytime with `/guildsettings view`
 
 ---
 
-## Contributing
+## 📋 Command Reference
 
-Want to help make Mellow better? We welcome contributions focused on:
+### 🧘 **Mental Health & Wellness**
 
--   New coping tools or prompts
--   Improved crisis detection and routing
--   Accessibility and privacy enhancements
--   Language and tone improvements for empathy
+-   `/checkin` - Log your current mood and feelings
+-   `/insights` - View mood trends and analysis
+-   `/profile` - Comprehensive mental health journey overview
+-   `/preferences` - Manage your personal settings
 
-Open an issue or submit a pull request!
+### 🛠️ **Coping & Support**
+
+-   `/coping` - Access grounding and breathing techniques
+-   `/toolbox` - Manage your favorite coping tools
+-   `/plan` - Create personalized coping plans
+-   `/music` - Get calming music suggestions
+-   `/support` - Access crisis resources and hotlines
+-   `/streaks` - Track your coping tool usage
+
+### 💭 **Expression & Privacy**
+
+-   `/ghostletter` - Write private messages for venting
+
+### ⚙️ **Server Management** (Admin only)
+
+-   `/guildsettings` - Configure server features and channels
+-   `/mod` - Moderation tools (timeout, ban, roles)
+
+### 📚 **Information & Help**
+
+-   `/help` - Command help and information
+-   `/about` - Learn about Mellow
+-   `/stats` - Bot usage statistics
+-   `/source` - Open source information
 
 ---
 
-## Licensing
+## 🔧 Installation & Setup
 
-Mellow is an open project for mental health support. Please use responsibly and with care for your community.
+### Prerequisites
+
+-   Node.js 18+
+-   PostgreSQL database
+-   Discord Bot Token
+-   OpenAI API Key
+
+### Environment Variables
+
+```env
+DISCORD_TOKEN=your_discord_bot_token
+DATABASE_URL=your_postgresql_connection_string
+OPENAI_API_KEY=your_openai_api_key
+```
+
+### Installation Steps
+
+```bash
+# Clone the repository
+git clone https://github.com/ThingSpace/Mellow.git
+cd Mellow
+
+# Install dependencies
+npm install
+
+# Set up database
+npx prisma migrate deploy
+npx prisma generate
+
+# Start the bot
+npm start
+```
+
+---
+
+## 🔒 Privacy & Safety
+
+Mellow is built with privacy and safety as top priorities:
+
+-   **Data Minimization:** Only collects necessary data for functionality
+-   **User Control:** Full control over data sharing and privacy settings
+-   **Secure Storage:** All data encrypted and securely stored
+-   **Crisis Protocols:** Trained responses for mental health emergencies
+-   **Professional Resources:** Direct access to crisis hotlines and support
+
+### Important Disclaimers
+
+⚠️ **Mellow is NOT a replacement for professional mental health care**
+
+-   Not for diagnosis or treatment of mental health conditions
+-   Emergency situations require immediate professional intervention
+-   Always consult qualified mental health professionals for serious concerns
+
+🆘 **In Crisis?**
+
+-   **US:** Call or text 988 (Suicide & Crisis Lifeline)
+-   **UK:** Call 116 123 (Samaritans)
+-   **Emergency:** Call 911 (US), 999 (UK), or your local emergency number
+
+---
+
+## 🤝 Contributing
+
+We welcome contributions that make mental health support more accessible and effective!
+
+### Ways to Contribute
+
+#### 🛠️ **Code Contributions**
+
+-   New coping tools and techniques
+-   Improved crisis detection algorithms
+-   Accessibility enhancements
+-   Performance optimizations
+-   Bug fixes and improvements
+
+#### 📝 **Content & Resources**
+
+-   Mental health educational content
+-   Crisis resource databases
+-   Multilingual support
+-   Inclusive language improvements
+
+#### 🧪 **Testing & Feedback**
+
+-   User experience testing
+-   Accessibility testing
+-   Feature suggestions
+-   Bug reports
+
+### Development Guidelines
+
+1.  **Fork the repository** and create a feature branch
+2.  **Follow code style** using our ESLint configuration
+3.  **Test thoroughly** especially for mental health features
+4.  **Document changes** in the changelog
+5.  **Submit a pull request** with detailed description
+
+### Code of Conduct
+
+-   **Respectful Communication:** Treat all contributors with respect
+-   **Mental Health Awareness:** Understand the sensitivity of our domain
+-   **Inclusive Environment:** Welcome contributors from all backgrounds
+-   **Constructive Feedback:** Provide helpful, actionable feedback
+
+---
+
+## 📊 Project Status
+
+### Current Version: 1.0.2
+
+#### ✅ **Completed Features**
+
+-   Comprehensive mood tracking and analytics
+-   AI-powered crisis detection and intervention
+-   Complete coping tools suite with personalization
+-   Guild management and configuration system
+-   System-wide logging and monitoring
+-   User preference management
+
+#### 🚧 **In Development**
+
+-   Enhanced AI personalization
+-   Late-night companion mode
+-   Advanced mood prediction algorithms
+-   Community support features
+
+#### 📅 **Planned Features**
+
+-   Multi-language support
+-   Mobile app integration
+-   Professional resource directory
+-   Peer support matching
+
+---
+
+## 🏗️ Architecture
+
+Mellow is built with modern technologies for reliability and scalability:
+
+-   **Backend:** Node.js with Discord.js v14
+-   **Database:** PostgreSQL with Prisma ORM
+-   **AI Integration:** OpenAI API for crisis detection and support
+-   **Logging:** Comprehensive system monitoring and audit trails
+-   **Deployment:** Docker-ready with environment-based configuration
+
+---
+
+## 📄 License
+
+This project is licensed under the **AGPL-3.0 License** - see the [LICENSE](LICENSE) file for details.
+
+### Why AGPL-3.0?
+
+We chose AGPL-3.0 to ensure that:
+
+-   The source code remains open and accessible
+-   Improvements benefit the entire community
+-   Mental health tools remain free and transparent
+-   Privacy and user rights are protected
+
+---
+
+## 🙏 Acknowledgments
+
+-   **Mental Health Professionals** who guided our approach
+-   **Discord.js Community** for excellent documentation and support
+-   **OpenAI** for powerful AI capabilities
+-   **Contributors** who make Mellow better every day
+-   **Users** who trust us with their mental health journey
+
+---
+
+## 📞 Support & Contact
+
+-   **Documentation:** [GitHub Wiki](https://github.com/ThingSpace/Mellow/tree/master/docs)
+-   **Issues:** [GitHub Issues](https://github.com/ThingSpace/Mellow/issues)
+-   **Discussions:** [GitHub Discussions](https://github.com/ThingSpace/Mellow/discussions)
+-   **Discord:** [Join our support server](https://discord.gg/C3ZuXPP7Hc)
+
+---
+
+<div align="center">
+
+**Made with 💜 for mental health awareness and support**
+
+*Remember: You are not alone, and your feelings are valid.*
+
+</div>
