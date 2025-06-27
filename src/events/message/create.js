@@ -33,12 +33,6 @@ export default {
             // 4. AI RESPONSE - Handle AI interactions
             const shouldRespond = await shouldTriggerAI(message, client)
             if (shouldRespond) {
-                // For replies, verify it's actually to the bot
-                if (message.reference?.messageId) {
-                    const isReply = await isReplyToBot(message, client)
-                    if (!isReply) return
-                }
-
                 await handleAIResponse(message, client)
             }
         } catch (error) {

@@ -1,3 +1,5 @@
+import { ChannelType } from 'discord.js'
+
 /**
  * Generate and send AI response to user message
  * @param {Object} message - Discord message object
@@ -39,22 +41,9 @@ export async function handleAIResponse(message, client) {
             allowedMentions: { repliedUser: true }
         })
 
-        // Log conversation to database
-        await client.db.conversationHistory.create({
-            data: {
-                userId: BigInt(message.author.id),
-                content: message.content,
-                isAiResponse: false
-            }
-        })
-
-        await client.db.conversationHistory.create({
-            data: {
-                userId: BigInt(message.author.id),
-                content: aiResponse,
-                isAiResponse: true
-            }
-        })
+        // Log conversation to database - Fix: use correct method signature
+        await client.db.conversationHistory.add(message.author.id, message.content, false)
+        await client.db.conversationHistory.add(message.author.id, aiResponse, true)
 
         return true
     } catch (error) {
@@ -92,21 +81,18 @@ export async function shouldTriggerAI(message, client) {
     const user = await client.db.users.findById(message.author.id)
     if (user?.isBanned) return false
 
-    // Check guild settings if in a guild
-    if (message.guild) {
-        const guildSettings = await client.db.guilds.findById(message.guild.id)
-        if (guildSettings?.isBanned) return false
-
-        // Check if guild has specific AI settings disabled
-        // This would need to be added to your schema if you want guild-level AI controls
-    }
-
-    // Always respond to DMs (except bot messages and banned users)
-    if (message.channel.type === 'DM') {
+    // Always respond to ALL DMs (except bot messages and banned users) - RETURN IMMEDIATELY
+    if (message.channel.type === ChannelType.DM) {
         return true
     }
 
-    // Check if message is a reply to the bot
+    // Check guild settings if in a guild (only for guild messages now)
+    if (message.guild) {
+        const guildSettings = await client.db.guilds.findById(message.guild.id)
+        if (guildSettings?.isBanned) return false
+    }
+
+    // For guild messages, check if message is a reply to the bot
     if (message.reference?.messageId) {
         const isReply = await isReplyToBot(message, client)
         if (isReply) return true
