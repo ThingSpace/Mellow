@@ -232,46 +232,56 @@ Configure server features and channels.
 **Subcommands:**
 
 #### `/guildsettings view`
+
 Display current server configuration and settings.
 
 #### `/guildsettings channels`
+
 Configure channel assignments for different bot features.
 
 **Options:**
-- `mod_alert_channel` - Channel for crisis alerts and serious moderation events
-- `mod_log_channel` - Channel for moderation action logs
-- `checkin_channel` - Channel for mental health check-in logs
-- `coping_tool_log` - Channel for coping tool usage logs
-- `system_channel` - Channel for system notifications
-- `audit_log_channel` - Channel for audit logs
+
+-   `mod_alert_channel` - Channel for crisis alerts and serious moderation events
+-   `mod_log_channel` - Channel for moderation action logs
+-   `checkin_channel` - Channel for mental health check-in logs
+-   `coping_tool_log` - Channel for coping tool usage logs
+-   `system_channel` - Channel for system notifications
+-   `audit_log_channel` - Channel for audit logs
 
 #### `/guildsettings features`
+
 Enable or disable bot features for your server.
 
 **Options:**
-- `check_ins` - Enable/disable mood tracking and check-ins
-- `ghost_letters` - Enable/disable private venting feature
-- `crisis_alerts` - Enable/disable crisis detection and alerts
-- `system_logs` - Enable/disable system event logging
+
+-   `check_ins` - Enable/disable mood tracking and check-ins
+-   `ghost_letters` - Enable/disable private venting feature
+-   `crisis_alerts` - Enable/disable crisis detection and alerts
+-   `system_logs` - Enable/disable system event logging
 
 #### `/guildsettings moderation`
+
 Configure auto-moderation and role settings.
 
 **Options:**
-- `auto_mod_enabled` - Enable/disable automatic moderation
-- `auto_mod_level` - Set moderation sensitivity (1-5 scale)
-- `moderator_role` - Assign mental health moderator role
-- `system_role` - Role automatically assigned to new members
+
+-   `auto_mod_enabled` - Enable/disable automatic moderation
+-   `auto_mod_level` - Set moderation sensitivity (1-5 scale)
+-   `moderator_role` - Assign mental health moderator role
+-   `system_role` - Role automatically assigned to new members
 
 #### `/guildsettings general`
+
 Configure general server preferences.
 
 **Options:**
-- `language` - Set default server language (English, Spanish, French, German)
+
+-   `language` - Set default server language (English, Spanish, French, German)
 
 **Permission Requirements:**
-- Server Administrator or Manage Guild permissions required
-- Changes are logged to audit channels when configured
+
+-   Server Administrator or Manage Guild permissions required
+-   Changes are logged to audit channels when configured
 
 ---
 

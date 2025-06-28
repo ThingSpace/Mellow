@@ -1,7 +1,9 @@
 title: Mellow Documentation
 description: Your AI-Powered Mental Health Companion for Discord
-baseurl: ""
-url: "https://mellow.athing.space"
+keywords: mental health, AI, Discord, chatbot, support, documentation, Mellow
+author: ByteBrush Studios
+baseurl: ''
+url: 'https://mellow.athing.space'
 
 markdown: kramdown
 highlighter: rouge
@@ -23,20 +25,20 @@ color_scheme_toggle: true
 nav_sort: order
 
 # Footer content
-footer_content: "Copyright &copy; 2025 ByteBrush Studios. All Rights Reserved"
+footer_content: 'Copyright &copy; 2025 ByteBrush Studios. All Rights Reserved'
 
 # Back to top link
 back_to_top: true
-back_to_top_text: "Back to top"
+back_to_top_text: 'Back to top'
 
 # External links
 aux_links:
-  "Mellow on GitHub":
-    - "https://github.com/ThingSpace/Mellow"
-  "Invite to Discord":
-    - "https://discord.com/oauth2/authorize?client_id=1386810331367608371"
-  "Support Server":
-    - "https://discord.gg/qyTcK7VRva"
+    'Mellow on GitHub':
+        - 'https://github.com/ThingSpace/Mellow'
+    'Invite to Discord':
+        - 'https://discord.com/oauth2/authorize?client_id=1386810331367608371'
+    'Support Server':
+        - 'https://discord.gg/qyTcK7VRva'
 
 aux_links_new_tab: true
 

@@ -8,9 +8,9 @@ nav_order: 5
 
 > **Developer Quick Links**
 >
-> - [REST API Documentation](#rest-api)  
-> - [OpenAPI/Swagger Spec](#openapi-spec)  
-> - [GitHub Repository](https://github.com/ThingSpace/Mellow)
+> -   [REST API Documentation](#rest-api)
+> -   [OpenAPI/Swagger Spec](#openapi-spec)
+> -   [GitHub Repository](https://github.com/ThingSpace/Mellow)
 >
 > _For bot command integration, see the [Commands Reference](commands.md)._
 

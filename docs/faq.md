@@ -28,9 +28,9 @@ See the [Commands Reference](commands.md) for a full list.
 
 ## How do I get help or support?
 
-- Use `/support` in Discord
-- [Join the support server](https://discord.gg/C3ZuXPP7Hc)
-- [Open a GitHub issue](https://github.com/ThingSpace/Mellow/issues)
+-   Use `/support` in Discord
+-   [Join the support server](https://discord.gg/C3ZuXPP7Hc)
+-   [Open a GitHub issue](https://github.com/ThingSpace/Mellow/issues)
 
 ## Can I contribute to Mellow?
 
