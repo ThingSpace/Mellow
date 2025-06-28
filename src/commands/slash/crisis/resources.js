@@ -48,7 +48,7 @@ export default {
             }
 
             // Get AI-powered resources
-            const resources = await client.aiService.getCrisisResources(context)
+            const resources = await client.ai.getCrisisResources(context)
 
             const embed = {
                 title: '🆘 Crisis Support Resources',

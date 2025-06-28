@@ -26,7 +26,7 @@ export default {
                             inline: false
                         }
                     )
-                    .setColor(client.colors.info)
+                    .setColor(client.colors.primary)
                     .setFooter({
                         text: client.footer,
                         iconURL: client.logo
