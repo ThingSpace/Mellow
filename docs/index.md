@@ -21,7 +21,7 @@ Mellow is designed to be a gentle, empathetic, and private support bot for anyon
 ## Quick Links
 
 -   **[Invite Mellow to Your Server](https://discord.com/oauth2/authorize?client_id=1386810331367608371)**
--   **[Join Support Server](https://discord.gg/qyTcK7VRva)**
+-   **[Join Support Server](https://discord.gg/C3ZuXPP7Hc)**
 -   **[View Source Code](https://github.com/ThingSpace/Mellow)**
 -   **[Getting Started Guide](getting-started.md)**
 

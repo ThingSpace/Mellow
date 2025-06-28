@@ -49,7 +49,7 @@ We welcome contributions that make mental health support more accessible and eff
 1. **Fork and Clone**
 
     ```bash
-    git clone https://github.com/YOUR_USERNAME/Mellow.git
+    git clone https://github.com/ThingSpace/Mellow.git
     cd Mellow
     ```
 
