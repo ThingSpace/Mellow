@@ -172,167 +172,137 @@ export default {
             })
         }
 
-        /** LIST ALL ADMINS/MODERATORS FOR MELLOW */
-        if (sub === 'list') {
-            const users = await client.db.users.findMany({
-                take: 20,
-                orderBy: {
-                    createdAt: 'desc'
+        const targetUser = interaction.options.getUser('user')
+        const targetId = targetUser ? BigInt(targetUser.id) : null
+
+        // Helper to ensure username is present for upsert/create
+        async function ensureUserUpsert(id, data) {
+            let userRecord = await client.db.users.findById(id)
+            let username = userRecord?.username
+            if (!username) {
+                // fallback to Discord API username
+                const discordUser = targetUser || (await client.users.fetch(id.toString()))
+                username = discordUser?.username || discordUser?.globalName || 'Unknown'
+            }
+            return client.db.users.upsert(id, { username, ...data })
+        }
+
+        switch (sub) {
+            case 'list': {
+                const users = await client.db.users.findMany({
+                    take: 20,
+                    orderBy: { createdAt: 'desc' }
+                })
+                if (!users.length) {
+                    return interaction.reply({
+                        content: 'No users found.',
+                        ephemeral: true
+                    })
                 }
-            })
-
-            if (!users.length) {
+                const lines = users.map(
+                    u => `• ${u.username} (ID: ${u.id}) [${u.role}]${u.isBanned ? ' [BANNED]' : ''}`
+                )
                 return interaction.reply({
-                    content: 'No users found.',
+                    content: `Users:\n${lines.join('\n')}`,
                     ephemeral: true
                 })
             }
-
-            const lines = users.map(u => `• ${u.username} (ID: ${u.id}) [${u.role}]${u.isBanned ? ' [BANNED]' : ''}`)
-
-            return interaction.reply({
-                content: `Users:\n${lines.join('\n')}`,
-                ephemeral: true
-            })
-        }
-
-        const targetId = interaction.options.getUser('user')
-
-        /** VIEW INFORMATION FOR A ADMIN/MODERATOR */
-        if (sub === 'info') {
-            const u = await client.db.users.findById(BigInt(targetId))
-
-            if (!u) {
+            case 'info': {
+                const u = await client.db.users.findById(targetId)
+                if (!u) {
+                    return interaction.reply({
+                        content: 'User not found.',
+                        ephemeral: true
+                    })
+                }
                 return interaction.reply({
-                    content: 'User not found.',
+                    embeds: [
+                        new client.Gateway.EmbedBuilder()
+                            .setTitle('User Information')
+                            .setColor(client.colors.primary)
+                            .setDescription(
+                                `Here is everything I know about ${targetUser.globalName || targetUser.username}!`
+                            )
+                            .addFields(
+                                { name: 'ID', value: `${u.id}`, inline: false },
+                                { name: 'Username', value: `${u.username}`, inline: false },
+                                { name: 'Role', value: `${u.role}`, inline: false },
+                                {
+                                    name: 'State',
+                                    value: `- Banned: ${u.isBanned ? 'Yes' : 'No'}\n- Ban Reason: ${u.banReason || 'None'}`,
+                                    inline: false
+                                }
+                            )
+                            .setThumbnail(client.logo)
+                            .setTimestamp()
+                            .setFooter({ text: client.footer, iconURL: client.logo })
+                    ]
+                })
+            }
+            case 'ban': {
+                const reason = interaction.options.getString('reason') || 'No reason provided.'
+                await client.db.users.ban(targetId, reason)
+                return interaction.reply({
+                    content: `User ${targetUser} has been banned.`,
                     ephemeral: true
                 })
             }
-
-            return interaction.reply({
-                embeds: [
-                    new client.Gateway.EmbedBuilder()
-                        .setTitle('User Information')
-                        .setColor(client.colors.primary)
-                        .setDescription(`Here is everything i know about ${targetId.globalName}!`)
-                        .addFields(
-                            {
-                                name: 'ID',
-                                value: `${u.id}`,
-                                inline: false
-                            },
-                            {
-                                name: 'Username',
-                                value: `${u.username}`,
-                                inline: false
-                            },
-                            {
-                                name: 'Role',
-                                value: `${u.role}`,
-                                inline: false
-                            },
-                            {
-                                name: 'State',
-                                value: `- Banned: ${u.isBanned ? 'Yes' : 'No'}\n- Ban Reason: ${u.banReason || 'None'}`,
-                                inline: false
-                            }
-                        )
-                        .setThumbnail(client.logo)
-                        .setTimestamp()
-                        .setFooter({
-                            text: client.footer,
-                            iconURL: client.logo
-                        })
-                ]
-            })
-        }
-
-        /** BAN A USER FROM USING MELLOW */
-        if (sub === 'ban') {
-            const reason = interaction.options.getString('reason') || 'No reason provided.'
-
-            await client.db.users.ban(BigInt(targetId), reason)
-
-            return interaction.reply({
-                content: `User ${targetId} has been banned.`,
-                ephemeral: true
-            })
-        }
-
-        /** RESTORE A USERS ACCESS TO MELLOW */
-        if (sub === 'unban') {
-            await client.db.users.unban(BigInt(targetId))
-
-            return interaction.reply({
-                content: `User ${targetId} has been unbanned.`,
-                ephemeral: true
-            })
-        }
-
-        /** PROMOTE A USER WITHIN THE MELLOW TEAM */
-        if (sub === 'promote') {
-            const role = interaction.options.getString('role')
-
-            await client.db.users.upsert(targetId, { role })
-
-            return interaction.reply({
-                content: `User ${targetId} has been promoted to ${role}.`,
-                ephemeral: true
-            })
-        }
-
-        /** DEMOTE A USER WITHIN THE MELLOW TEAM */
-        if (sub === 'demote') {
-            await client.db.users.upsert(targetId, { role: 'USER' })
-
-            return interaction.reply({
-                content: `User ${targetId} has been demoted to USER.`,
-                ephemeral: true
-            })
-        }
-
-        /** ADD A MELLOW BOT OWNER */
-        if (sub === 'addowner') {
-            await client.db.users.upsert(targetId, { role: 'OWNER' })
-
-            return interaction.reply({
-                content: `User ${targetId} has been granted the owner role.`,
-                ephemeral: true
-            })
-        }
-
-        /** REMOVE A USER FROM MELLOW OWNERSHIP */
-        if (sub === 'removeowner') {
-            let role = interaction.options.getString('newrole')
-
-            if (!role) role = 'USER'
-
-            await client.db.users.upsert(targetId, { role })
-
-            return interaction.reply({
-                content: `User ${targetId} has been promoted to ${role}.`,
-                ephemeral: true
-            })
-        }
-
-        /** ADD A USER AS A MELLOW ADMIN */
-        if (sub === 'addadmin') {
-            await client.db.users.upsert(targetId, { role: 'ADMIN' })
-
-            return interaction.reply({
-                content: `User ${targetId} has been granted ADMIN role.`,
-                ephemeral: true
-            })
-        }
-
-        /** REMOVE A USER FROM MELLOW ADMIN */
-        if (sub === 'removeadmin') {
-            await client.db.users.upsert(targetId, { role: 'USER' })
-
-            return interaction.reply({
-                content: `User ${targetId} has been removed from ADMIN role.`,
-                ephemeral: true
-            })
+            case 'unban': {
+                await client.db.users.unban(targetId)
+                return interaction.reply({
+                    content: `User ${targetUser} has been unbanned.`,
+                    ephemeral: true
+                })
+            }
+            case 'promote': {
+                const role = interaction.options.getString('role')
+                await ensureUserUpsert(targetId, { role })
+                return interaction.reply({
+                    content: `User ${targetUser} has been promoted to ${role}.`,
+                    ephemeral: true
+                })
+            }
+            case 'demote': {
+                await ensureUserUpsert(targetId, { role: 'USER' })
+                return interaction.reply({
+                    content: `User ${targetUser} has been demoted to USER.`,
+                    ephemeral: true
+                })
+            }
+            case 'addowner': {
+                await ensureUserUpsert(targetId, { role: 'OWNER' })
+                return interaction.reply({
+                    content: `User ${targetUser} has been granted the owner role.`,
+                    ephemeral: true
+                })
+            }
+            case 'removeowner': {
+                let role = interaction.options.getString('newrole') || 'USER'
+                await ensureUserUpsert(targetId, { role })
+                return interaction.reply({
+                    content: `User ${targetUser} has been promoted to ${role}.`,
+                    ephemeral: true
+                })
+            }
+            case 'addadmin': {
+                await ensureUserUpsert(targetId, { role: 'ADMIN' })
+                return interaction.reply({
+                    content: `User ${targetUser} has been granted ADMIN role.`,
+                    ephemeral: true
+                })
+            }
+            case 'removeadmin': {
+                await ensureUserUpsert(targetId, { role: 'USER' })
+                return interaction.reply({
+                    content: `User ${targetUser} has been removed from ADMIN role.`,
+                    ephemeral: true
+                })
+            }
+            default:
+                return interaction.reply({
+                    content: 'Unknown subcommand.',
+                    ephemeral: true
+                })
         }
     }
 }

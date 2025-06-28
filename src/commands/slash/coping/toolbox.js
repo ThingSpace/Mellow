@@ -47,7 +47,14 @@ export default {
                 type: cmdTypes.SUB_COMMAND,
                 name: 'suggest',
                 description: 'Get a personalized coping tool suggestion',
-                options: []
+                options: [
+                    {
+                        name: 'goal',
+                        description: 'What is your current goal or focus?',
+                        required: false,
+                        type: cmdTypes.STRING
+                    }
+                ]
             }
         ]
     },
@@ -56,6 +63,11 @@ export default {
         const userId = interaction.user.id
 
         try {
+            // Defer reply for potentially long-running subcommands
+            if (subcommand === 'suggest') {
+                await interaction.deferReply()
+            }
+
             switch (subcommand) {
                 case 'add': {
                     const tool = interaction.options.getString('tool')
@@ -76,8 +88,7 @@ export default {
                     }
 
                     return interaction.reply({
-                        content: `✅ Added **${tool}** to your favorite coping tools!`,
-                        ephemeral: true
+                        content: `✅ Added **${tool}** to your favorite coping tools!`
                     })
                 }
 
@@ -111,8 +122,7 @@ export default {
                     }
 
                     return interaction.reply({
-                        content: `✅ Removed **${tool}** from your favorites.`,
-                        ephemeral: true
+                        content: `✅ Removed **${tool}** from your favorites.`
                     })
                 }
 
@@ -138,56 +148,29 @@ export default {
                 }
 
                 case 'suggest': {
-                    // Get user's recent check-ins for context
-                    const userProfile = await client.db.users.findById(userId, {
-                        include: {
-                            checkIns: {
-                                orderBy: { createdAt: 'desc' },
-                                take: 3
-                            }
-                        }
+                    const goal = interaction.options.getString('goal') || undefined
+                    const aiSuggestion = await client.ai.generateSuggestion({
+                        userId,
+                        goal
                     })
 
-                    const recentMood = userProfile?.checkIns?.[0]?.mood || 'neutral'
-
-                    // Simple suggestion logic based on mood
-                    const suggestions = {
-                        anxious: ['breathing exercises', 'grounding techniques', 'progressive muscle relaxation'],
-                        sad: ['journaling', 'gratitude practice', 'gentle movement'],
-                        angry: ['breathing exercises', 'physical exercise', 'mindful walking'],
-                        stressed: ['meditation', 'breathing exercises', 'time management'],
-                        happy: ['gratitude practice', 'creative activities', 'social connection'],
-                        neutral: ['mindfulness', 'breathing exercises', 'gentle stretching']
-                    }
-
-                    const moodSuggestions = suggestions[recentMood] || suggestions.neutral
-                    const suggestion = moodSuggestions[Math.floor(Math.random() * moodSuggestions.length)]
-
-                    // Log coping tool suggestion
                     if (client.systemLogger) {
                         await client.systemLogger.logUserEvent(
                             userId,
                             interaction.user.username,
                             'coping_suggestion_requested',
-                            `Suggested: ${suggestion} (based on mood: ${recentMood})`
+                            `AI suggested: ${aiSuggestion}`
                         )
                     }
 
                     const embed = new client.Gateway.EmbedBuilder()
                         .setTitle('💡 Coping Tool Suggestion')
                         .setColor(client.colors.primary)
-                        .setDescription(
-                            `Based on your recent mood (${recentMood}), I suggest trying **${suggestion}**.`
-                        )
-                        .addFields({
-                            name: 'Why this suggestion?',
-                            value: `This tool is often helpful when feeling ${recentMood}. Give it a try and see how it feels!`,
-                            inline: false
-                        })
+                        .setDescription(`Here's a personalized suggestion for you:\n\n${aiSuggestion}`)
                         .setFooter({ text: client.footer, iconURL: client.logo })
                         .setTimestamp()
 
-                    return interaction.reply({ embeds: [embed] })
+                    return interaction.editReply({ embeds: [embed] })
                 }
 
                 default:
@@ -203,10 +186,13 @@ export default {
                 await client.systemLogger.logError(error, `Toolbox Command: ${subcommand}`)
             }
 
-            return interaction.reply({
-                content: '❌ An error occurred while managing your toolbox. Please try again later.',
-                ephemeral: true
-            })
+            // Only reply if not already replied or deferred
+            if (!interaction.replied && !interaction.deferred) {
+                return interaction.reply({
+                    content: '❌ An error occurred while managing your toolbox. Please try again later.',
+                    ephemeral: true
+                })
+            }
         }
     }
 }

@@ -201,4 +201,20 @@ export class CopingToolUsageModule {
             ...options
         })
     }
+
+    /**
+     * Get the most commonly used coping tools for a user (top 3)
+     * @param {string|number} userId
+     * @returns {Promise<string[]>}
+     */
+    async getCommonToolsForUser(userId) {
+        const usages = await this.prisma.copingToolUsage.groupBy({
+            by: ['toolName'],
+            where: { userId: BigInt(userId) },
+            _count: { toolName: true },
+            orderBy: { _count: { toolName: 'desc' } },
+            take: 3
+        })
+        return usages.map(u => u.toolName)
+    }
 }

@@ -10,6 +10,7 @@ Improve system performance, reliability, and maintainability while ensuring scal
     -   [x] Prisma ORM with proper schema design
     -   [x] BigInt IDs for Discord compatibility
     -   [x] Proper database relationships and includes
+    -   [x] All upsert/create operations now enforce required fields (e.g., username)
     -   [ ] Add database indexes for frequently queried fields
     -   [ ] Implement caching layer for common queries
     -   [ ] Add database connection pooling
@@ -17,6 +18,7 @@ Improve system performance, reliability, and maintainability while ensuring scal
     -   [x] Optimize command response times (removed unnecessary deferrals)
     -   [x] Fixed interaction acknowledgment issues
     -   [x] Streamlined embed generation
+    -   [x] Refactored command subcommand handling to use switch statements for maintainability
     -   [ ] Implement async processing for heavy operations
     -   [ ] Add request queuing for high-load scenarios
 -   [x] **Memory Management**
@@ -80,6 +82,7 @@ Improve system performance, reliability, and maintainability while ensuring scal
     -   [x] Shared utility functions (streak calculator, etc.)
     -   [x] Service-based architecture (AI, reminders, etc.)
     -   [x] Comprehensive JSDoc documentation
+    -   [x] Refactored coping plan/toolbox commands for clarity and maintainability
     -   [ ] Refactor large files into smaller modules
     -   [ ] Implement consistent naming conventions
     -   [ ] Create code style guidelines
@@ -149,6 +152,11 @@ Improve system performance, reliability, and maintainability while ensuring scal
     -   [x] Error tracking and reporting
     -   [x] User behavior monitoring
     -   [x] Crisis event tracking
+-   [x] **Coping Plan & Toolbox AI Improvements**
+    -   [x] Added `goal` option to `/plan suggest` and `/toolbox suggest`
+    -   [x] AI suggestion logic now gathers user context internally
+    -   [x] Improved error handling and logging in coping commands and AI service
+    -   [x] Consistent use of `BigInt` for all Discord IDs in DB operations
 
 ## Planned Technical Commands
 

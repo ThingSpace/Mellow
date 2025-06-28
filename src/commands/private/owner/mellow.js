@@ -146,6 +146,7 @@ export default {
 
             // Check if user is an owner
             const isOwner = await client.db.mellow.isOwner(userId)
+
             if (!isOwner) {
                 return interaction.editReply({
                     embeds: [

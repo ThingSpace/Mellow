@@ -448,6 +448,38 @@ Be compassionate, practical, and provide specific, actionable resources. Focus o
             throw error
         }
     }
+
+    /**
+     * Generate a personalized suggestion for the user based on their trends and preferences.
+     * @param {Object} context - User context for suggestion
+     * @param {string} context.userId - Discord user ID
+     * @param {string} [context.goal] - User's stated goal or focus
+     * @returns {Promise<string>} AI-generated suggestion
+     */
+    async generateSuggestion({ userId, goal }) {
+        const userPrefs = await db.userPreferences.findById(userId)
+        const personality = userPrefs?.aiPersonality || 'gentle'
+
+        const moodTrend = await db.moodCheckIns.getMoodTrendForUser?.(userId)
+        const checkInTrend = await db.moodCheckIns.getCheckInTrendForUser?.(userId)
+        const commonCopingTools = await db.copingToolUsage.getCommonToolsForUser?.(userId)
+        const favoriteTools = await db.favoriteCopingTools.findMany({ where: { userId: BigInt(userId) } })
+
+        const favoriteToolNames = favoriteTools?.map(f => f.tool) || []
+
+        let prompt = `You are Mellow, an AI mental health companion. Provide a personalized, actionable suggestion for the user based on the following context:\n`
+
+        if (moodTrend) prompt += `- Recent mood trend: ${moodTrend}\n`
+        if (checkInTrend) prompt += `- Check-in trend: ${checkInTrend}\n`
+        if (commonCopingTools && commonCopingTools.length)
+            prompt += `- Most used coping tools: ${commonCopingTools.join(', ')}\n`
+        if (favoriteToolNames.length) prompt += `- Favorite coping tools: ${favoriteToolNames.join(', ')}\n`
+        if (goal) prompt += `- User's goal: ${goal}\n`
+        prompt += `- Your personality should be: ${personality}\n`
+        prompt += `\nGive a supportive, concise, and practical suggestion that fits the user's trends and preferences. Use a warm, encouraging tone.`
+
+        return this.generateResponse(prompt, userId)
+    }
 }
 
 export const aiService = new AIService()

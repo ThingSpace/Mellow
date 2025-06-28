@@ -275,4 +275,39 @@ export class MoodCheckInModule {
             }
         })
     }
+
+    /**
+     * Get a simple mood trend summary for a user (e.g., last 7 check-ins)
+     * @param {string|number} userId
+     * @returns {Promise<string|null>}
+     */
+    async getMoodTrendForUser(userId) {
+        const checkIns = await this.prisma.moodCheckIn.findMany({
+            where: { userId: BigInt(userId) },
+            orderBy: { createdAt: 'desc' },
+            take: 7
+        })
+        if (!checkIns.length) return null
+        // Example: summarize as a comma-separated list of moods
+        return checkIns
+            .map(c => c.mood)
+            .reverse()
+            .join(' → ')
+    }
+
+    /**
+     * Get a simple check-in trend summary for a user (e.g., frequency in last week)
+     * @param {string|number} userId
+     * @returns {Promise<string|null>}
+     */
+    async getCheckInTrendForUser(userId) {
+        const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+        const count = await this.prisma.moodCheckIn.count({
+            where: {
+                userId: BigInt(userId),
+                createdAt: { gte: oneWeekAgo }
+            }
+        })
+        return `Check-ins in last 7 days: ${count}`
+    }
 }
