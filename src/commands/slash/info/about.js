@@ -23,6 +23,11 @@ export default {
                             inline: false
                         },
                         {
+                            name: 'Documentation',
+                            value: '[Mellow Docs](https://mellow.athing.space)',
+                            inline: false
+                        },
+                        {
                             name: 'Important Note',
                             value: 'Mellow is not a substitute for professional help. If you are in crisis, please reach out to a qualified professional or helpline.',
                             inline: false

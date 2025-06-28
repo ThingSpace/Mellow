@@ -25,6 +25,11 @@ export default {
                                 inline: false
                             },
                             {
+                                name: 'Documentation',
+                                value: '[Mellow Docs](https://mellow.athing.space)',
+                                inline: false
+                            },
+                            {
                                 name: 'License',
                                 value: 'AGPL-3.0',
                                 inline: true

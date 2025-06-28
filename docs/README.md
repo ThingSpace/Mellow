@@ -14,7 +14,7 @@ This directory contains the complete documentation for Mellow, hosted via GitHub
 
 ## 🌐 Accessing Documentation
 
-The documentation is available at: `https://thingspace.github.io/Mellow`
+The documentation is available at: [https://mellow.athing.space](https://mellow.athing.space)
 
 ## 🛠️ Local Development
 

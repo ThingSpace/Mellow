@@ -135,7 +135,8 @@ export default {
                     .setColor(client.colors.primary)
                     .setThumbnail(client.logo)
                     .setDescription(
-                        'Here are all the available Mellow commands! Use `/help <command>` to get detailed information about a specific command.'
+                        'Here are all the available Mellow commands! Use `/help <command>` to get detailed information about a specific command.\n\n' +
+                            '📚 [Full Documentation](https://mellow.athing.space)'
                     )
                     .addFields(fields)
                     .setTimestamp()

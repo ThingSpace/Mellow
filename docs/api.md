@@ -6,7 +6,13 @@ nav_order: 5
 
 # API Reference
 
-Technical documentation for developers working with Mellow's codebase.
+> **Developer Quick Links**
+>
+> - [REST API Documentation](#rest-api)  
+> - [OpenAPI/Swagger Spec](#openapi-spec)  
+> - [GitHub Repository](https://github.com/ThingSpace/Mellow)
+>
+> _For bot command integration, see the [Commands Reference](commands.md)._
 
 ## 🏗️ Architecture Overview
 

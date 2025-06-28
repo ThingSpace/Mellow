@@ -16,12 +16,14 @@ search_enabled: true
 # Theme settings
 theme: just-the-docs
 color_scheme: mellow
+# Enable dark mode toggle for just-the-docs
+color_scheme_toggle: true
 
 # Navigation structure (for just-the-docs)
 nav_sort: order
 
 # Footer content
-footer_content: "Copyright &copy; 2025 Mellow. Mental health support for Discord communities."
+footer_content: "Copyright &copy; 2025 ByteBrush Studios. All Rights Reserved"
 
 # Back to top link
 back_to_top: true
