@@ -1,7 +1,7 @@
 title: Mellow Documentation
 description: Your AI-Powered Mental Health Companion for Discord
-baseurl: '/mellow'
-url: 'https://thingspace.github.io'
+baseurl: ""
+url: "https://mellow.athing.space"
 
 markdown: kramdown
 highlighter: rouge
