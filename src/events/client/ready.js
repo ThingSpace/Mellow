@@ -47,6 +47,9 @@ export default {
 
             log('All services initialized successfully!', 'done')
 
+            const guildCount = await client.db.prisma.guild.count()
+            const userCount = await client.db.prisma.user.count()
+
             // Log startup event using system logger
             if (client.systemLogger) {
                 const embed = new client.Gateway.EmbedBuilder()
@@ -56,12 +59,12 @@ export default {
                     .addFields(
                         {
                             name: 'Guilds',
-                            value: client.guilds.cache.size.toString(),
+                            value: `${guildCount.toLocaleString()}`,
                             inline: true
                         },
                         {
                             name: 'Users',
-                            value: client.users.cache.size.toString(),
+                            value: `${userCount.toLocaleString()}`,
                             inline: true
                         }
                     )

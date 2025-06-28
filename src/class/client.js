@@ -36,9 +36,6 @@ class Mellow extends Client {
             ],
             partials: [
                 Partials.Channel,
-                Partials.DirectMessages,
-                Partials.DirectMessageReactions,
-                Partials.DirectMessageTyping,
                 Partials.GuildMember,
                 Partials.GuildScheduledEvent,
                 Partials.Message,
