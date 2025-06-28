@@ -4,18 +4,19 @@
 [![License](https://img.shields.io/badge/License-AGPL--3.0-blue?style=for-the-badge)](LICENSE)
 [![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
 [![OpenAI](https://img.shields.io/badge/OpenAI-412991?style=for-the-badge&logo=openai&logoColor=white)](https://openai.com/)
-[![Documentation](https://img.shields.io/badge/Documentation-GitHub%20Pages-blue?style=for-the-badge)](https://thingspace.github.io/Mellow)
+[![Documentation](https://img.shields.io/badge/Documentation-GitHub%20Pages-blue?style=for-the-badge)](https://mellow.athing.space)
 
 **Mellow** is an AI-powered mental health companion that lives right inside Discord. It's not a therapist — but it _is_ a safe, supportive presence you can talk to when things feel heavy, confusing, or just too much.
 
 ## 📚 Documentation
 
-**Complete documentation is available at: [thingspace.github.io/Mellow](https://thingspace.github.io/Mellow)**
+**Complete documentation is available at: [mellow.athing.space](https://mellow.athing.space)**
 
--   [Getting Started Guide](https://thingspace.github.io/Mellow/getting-started.html)
--   [Command Reference](https://thingspace.github.io/Mellow/commands.html)
--   [API Documentation](https://thingspace.github.io/Mellow/api.html)
--   [Contributing Guide](https://thingspace.github.io/Mellow/contributing.html)
+-   [Getting Started Guide](https://mellow.athing.space/getting-started)
+-   [Command Reference](https://mellow.athing.space/commands)
+-   [API Documentation](https://mellow.athing.space/api)
+-   [Contributing Guide](https://mellow.athing.space/contributing)
+-   [Troubleshooting](https://mellow.athing.space/troubleshooting)
 
 ---
 
