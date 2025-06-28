@@ -13,7 +13,11 @@ plugins:
 # Search configuration
 search_enabled: true
 
-# Navigation structure
+# Theme settings
+theme: just-the-docs
+color_scheme: mellow
+
+# Navigation structure (for just-the-docs)
 nav_sort: order
 
 # Footer content
