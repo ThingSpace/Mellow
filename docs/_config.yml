@@ -17,7 +17,7 @@ search_enabled: true
 
 # Theme settings
 theme: just-the-docs
-color_scheme: dark
+color_scheme: mellow
 color_scheme_toggle: true
 
 # Navigation structure (for just-the-docs)
