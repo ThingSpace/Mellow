@@ -28,24 +28,7 @@ aux_links:
   "Mellow on GitHub":
     - "https://github.com/ThingSpace/Mellow"
   "Invite to Discord":
-    - "https://discord.com/oauth2/authorize?client_id=1386810331367608371&permissions=1394015504448"
-  "Support Server":
-    - "https://discord.gg/qyTcK7VRva"
-
-aux_links_new_tab: true
-
-exclude:
-    - README.md
-    - node_modules/
-    - .sass-cache/
-    - .jekyll-cache/
-    - gemfiles/
-    - Gemfile
-    - Gemfile.lock
-    - vendor/
-    - "https://github.com/ThingSpace/Mellow"
-  "Invite to Discord":
-    - "https://discord.com/oauth2/authorize?client_id=1088267111259533312&permissions=1394015504448&integration_type=0&scope=bot+applications.commands"
+    - "https://discord.com/oauth2/authorize?client_id=1386810331367608371"
   "Support Server":
     - "https://discord.gg/qyTcK7VRva"
 
