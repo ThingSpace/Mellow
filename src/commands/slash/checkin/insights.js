@@ -50,7 +50,7 @@ export default {
         })
 
         if (!checkIns.length) {
-            return interaction.editReply({
+            return interaction.reply({
                 embeds: [
                     new client.Gateway.EmbedBuilder()
                         .setTitle('Mood Insights')
@@ -127,7 +127,7 @@ export default {
             timeframeText = 'All Time'
         }
 
-        await interaction.editReply({
+        await interaction.reply({
             embeds: [
                 new client.Gateway.EmbedBuilder()
                     .setTitle(`Mood Insights (${timeframeText})`)
