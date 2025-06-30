@@ -32,7 +32,7 @@ nav_order: 8
 ## Bot left my server or is offline
 
 -   Re-invite the bot using the [invite link](https://discord.com/oauth2/authorize?client_id=1386810331367608371).
--   Check the [status page](https://mellow.athing.space/status) if available.
+-   Check the [status page](https://status.athing.space) if available.
 
 ## Still need help?
 
