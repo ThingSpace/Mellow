@@ -73,6 +73,12 @@ export default {
                         required: false,
                         type: cmdTypes.STRING,
                         choices: languageChoices
+                    },
+                    {
+                        name: 'context_logging',
+                        description: 'Allow AI to use your messages for conversation context (improves responses)',
+                        required: false,
+                        type: cmdTypes.BOOLEAN
                     }
                 ]
             },
@@ -122,7 +128,8 @@ export default {
                                         `**AI Personality:** ${settings.aiPersonality || 'gentle'}`,
                                         `**Theme:** ${settings.profileTheme || 'blue'}`,
                                         `**Language:** ${settings.language || 'en'}`,
-                                        `**Journal Privacy:** ${settings.journalPrivacy ? '🔒 Private' : '🌐 Public'}`
+                                        `**Journal Privacy:** ${settings.journalPrivacy ? '🔒 Private' : '🌐 Public'}`,
+                                        `**Context Logging:** ${!settings.disableContextLogging ? '✅ Enabled' : '❌ Disabled'}`
                                     ].join('\n'),
                                     inline: true
                                 },
@@ -140,8 +147,7 @@ export default {
                                 text: 'Use /preferences update to change your settings.',
                                 iconURL: client.logo
                             })
-                    ],
-                    ephemeral: true
+                    ]
                 })
             }
 
@@ -183,6 +189,11 @@ export default {
                     updates.language = language
                 }
 
+                const contextLogging = interaction.options.getBoolean('context_logging')
+                if (contextLogging !== null) {
+                    updates.disableContextLogging = !contextLogging // Note: inverted logic
+                }
+
                 if (Object.keys(updates).length === 0) {
                     return interaction.reply({
                         content: '❌ No settings provided to update.',
@@ -205,8 +216,7 @@ export default {
                     }
 
                     return interaction.reply({
-                        content: '✅ Your preferences have been updated!',
-                        ephemeral: true
+                        content: '✅ Your preferences have been updated!'
                     })
                 } catch (error) {
                     console.error('Failed to update preferences:', error)
@@ -233,8 +243,7 @@ export default {
                     }
 
                     return interaction.reply({
-                        content: '✅ Your preferences have been reset to default values!',
-                        ephemeral: true
+                        content: '✅ Your preferences have been reset to default values!'
                     })
                 } catch (error) {
                     console.error('Failed to reset preferences:', error)

@@ -27,7 +27,7 @@ export default {
 
     run: async (client, interaction) => {
         const cmd = await interaction.options.getString('command')
-        const isPrivate = interaction.options.getBoolean('private') ?? true
+        const isPrivate = interaction.options.getBoolean('private') ?? false
 
         if (cmd && !client.slash.get(cmd)) {
             return interaction.reply({

@@ -27,17 +27,24 @@ export async function handleAIResponse(message, client) {
         // Start typing indicator
         await message.channel.sendTyping()
 
-        // Generate AI response with user's personality preference
-        const aiResponse = await client.ai.generateResponse(message.content, message.author.id)
+        // Prepare context for AI service
+        const context = {
+            messageId: message.id,
+            channelId: message.channel.id
+        }
+
+        // Add guild context for guild messages
+        if (message.guild) {
+            context.guildId = message.guild.id
+        }
+
+        // Generate AI response with enhanced context
+        const aiResponse = await client.ai.generateResponse(message.content, message.author.id, context)
 
         await message.reply({
             content: aiResponse,
             allowedMentions: { repliedUser: true }
         })
-
-        // Log conversation to database - Fix: use correct method signature
-        await client.db.conversationHistory.add(message.author.id, message.content, false)
-        await client.db.conversationHistory.add(message.author.id, aiResponse, true)
 
         // Log AI interaction to system logger
         if (client.systemLogger) {

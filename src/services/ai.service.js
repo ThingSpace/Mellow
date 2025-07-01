@@ -102,8 +102,9 @@ export class AIService {
      * GENERATE A RESPONSE WITH FORMATTING, HISTORY AND PERFORMANCE TRACKING
      * @param message The users message/request
      * @param userId The Discord ID of the user
+     * @param context Additional context (channelId, guildId, etc.)
      */
-    async generateResponse(message, userId) {
+    async generateResponse(message, userId, context = {}) {
         const perfId = `resp-${Date.now()}-${userId}`
 
         try {
@@ -124,14 +125,48 @@ export class AIService {
             const userPrefs = await db.userPreferences.findById(userId)
             const personality = userPrefs?.aiPersonality || 'gentle'
 
-            // Get chat history using the MessageHistoryTool
-            const chatHistory = await this.messageHistory.getRecentHistory(userId, 50)
+            // Get enhanced chat history with channel context
+            const chatHistory = await this.messageHistory.getEnhancedContext(
+                userId,
+                context.channelId,
+                100, // User history limit - increased for better context
+                20 // Channel context limit - increased for better context
+            )
+
+            // Get conversation summary for additional context
+            const conversationSummary = await this.messageHistory.getConversationSummary(userId, 7)
 
             // Build enhanced prompt from database with personality customization
             let enhancedPrompt = this.config.systemPrompt
 
+            // Add conversation summary if available
+            if (conversationSummary) {
+                enhancedPrompt += `\n\n**User Context Summary:**\n${conversationSummary}`
+            }
+
             // Add personality-specific instructions
             enhancedPrompt += this.getPersonalityInstructions(personality)
+
+            // Add context awareness instructions
+            if (context.channelId) {
+                enhancedPrompt += `\n\n**Context & Memory Instructions:**
+- You are responding in a Discord ${context.guildId ? 'guild channel' : 'direct message'}
+- You have access to previous conversation history with this user
+- Pay attention to channel context messages marked with [Recent channel message from username]
+- Maintain conversation continuity and reference previous messages when relevant
+- Be aware of the broader conversation flow in the channel
+- Remember details about the user from previous interactions (their concerns, progress, preferences)
+- If you see patterns in their messages or mood over time, acknowledge this thoughtfully
+- Build upon previous conversations naturally - don't treat each message as isolated
+- Use context from previous interactions to provide more personalized and relevant support`
+            } else {
+                enhancedPrompt += `\n\n**Context & Memory Instructions:**
+- This is a direct message conversation
+- You have access to your full conversation history with this user
+- Reference previous conversations and build upon them naturally
+- Remember their concerns, progress, and preferences from past interactions
+- Provide continuity in your support and acknowledge their journey over time`
+            }
 
             if (typeof enhancedPrompt !== 'string') {
                 console.error(`System prompt is not a valid string:`, enhancedPrompt)
@@ -146,6 +181,18 @@ export class AIService {
                 { role: 'user', content: message }
             ]
 
+            // Debug logging for context analysis
+            if (process.env.NODE_ENV === 'development') {
+                console.log(`AI Context for user ${userId}:`)
+                console.log(`- Total messages in context: ${messages.length - 1}`) // Exclude system prompt
+                console.log(`- User history messages: ${chatHistory.filter(m => m.role === 'user').length}`)
+                console.log(`- AI response messages: ${chatHistory.filter(m => m.role === 'assistant').length}`)
+                console.log(`- Channel context messages: ${chatHistory.filter(m => m.role === 'system').length}`)
+                if (conversationSummary) {
+                    console.log(`- Has conversation summary: Yes`)
+                }
+            }
+
             const { text: fullResponse } = await generateText({
                 model: this.model,
                 messages,
@@ -155,9 +202,19 @@ export class AIService {
                 frequencyPenalty: this.config.frequencyPenalty
             })
 
-            // Save both the user message and AI response to history
-            await this.messageHistory.saveMessage(userId, message, false)
-            await this.messageHistory.saveMessage(userId, fullResponse, true)
+            // Save both the user message and AI response to history with context
+            await this.messageHistory.saveMessage(userId, message, false, {
+                channelId: context.channelId,
+                guildId: context.guildId,
+                messageId: context.messageId,
+                contextType: 'conversation'
+            })
+
+            await this.messageHistory.saveMessage(userId, fullResponse, true, {
+                channelId: context.channelId,
+                guildId: context.guildId,
+                contextType: 'conversation'
+            })
 
             return this.messageFormatting.formatForDiscord(fullResponse)
         } catch (error) {
