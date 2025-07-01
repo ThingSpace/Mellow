@@ -461,6 +461,62 @@ Check what time-based companion mode is currently active for you.
 
 **Automatic Activation:** Based on your timezone preference set in `/preferences`
 
+## ---
+
+### `/version`
+
+View version information, changelogs, and repository details.
+
+**Usage:** `/version [subcommand] [options]`
+
+**Subcommands:**
+
+#### `/version current`
+
+Display current version information and update status.
+
+**Example:** `/version current`
+
+#### `/version latest`
+
+Check for updates and show the latest release information.
+
+**Example:** `/version latest`
+
+#### `/version changelog`
+
+View changelog for a specific version or list all available versions.
+
+**Options:**
+- `version` - Specific version to view (e.g., "1.1.0") - Optional
+
+**Examples:**
+- `/version changelog` - List all available versions
+- `/version changelog version:1.1.0` - View changelog for v1.1.0
+
+#### `/version releases`
+
+View recent releases from the repository.
+
+**Options:**
+- `count` - Number of releases to show (1-10, default: 5) - Optional
+
+**Example:** `/version releases count:10`
+
+#### `/version repo`
+
+View repository information including stats, contributors, and recent commits.
+
+**Example:** `/version repo`
+
+**Features:**
+- Real-time version checking
+- Automatic update notifications
+- Direct links to GitHub releases
+- Repository statistics and insights
+- Recent commit history
+- Contributor information
+
 ## Command Permissions
 
 ### User Commands

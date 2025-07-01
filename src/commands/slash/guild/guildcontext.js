@@ -8,7 +8,7 @@ export default {
         description: 'View guild-level conversation context statistics (admin only)',
         handlers: {
             cooldown: 15000,
-            requiredRoles: ['SUPPORT'],
+            requiredRoles: [],
             requiredPerms: [PermissionFlagsBits.Administrator, PermissionFlagsBits.ManageGuild]
         },
         options: []
@@ -31,7 +31,7 @@ export default {
             // Get guild conversation history stats
             const guildHistory = await client.db.conversationHistory.findMany({
                 where: {
-                    guildId: BigInt(guildId),
+                    guildId: guildId, // Convert BigInt to string for Prisma query
                     // Only count messages that are part of guild context
                     OR: [{ contextType: 'channel_context' }, { contextType: 'conversation' }]
                 },
@@ -127,7 +127,7 @@ export default {
                 })
             }
 
-            return interaction.reply({ embeds: [embed], ephemeral: true })
+            return interaction.reply({ embeds: [embed] })
         } catch (error) {
             console.error('Error getting guild context:', error)
             return interaction.reply({

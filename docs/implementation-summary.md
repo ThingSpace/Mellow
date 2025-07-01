@@ -1,5 +1,11 @@
 # Context Commands & Statistics Implementation Summary
 
+## 📚 Related Documentation
+
+-   **[AI Features Status](./ai-features-status.md)** - Comprehensive overview of implemented AI capabilities and future development
+-   **[Command Reference](./commands.md)** - Complete list of all available commands
+-   **[Features Overview](./features.md)** - Detailed feature descriptions and capabilities
+
 ## ✅ Completed Tasks
 
 ### 1. Guild Context Command Implementation

@@ -10,7 +10,7 @@ export default {
         handlers: {
             cooldown: 15000,
             requiredPerms: [PermissionFlagsBits.ManageMessages],
-            requiredRoles: ['SUPPORT']
+            requiredRoles: []
         },
         options: [
             {

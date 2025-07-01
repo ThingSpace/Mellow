@@ -35,6 +35,18 @@ export default {
                 description: 'View bot system status and command counts',
                 type: cmdTypes.SUB_COMMAND,
                 options: []
+            },
+            {
+                name: 'version',
+                description: 'Check version and update status',
+                type: cmdTypes.SUB_COMMAND,
+                options: []
+            },
+            {
+                name: 'github',
+                description: 'GitHub repository information and connection test',
+                type: cmdTypes.SUB_COMMAND,
+                options: []
             }
         ]
     },
@@ -306,6 +318,219 @@ export default {
                             })
 
                         await interaction.editReply({ embeds: [embed] })
+                    }
+                    break
+                }
+
+                case 'version': {
+                    try {
+                        if (!client.github) {
+                            const embed = new client.Gateway.EmbedBuilder()
+                                .setTitle('⚠️ GitHub Not Configured')
+                                .setDescription('GitHub client is not configured. Update checks unavailable.')
+                                .setColor(client.colors.warning)
+                                .setThumbnail(client.logo)
+                                .setTimestamp()
+                                .setFooter({
+                                    text: client.footer,
+                                    iconURL: client.logo
+                                })
+
+                            return await interaction.editReply({ embeds: [embed] })
+                        }
+
+                        const github = client.github
+                        const currentVersion = github.getCurrentVersion()
+                        const updateCheck = await github.checkForUpdates()
+
+                        const embed = new client.Gateway.EmbedBuilder()
+                            .setTitle('📦 Version Information')
+                            .setDescription('Current version and update status')
+                            .setColor(
+                                updateCheck.success && !updateCheck.isUpToDate
+                                    ? client.colors.warning
+                                    : client.colors.success
+                            )
+                            .addFields(
+                                {
+                                    name: '🏷️ Current Version',
+                                    value: `v${currentVersion}`,
+                                    inline: true
+                                },
+                                {
+                                    name: '🔧 Environment',
+                                    value: process.env.NODE_ENV || 'development',
+                                    inline: true
+                                }
+                            )
+                            .setThumbnail(client.logo)
+                            .setTimestamp()
+                            .setFooter({
+                                text: client.footer,
+                                iconURL: client.logo
+                            })
+
+                        if (updateCheck.success) {
+                            const status = updateCheck.isUpToDate ? '✅ Up to date' : '🔄 Update available'
+                            const latestVersion = updateCheck.latestVersion
+
+                            embed.addFields(
+                                {
+                                    name: '📊 Update Status',
+                                    value: status,
+                                    inline: true
+                                },
+                                {
+                                    name: '🆕 Latest Version',
+                                    value: `v${latestVersion}`,
+                                    inline: true
+                                }
+                            )
+
+                            if (!updateCheck.isUpToDate) {
+                                embed.addFields({
+                                    name: '📦 Latest Release',
+                                    value: `[${updateCheck.releaseInfo.name}](${updateCheck.releaseInfo.htmlUrl})`,
+                                    inline: false
+                                })
+                            }
+                        } else {
+                            embed.addFields({
+                                name: '⚠️ Update Check',
+                                value: 'Unable to check for updates',
+                                inline: false
+                            })
+                        }
+
+                        await interaction.editReply({ embeds: [embed] })
+                    } catch (error) {
+                        console.error('Error getting version info:', error)
+
+                        const embed = new client.Gateway.EmbedBuilder()
+                            .setTitle('❌ Version Error')
+                            .setDescription(`Failed to get version info: ${error.message}`)
+                            .setColor(client.colors.error)
+                            .setThumbnail(client.logo)
+                            .setTimestamp()
+                            .setFooter({
+                                text: client.footer,
+                                iconURL: client.logo
+                            })
+
+                        await interaction.editReply({ embeds: [embed] })
+                    }
+                    break
+                }
+
+                case 'github': {
+                    try {
+                        if (!client.github) {
+                            const embed = new client.Gateway.EmbedBuilder()
+                                .setTitle('⚠️ GitHub Not Configured')
+                                .setDescription(
+                                    'GitHub client is not configured. Please set GITHUB_TOKEN environment variable.'
+                                )
+                                .setColor(client.colors.warning)
+                                .setThumbnail(client.logo)
+                                .setTimestamp()
+                                .setFooter({
+                                    text: client.footer,
+                                    iconURL: client.logo
+                                })
+
+                            return await interaction.editReply({ embeds: [embed] })
+                        }
+
+                        const github = client.github
+                        const [connectionTest, repoInfo, rateLimit] = await Promise.all([
+                            github.testConnection(),
+                            github.getRepoInfo(),
+                            github.getRateLimit()
+                        ])
+
+                        const embed = new client.Gateway.EmbedBuilder()
+                            .setTitle('🔗 GitHub Repository Status')
+                            .setDescription('GitHub API connection and repository information')
+                            .setColor(connectionTest.success ? client.colors.success : client.colors.error)
+                            .setThumbnail(client.logo)
+                            .setTimestamp()
+                            .setFooter({
+                                text: client.footer,
+                                iconURL: client.logo
+                            })
+
+                        // Connection status
+                        embed.addFields({
+                            name: '🔌 API Connection',
+                            value: connectionTest.success
+                                ? `✅ Connected as ${connectionTest.user}`
+                                : `❌ Connection failed: ${connectionTest.error}`,
+                            inline: false
+                        })
+
+                        // Rate limit info
+                        if (connectionTest.success && connectionTest.rateLimit) {
+                            const remaining = connectionTest.rateLimit.remaining
+                            const total = connectionTest.rateLimit.total
+                            const resetTime = connectionTest.rateLimit.resetTime.toLocaleTimeString()
+
+                            embed.addFields({
+                                name: '📊 Rate Limit',
+                                value: `${remaining}/${total} remaining (resets at ${resetTime})`,
+                                inline: true
+                            })
+                        }
+
+                        // Repository info
+                        if (repoInfo.success) {
+                            const repo = repoInfo.data
+                            embed.addFields(
+                                {
+                                    name: '📁 Repository',
+                                    value: `[${repo.name}](${repo.htmlUrl})`,
+                                    inline: true
+                                },
+                                {
+                                    name: '⭐ Stars',
+                                    value: repo.stars.toString(),
+                                    inline: true
+                                },
+                                {
+                                    name: '🍴 Forks',
+                                    value: repo.forks.toString(),
+                                    inline: true
+                                },
+                                {
+                                    name: '📝 Description',
+                                    value: repo.description || 'No description',
+                                    inline: false
+                                }
+                            )
+                        } else {
+                            embed.addFields({
+                                name: '⚠️ Repository Info',
+                                value: 'Unable to fetch repository information',
+                                inline: false
+                            })
+                        }
+
+                        await interaction.editReply({ embeds: [embed] })
+                    } catch (error) {
+                        console.error('Error in GitHub command:', error)
+                        await interaction.editReply({
+                            embeds: [
+                                new client.Gateway.EmbedBuilder()
+                                    .setTitle('❌ GitHub Error')
+                                    .setDescription(`An error occurred: ${error.message}`)
+                                    .setColor(client.colors.error)
+                                    .setThumbnail(client.logo)
+                                    .setTimestamp()
+                                    .setFooter({
+                                        text: client.footer,
+                                        iconURL: client.logo
+                                    })
+                            ]
+                        })
                     }
                     break
                 }
