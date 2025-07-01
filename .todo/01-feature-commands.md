@@ -1,8 +1,10 @@
-# 01: Scaffold Feature Commands/Handler-   [x] Late-Night Companion Mode
+# 01: Scaffold Feature Commands/Handler- [x] Late-Night Companion Mode
+
     -   [x] Implement timezone-aware time detection
-    -   [x] Integrate late-night companion mode into AI responses  
+    -   [x] Integrate late-night companion mode into AI responses
     -   [x] Update presence/status based on user timezones
     -   [x] **AI-powered late-night support and check-ins**
+
 ## Goal
 
 Implement commands and handlers for Mellow's unique features.

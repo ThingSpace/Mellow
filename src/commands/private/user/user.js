@@ -80,6 +80,10 @@ export default {
                         type: cmdTypes.STRING,
                         choices: [
                             {
+                                name: 'SUPPORT',
+                                value: 'SUPPORT'
+                            },
+                            {
                                 name: 'MOD',
                                 value: 'MOD'
                             }
@@ -127,6 +131,7 @@ export default {
                         choices: [
                             { name: 'ADMIN', value: 'ADMIN' },
                             { name: 'MOD', value: 'MOD' },
+                            { name: 'SUPPORT', value: 'SUPPORT' },
                             { name: 'USER', value: 'USER' }
                         ]
                     }

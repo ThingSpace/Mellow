@@ -127,17 +127,17 @@ class AIService {
     /**
      * Generate personalized AI response with context and personality
      * @param {string} message - User's message
-     * @param {string} userId - Discord user ID  
+     * @param {string} userId - Discord user ID
      * @param {Object} context - Additional context (channelId, guildId, etc.)
      * @returns {Promise<Object>} AI response with formatting and crisis analysis
      */
     async generateResponse(message, userId, context = {}) {
-        // Returns: { 
+        // Returns: {
         //   text: string,
         //   crisisDetected: boolean,
         //   severity: string,
         //   resources: Array,
-        //   needsModAlert: boolean 
+        //   needsModAlert: boolean
         // }
     }
 
@@ -148,7 +148,7 @@ class AIService {
      * @returns {Promise<Object>} Comprehensive crisis analysis
      */
     async analyzeCrisis(message, user) {
-        // Returns: { 
+        // Returns: {
         //   severity: 'safe'|'low'|'medium'|'high'|'critical',
         //   confidence: number,
         //   resources: Array,
@@ -168,7 +168,7 @@ class AIService {
         // Returns: {
         //   immediate: Array,    // Immediate safety actions
         //   hotlines: Array,     // Crisis hotlines and contacts
-        //   coping: Array,       // Immediate coping strategies  
+        //   coping: Array,       // Immediate coping strategies
         //   longterm: Array,     // Long-term support options
         //   aiResponse: string   // Personalized AI message
         // }
@@ -178,7 +178,7 @@ class AIService {
      * Generate personalized coping tool suggestions
      * @param {string} mood - Current mood state
      * @param {Array} history - Recent check-ins and tool usage
-     * @param {Object} preferences - User personality and preferences  
+     * @param {Object} preferences - User personality and preferences
      * @returns {Promise<Array>} AI-curated coping tool recommendations
      */
     async suggestCopingTools(mood, history, preferences) {
@@ -216,18 +216,18 @@ Advanced multi-layered crisis detection with AI and keyword-based backup systems
 ```javascript
 // Crisis Detection Flow:
 // 1. OpenAI Moderation API analysis
-// 2. Custom AI crisis severity assessment  
+// 2. Custom AI crisis severity assessment
 // 3. Keyword-based backup detection
 // 4. Context-aware resource provision
 // 5. Automated moderator alerts (when configured)
 
 // Crisis Severity Levels:
 const CRISIS_LEVELS = {
-    SAFE: 'safe',           // No crisis indicators detected
-    LOW: 'low',             // Mild distress, general support needed
-    MEDIUM: 'medium',       // Moderate distress, coping resources provided
-    HIGH: 'high',           // Significant distress, immediate support + mod alert
-    CRITICAL: 'critical'    // Severe crisis, emergency resources + urgent mod alert
+    SAFE: 'safe', // No crisis indicators detected
+    LOW: 'low', // Mild distress, general support needed
+    MEDIUM: 'medium', // Moderate distress, coping resources provided
+    HIGH: 'high', // Significant distress, immediate support + mod alert
+    CRITICAL: 'critical' // Severe crisis, emergency resources + urgent mod alert
 }
 ```
 
@@ -670,7 +670,7 @@ class ConversationHistory {
     /**
      * Store user message for AI context (respects privacy settings)
      * @param {string} userId - Discord user ID
-     * @param {string} message - Message content  
+     * @param {string} message - Message content
      * @param {Object} context - Channel/guild context
      * @returns {Promise<Object>} Stored conversation entry
      */
@@ -708,7 +708,7 @@ class ConversationHistory {
 
     /**
      * Clear user's conversation history (privacy controls)
-     * @param {string} userId - Discord user ID  
+     * @param {string} userId - Discord user ID
      * @returns {Promise<boolean>} Success status
      */
     async clearUserHistory(userId) {
@@ -724,13 +724,13 @@ class ConversationHistory {
 const CONTEXT_POLICY = {
     // User enabled, Server enabled = Full context logging
     userEnabled_serverEnabled: 'FULL_LOGGING',
-    
-    // User enabled, Server disabled = DM-only logging  
+
+    // User enabled, Server disabled = DM-only logging
     userEnabled_serverDisabled: 'DM_ONLY_LOGGING',
-    
+
     // User disabled, Server enabled = No logging for user
     userDisabled_serverEnabled: 'NO_LOGGING',
-    
+
     // User disabled, Server disabled = No logging for user
     userDisabled_serverDisabled: 'NO_LOGGING'
 }
