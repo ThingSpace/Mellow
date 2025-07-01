@@ -3,7 +3,7 @@ layout: default
 title: Technical Documentation
 nav_order: 11
 has_children: true
-description: "Technical resources for developers and advanced users"
+description: 'Technical resources for developers and advanced users'
 ---
 
 # Technical Documentation
@@ -13,16 +13,19 @@ This section contains technical resources for developers, contributors, and adva
 ## 📚 Available Resources
 
 ### Development Status
-- **[AI Features Status](ai-features-status.md)** - Current implementation status and roadmap for AI features
-- **[Implementation Summary](implementation-summary.md)** - Detailed technical implementation notes
+
+-   **[AI Features Status](ai-features-status.md)** - Current implementation status and roadmap for AI features
+-   **[Implementation Summary](implementation-summary.md)** - Detailed technical implementation notes
 
 ### API & Integration
-- **[API Reference](api.md)** - Complete API documentation for developers
-- **[Technical Commands](technical-commands.md)** - Debug and diagnostic commands
+
+-   **[API Reference](api.md)** - Complete API documentation for developers
+-   **[Technical Commands](technical-commands.md)** - Debug and diagnostic commands
 
 ### Development
-- **[Contributing Guide](contributing.md)** - How to contribute to Mellow's development
-- **[Change Logs](changelog.md)** - Version history and release notes
+
+-   **[Contributing Guide](contributing.md)** - How to contribute to Mellow's development
+-   **[Change Logs](changelog.md)** - Version history and release notes
 
 ## 🔧 Developer Quick Start
 
@@ -34,10 +37,11 @@ This section contains technical resources for developers, contributors, and adva
 ## 🚀 Integration Support
 
 For technical support and integration questions:
-- **Discord Support:** [Join our support server](https://discord.gg/C3ZuXPP7Hc)
-- **GitHub Issues:** [Report bugs or request features](https://github.com/ThingSpace/Mellow/issues)
-- **Email:** [support@athing.space](mailto:support@athing.space)
+
+-   **Discord Support:** [Join our support server](https://discord.gg/C3ZuXPP7Hc)
+-   **GitHub Issues:** [Report bugs or request features](https://github.com/ThingSpace/Mellow/issues)
+-   **Email:** [support@athing.space](mailto:support@athing.space)
 
 ---
 
-*This documentation is maintained by the Mellow development team and community contributors.*
+_This documentation is maintained by the Mellow development team and community contributors._

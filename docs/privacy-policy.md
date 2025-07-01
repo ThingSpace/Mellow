@@ -2,7 +2,7 @@
 layout: default
 title: Privacy Policy
 nav_order: 15
-description: "Official privacy policy and data handling practices"
+description: 'Official privacy policy and data handling practices'
 permalink: /privacy-policy/
 ---
 

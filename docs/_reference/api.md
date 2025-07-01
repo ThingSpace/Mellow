@@ -2,7 +2,8 @@
 layout: default
 title: API Reference
 nav_order: 6
-description: "Technical API documentation for developers and advanced users"
+description: 'Technical API documentation for developers and advanced users'
+collection: reference
 ---
 
 # API Reference

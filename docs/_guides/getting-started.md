@@ -2,6 +2,8 @@
 layout: default
 title: Getting Started
 nav_order: 2
+description: 'Complete setup guide for Mellow - from server configuration to personal settings'
+collection: guides
 ---
 
 # Getting Started with Mellow

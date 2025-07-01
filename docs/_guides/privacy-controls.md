@@ -2,7 +2,8 @@
 layout: default
 title: Privacy Controls
 nav_order: 5
-description: "Comprehensive guide to privacy controls, context logging, and data management in Mellow"
+description: 'Comprehensive guide to privacy controls, context logging, and data management in Mellow'
+collection: guides
 ---
 
 # Privacy Controls & Context Logging
