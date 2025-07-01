@@ -2,7 +2,8 @@
 layout: default
 title: Troubleshooting
 nav_order: 9
-description: "Solutions to common issues and technical support"
+description: 'Solutions to common issues and technical support'
+collection: guides
 ---
 
 # Troubleshooting

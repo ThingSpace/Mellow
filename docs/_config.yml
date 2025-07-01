@@ -8,8 +8,8 @@ url: 'https://mellow.athing.space'
 # SEO and social media
 lang: en_US
 twitter:
-  username: MellowBot
-  card: summary_large_image
+    username: MellowBot
+    card: summary_large_image
 
 # Site verification (add when available)
 # google_site_verification: "your-verification-code"
@@ -39,38 +39,62 @@ nav_sort: order
 # Callouts configuration
 callouts_level: quiet
 callouts:
-  highlight:
-    color: yellow
-  new:
-    title: "New in v1.1.0"
-    color: green
-  note:
-    title: "Note"
-    color: blue
-  warning:
-    title: "Warning"
-    color: red
+    highlight:
+        color: yellow
+    new:
+        title: 'New in v1.1.0'
+        color: green
+    note:
+        title: 'Note'
+        color: blue
+    warning:
+        title: 'Warning'
+        color: red
 
 # Collections for better organization
 collections:
-  guides:
-    output: true
-    permalink: /:collection/:name/
-  reference:
-    output: true
-    permalink: /:collection/:name/
-  technical:
-    output: true
-    permalink: /:collection/:name/
+    guides:
+        output: true
+        permalink: /guides/:name/
+        sort_by: nav_order
+    reference:
+        output: true
+        permalink: /reference/:name/
+        sort_by: nav_order
+    technical:
+        output: true
+        permalink: /technical/:name/
+        sort_by: nav_order
+
+# Default front matter for collections
+defaults:
+    - scope:
+          path: ""
+          type: "guides"
+      values:
+          layout: "default"
+          collection: "guides"
+    - scope:
+          path: ""
+          type: "reference"
+      values:
+          layout: "default"
+          collection: "reference"
+    - scope:
+          path: ""
+          type: "technical"
+      values:
+          layout: "default"
+          collection: "technical"
 
 # Table of contents
 nav_external_links:
-  - title: Mellow on GitHub
-    url: https://github.com/ThingSpace/Mellow
-  - title: Invite to Discord
-    url: https://discord.com/oauth2/authorize?client_id=1386810331367608371
-  - title: Support Server
-    url: https://discord.gg/C3ZuXPP7Hc
+    - title: Mellow on GitHub
+      url: https://github.com/ThingSpace/Mellow
+    - title: Invite to Discord
+      url: https://discord.com/oauth2/authorize?client_id=1386810331367608371
+    - title: Support Server
+      url: https://discord.gg/C3ZuXPP7Hc
 
 # Footer content
 footer_content: 'Copyright &copy; 2025 ByteBrush Studios. All Rights Reserved'

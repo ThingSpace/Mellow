@@ -2,7 +2,7 @@
 layout: default
 title: Roadmap
 nav_order: 14
-description: "Development roadmap and future feature plans"
+description: 'Development roadmap and future feature plans'
 ---
 
 # 🎯 Mellow v1.1.0 - Implementation Complete & Future Roadmap

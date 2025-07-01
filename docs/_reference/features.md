@@ -3,6 +3,7 @@ layout: default
 title: Features Overview
 nav_order: 4
 description: "Comprehensive overview of Mellow's mental health features and capabilities"
+collection: reference
 ---
 
 # Features Overview

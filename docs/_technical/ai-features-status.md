@@ -2,8 +2,9 @@
 layout: default
 title: AI Features Status
 nav_order: 12
-description: "Current status and development roadmap for AI features"
+description: 'Current status and development roadmap for AI features'
 parent: Technical Documentation
+collection: technical
 ---
 
 # AI Features Implementation Status

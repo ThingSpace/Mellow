@@ -2,7 +2,7 @@
 layout: default
 title: Terms of Service
 nav_order: 16
-description: "Terms of service and usage agreement"
+description: 'Terms of service and usage agreement'
 permalink: /terms-of-service/
 ---
 
