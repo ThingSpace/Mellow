@@ -2,6 +2,13 @@ import { PerformanceTool } from './tools/performance.js'
 import { buildCopingPrompt } from './tools/copingTool.js'
 import { MessageFormattingTool } from './tools/messageFormatting.js'
 import { MessageHistoryTool } from './tools/messageHistory.js'
+import {
+    isLateNight,
+    isEarlyMorning,
+    isLateEvening,
+    getTimePeriod,
+    getSleepSuggestion
+} from '../functions/timeHelper.js'
 import { db } from '../database/client.js'
 import { openai } from '@ai-sdk/openai'
 import { generateText } from 'ai'
@@ -147,6 +154,14 @@ export class AIService {
             // Add personality-specific instructions
             enhancedPrompt += this.getPersonalityInstructions(personality)
 
+            // Add late-night mode instructions if applicable
+            if (userPrefs?.timezone) {
+                const lateNightInstructions = this.getLateNightInstructions(userPrefs.timezone)
+                if (lateNightInstructions) {
+                    enhancedPrompt += lateNightInstructions
+                }
+            }
+
             // Add context awareness instructions
             if (context.channelId) {
                 enhancedPrompt += `\n\n**Context & Memory Instructions:**
@@ -166,6 +181,19 @@ export class AIService {
 - Reference previous conversations and build upon them naturally
 - Remember their concerns, progress, and preferences from past interactions
 - Provide continuity in your support and acknowledge their journey over time`
+            }
+
+            // Late-night companion mode: Adjust tone and provide sleep-related suggestions
+            const currentHour = new Date().getHours()
+            if (isLateNight(currentHour)) {
+                enhancedPrompt += `\n\n**Late-Night Companion Mode:**
+- It's currently late at night. Your tone should be extra gentle and calming.
+- Prioritize the user's comfort and emotional safety.
+- If the user is expressing distress, gently encourage relaxation and provide coping strategies.
+- Consider suggesting a wind-down routine or sleep hygiene tips if appropriate.
+- Avoid suggesting activities that are too stimulating or demanding.
+
+`
             }
 
             if (typeof enhancedPrompt !== 'string') {
@@ -293,6 +321,66 @@ export class AIService {
         }
 
         return personalityInstructions[personality] || personalityInstructions.gentle
+    }
+
+    /**
+     * Get late-night companion mode instructions based on user's timezone
+     * @param {string} timezone - User's timezone preference
+     * @returns {string} - Additional instructions for late-night mode
+     */
+    getLateNightInstructions(timezone) {
+        if (!timezone) {
+            return '' // No timezone set, skip late-night mode
+        }
+
+        const timePeriod = getTimePeriod(timezone)
+        const sleepSuggestion = getSleepSuggestion(timezone)
+
+        let instructions = ''
+
+        if (isLateNight(timezone)) {
+            instructions += `
+
+**Late-Night Companion Mode Active**
+- It's currently late night (${timePeriod}) in the user's timezone
+- Use a calmer, more gentle tone than usual
+- Be extra supportive and understanding - late nights can be difficult emotionally
+- Acknowledge that late-night thoughts and feelings can feel more intense
+- If appropriate, gently suggest relaxation techniques or coping strategies
+- Be present and patient - avoid rushing the conversation
+- Consider the user might be dealing with insomnia, anxiety, or emotional struggles
+- Offer comfort without judgment about being up late`
+
+            if (sleepSuggestion) {
+                instructions += `
+- Sleep hygiene note: ${sleepSuggestion}`
+            }
+        } else if (isEarlyMorning(timezone)) {
+            instructions += `
+
+**Early Morning Mode Active**
+- It's currently early morning (${timePeriod}) in the user's timezone
+- The user might be starting their day or having trouble sleeping
+- Use gentle, warm language appropriate for the morning
+- Consider offering positive affirmations for the day ahead
+- Be mindful they might be feeling groggy or need gentle encouragement`
+
+            if (sleepSuggestion) {
+                instructions += `
+- Morning wellness note: ${sleepSuggestion}`
+            }
+        } else if (isLateEvening(timezone)) {
+            instructions += `
+
+**Evening Wind-Down Mode**
+- It's currently late evening (${timePeriod}) in the user's timezone
+- The user might be winding down from their day
+- Use calming, reflective language
+- Consider offering relaxation suggestions if appropriate
+- Be supportive of end-of-day reflections and feelings`
+        }
+
+        return instructions
     }
 
     async getCopingResponse({ tool, feeling, userId }) {

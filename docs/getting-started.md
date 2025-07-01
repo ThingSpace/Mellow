@@ -6,207 +6,222 @@ nav_order: 2
 
 # Getting Started with Mellow
 
-This guide will help you set up and start using Mellow in your Discord server or as a personal companion.
+This guide will help you set up and start using Mellow's comprehensive mental health features in your Discord server or as a personal companion.
 
-## Installation
+## 🚀 Quick Setup
 
 ### Adding Mellow to Your Server
 
 1. **Invite the Bot**
+   - Use the [official invite link](https://discord.com/oauth2/authorize?client_id=1386810331367608371)
+   - Select your server and authorize the required permissions
+   - Mellow will introduce itself and provide setup guidance
 
-    - Use the [official invite link](https://discord.com/oauth2/authorize?client_id=1386810331367608371)
-    - Select your server and authorize the required permissions
-
-2. **Initial Setup**
-    - Run `/guildsettings view` to see current configuration
-    - Configure channels with `/guildsettings channels`
-    - Enable features with `/guildsettings features`
+2. **Initial Server Configuration** (Admins Only)
+   ```
+   /guildsettings view          # See current configuration
+   /guildsettings channels      # Configure feature channels
+   /guildsettings features      # Enable/disable features
+   ```
 
 ### Required Permissions
 
 Mellow needs these permissions to function properly:
 
--   **Send Messages** - Basic communication
--   **Use Slash Commands** - Modern command interface
--   **Embed Links** - Rich message formatting
--   **Manage Messages** - Moderation features
--   **Timeout Members** - Moderation actions
--   **Ban Members** - Moderation actions
--   **Manage Roles** - Role assignment features
+**Core Functionality:**
+- **Send Messages** - Basic communication
+- **Use Slash Commands** - Modern command interface  
+- **Embed Links** - Rich message formatting
+- **Read Message History** - Context understanding
 
-## First Steps
+**Moderation Features:**
+- **Manage Messages** - Message management
+- **Timeout Members** - User timeout actions
+- **Ban Members** - Ban/unban functionality
+- **Manage Roles** - Role assignment features
 
-### 1. Personal Setup
+## 🎯 Essential First Steps
 
-Start by configuring your personal preferences:
+### 1. Personal Configuration
 
-```
-/preferences view          # See current settings
-/preferences update        # Modify check-in intervals, themes, etc.
-/profile                   # View your mental health journey
-```
-
-### 2. Your First Check-In
-
-Begin tracking your mental health with structured check-ins:
+Set up your personalized Mellow experience:
 
 ```
-/checkin                   # Start your first mood check-in
+/preferences view                    # See current settings
+/preferences update                  # Configure all your preferences
+/profile                            # View your mental health journey
 ```
 
-You'll be guided through:
+**Critical Settings to Configure:**
 
--   **Mood Selection** - Choose from happy, calm, sad, anxious, etc.
--   **Intensity Rating** - Rate from 1-5 how strongly you feel
--   **Activity Tracking** - Note what you've been doing
--   **Next Check-In** - Schedule based on your preferences
+- **🕐 Timezone** - Enables automatic late-night companion mode with gentle, time-appropriate responses
+- **🤖 AI Personality** - Choose: gentle, supportive, direct, playful, professional, or encouraging  
+- **🔔 Check-in Reminders** - Set intervals from 1-24 hours for mental health tracking
+- **🎨 Profile Theme** - Select your preferred color scheme for embeds
+- **💭 Context Logging** - Allow AI to remember conversations for personalized support
+- **📱 Reminder Method** - Choose DM or channel notifications
 
-### 3. Explore Coping Tools
+### 2. Understanding Privacy & Context
 
-Discover tools to support your mental health:
+**Context Logging** is one of Mellow's most powerful features:
 
 ```
-/coping                    # Access breathing, grounding exercises
-/toolbox                   # Manage your favorite tools
-/plan                      # Create personalized coping plans
-/support                   # Crisis resources and hotlines
+/context                            # See what the AI remembers about you  
+/preferences update context_logging:true     # Enable for better responses
+/preferences update context_logging:false    # Disable for more privacy
 ```
 
-### 4. Server Configuration (Admins)
+**How Context Improves Your Experience:**
+- AI remembers your previous conversations and builds upon them
+- More personalized coping suggestions based on your patterns
+- Continuity in support across multiple sessions
+- Recognition of your mental health journey over time
 
-Set up Mellow for your community:
+See our [Privacy Controls guide](privacy-controls.md) for complete details.
 
-#### Channel Configuration
+### 3. Your First Mental Health Check-In
+
+Begin tracking your mental wellness:
+
+```
+/checkin                            # Start your first mood check-in
+```
+
+**The Check-In Process:**
+- **🎭 Mood Selection** - Choose from happy, calm, sad, anxious, stressed, excited, etc.
+- **📊 Intensity Rating** - Rate 1-5 how strongly you feel this mood
+- **🏃 Activity Tracking** - Note what you've been doing (work, social, exercise, etc.)
+- **⏰ Next Check-In** - Automatically scheduled based on your preferences
+
+### 4. Discover Time-Based Support
+
+**Late-Night Companion Mode** automatically activates based on your timezone:
+
+```
+/timemode                           # Check your current time-based mode
+```
+
+**Automatic Mode Features:**
+- **🌙 Late-Night Mode (10 PM - 6 AM)** - Extra gentle, calming responses with sleep-friendly suggestions
+- **🌅 Early Morning Mode (6 AM - 10 AM)** - Encouraging support for starting your day
+- **🌆 Evening Wind-Down (8 PM - 10 PM)** - Calming, reflective responses for day's end
+- **☀️ Standard Mode** - Regular supportive interactions throughout the day
+
+### 5. Explore Mental Health Tools
+
+Discover Mellow's comprehensive toolkit:
+
+```
+/coping                             # Access breathing & grounding exercises
+/toolbox                            # Manage your favorite coping tools  
+/plan                               # Create personalized coping plans
+/music                              # Get calming music suggestions
+/support                            # Crisis resources and hotlines
+/streaks                            # Track your tool usage patterns
+```
+
+**Specialized Features:**
+- **Ghost Letters** (`/ghostletter`) - Private, safe venting that gets cleared
+- **Insights** (`/insights`) - Detailed mood analysis and trends
+- **Crisis Detection** - Automatic support when you need it most
+
+## 🏥 Understanding Crisis Support
+
+**Automatic Crisis Detection:**
+- Mellow's AI automatically detects signs of distress in messages
+- Provides appropriate resources and coping strategies discreetly
+- Can alert server moderators in serious situations (if enabled)
+- Always respects your privacy and autonomy
+
+**Getting Help:**
+```
+/support                            # Immediate crisis resources
+```
+
+## ⚙️ Server Setup (Administrators)
+
+### Essential Channel Configuration
+
+Set up dedicated channels for Mellow's features:
 
 ```
 /guildsettings channels mod_alert_channel:#crisis-alerts
-/guildsettings channels mod_log_channel:#mod-logs
+/guildsettings channels mod_log_channel:#mod-logs  
 /guildsettings channels checkin_channel:#mental-health
 /guildsettings channels system_channel:#system-logs
+/guildsettings channels audit_log_channel:#audit-logs
 ```
 
-#### Feature Toggles
+### Feature Management
+
+Control which features are available in your server:
 
 ```
-/guildsettings features check_ins:true
-/guildsettings features crisis_alerts:true
-/guildsettings features ghost_letters:true
-/guildsettings features system_logs:true
+/guildsettings features check_ins:true           # Enable mood tracking
+/guildsettings features crisis_alerts:true       # Enable crisis detection
+/guildsettings features ghost_letters:true       # Enable private venting
+/guildsettings features system_logs:true         # Enable system logging
 ```
 
-#### Moderation Setup
+### Moderation Tools
+
+Access comprehensive moderation features:
 
 ```
-/guildsettings moderation auto_mod_enabled:true
-/guildsettings moderation auto_mod_level:3
-/guildsettings moderation moderator_role:@Mental Health Moderator
-/guildsettings moderation system_role:@Member
+/mod timeout user:@user duration:1h reason:"Breaking rules"
+/mod ban user:@user reason:"Severe violation" 
+/mod role add user:@user role:@Helper
+/mod logs user:@user                            # View user's mod history
 ```
 
-## Key Commands Overview
+## 🔧 Advanced Features
 
-### Mental Health & Wellness
+### AI Personality Customization
 
--   `/checkin` - Log your current mood and feelings
--   `/insights` - View mood trends and analysis
--   `/profile` - Comprehensive mental health journey
--   `/preferences` - Manage personal settings
+Each user can customize how Mellow interacts with them:
 
-### Coping & Support
+**Available Personalities:**
+- **Gentle** - Soft, nurturing, and understanding approach
+- **Supportive** - Encouraging and optimistic responses  
+- **Direct** - Clear, straightforward guidance
+- **Playful** - Light-hearted but caring interactions
+- **Professional** - Formal, structured support approach
+- **Encouraging** - Motivational and uplifting tone
 
--   `/coping` - Access grounding and breathing techniques
--   `/toolbox` - Manage favorite coping tools
--   `/plan` - Create personalized coping plans
--   `/music` - Get calming music suggestions
--   `/support` - Access crisis resources
--   `/streaks` - Track coping tool usage
+### Analytics & Insights  
 
-### Privacy & Expression
+Track your mental health journey:
 
--   `/ghostletter` - Write private messages for venting
+```
+/insights week                      # Weekly mood analysis
+/insights month                     # Monthly trends  
+/insights all                       # All-time patterns
+/profile                           # Complete wellness overview
+```
 
-### Information & Help
+### Privacy Controls
 
--   `/help` - Command help and information
--   `/about` - Learn about Mellow
--   `/source` - Open source information
+Manage your data and privacy:
 
-## Privacy & Safety
+```
+/preferences view                   # Review all settings
+/preferences reset                  # Clear all data and reset
+/context                           # View AI conversation history
+```
 
-### Data Protection
+## 🆘 Need Help?
 
--   All personal data is encrypted and secure
--   You control what information is shared
--   Crisis detection respects privacy while ensuring safety
+- **Command Help:** Use `/help` for quick command references
+- **Crisis Support:** Use `/support` for immediate crisis resources  
+- **Technical Issues:** See our [Troubleshooting guide](troubleshooting.md)
+- **Questions:** Check our [FAQ](faq.md) or join the [support server](https://discord.gg/C3ZuXPP7Hc)
 
-### Crisis Support
+## 🎯 Next Steps
 
--   AI monitors for distress signals
--   Immediate access to crisis resources
--   Automatic alerts to moderators when appropriate
--   Professional help information always available
+1. **Complete your first week** of check-ins to see trend analysis
+2. **Explore coping tools** and add favorites to your toolbox
+3. **Create a coping plan** for challenging situations  
+4. **Configure server features** if you're an administrator
+5. **Join the community** in our support server for tips and updates
 
-### Safe Spaces
-
--   Ghost letters are completely private
--   Check-ins are confidential by default
--   Judgment-free environment encouraged
-
-## Best Practices
-
-### For Users
-
-1. **Regular Check-Ins** - Consistency helps track patterns
-2. **Honest Reporting** - Accurate mood tracking improves insights
-3. **Explore Tools** - Try different coping techniques
-4. **Privacy Settings** - Configure comfort levels
-5. **Professional Help** - Use resources when needed
-
-### For Server Admins
-
-1. **Clear Guidelines** - Set mental health channel rules
-2. **Mod Training** - Ensure mods understand crisis protocols
-3. **Resource Sharing** - Pin crisis resources and guidelines
-4. **Regular Monitoring** - Check crisis alerts and logs
-5. **Community Culture** - Foster supportive environment
-
-## Troubleshooting
-
-### Common Issues
-
-**Bot not responding to commands?**
-
--   Check bot permissions in server settings
--   Ensure slash commands are enabled
--   Try using commands in DMs
-
-**Can't see check-in history?**
-
--   Use `/profile` for comprehensive overview
--   Try `/insights` for mood analysis
--   Check `/preferences` for privacy settings
-
-**Reminders not working?**
-
--   Verify DM permissions are enabled
--   Check `/preferences` for reminder settings
--   Ensure proper intervals are configured
-
-### Getting Help
-
-1. **Documentation** - Check these docs first
-2. **Help Command** - Use `/help` for specific command info
-3. **Support Server** - Join our Discord for community help
-4. **GitHub Issues** - Report bugs or request features
-5. **Email Support** - Contact support@athing.space
-
-## Next Steps
-
--   Explore the [full command reference](commands.md)
--   Read about [privacy policies](privacy-policy.md)
--   Learn about [contributing](contributing.md)
--   Check out the [API documentation](api.md)
-
----
-
-Remember: You are not alone, and your feelings are valid. Mellow is here to support you, but professional help is always available when needed.
+Remember: Mellow is here to support your mental health journey, not replace professional care. If you're experiencing a mental health crisis, please reach out to a professional or use the crisis resources provided by `/support`.

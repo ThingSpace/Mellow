@@ -25,11 +25,12 @@ Enhance Mellow with advanced AI capabilities for personalized support and intell
     -   [x] Mod alert system for high-risk situations
     -   [x] Comprehensive crisis logging and statistics
     -   [x] Crisis analysis commands for moderators
--   [ ] **Late-Night Companion Mode**
-    -   [ ] Time-based response adjustments
-    -   [ ] Calmer, more supportive tone during late hours
-    -   [ ] Gentle wake-up check-ins
-    -   [ ] Sleep hygiene suggestions
+-   [x] **Late-Night Companion Mode**
+    -   [x] Time-based response adjustments using user's timezone
+    -   [x] Calmer, more supportive tone during late hours
+    -   [x] Gentle wake-up check-ins for early morning
+    -   [x] Sleep hygiene suggestions and evening wind-down mode
+    -   [x] Timezone-aware presence updates
 -   [x] **Mood Pattern Analysis**
     -   [x] Basic mood trend analysis in insights command
     -   [x] Mood distribution and frequency analysis
