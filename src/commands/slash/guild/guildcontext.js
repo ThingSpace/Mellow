@@ -8,7 +8,7 @@ export default {
         description: 'View guild-level conversation context statistics (admin only)',
         handlers: {
             cooldown: 15000,
-            requiredRoles: ['OWNER', 'ADMIN'],
+            requiredRoles: ['SUPPORT'],
             requiredPerms: [PermissionFlagsBits.Administrator, PermissionFlagsBits.ManageGuild]
         },
         options: []

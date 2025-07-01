@@ -5,7 +5,7 @@ export default {
         name: 'guildsettings',
         description: 'View or update guild settings',
         handlers: {
-            requiredRoles: [],
+            requiredRoles: ['SUPPORT'],
             requiredPerms: [PermissionFlagsBits.Administrator, PermissionFlagsBits.ManageGuild],
             cooldown: 15000
         },
