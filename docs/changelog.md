@@ -1,3 +1,9 @@
+---
+layout: default
+title: Change Logs
+nav_order: 8
+---
+
 # Changelog
 
 All notable changes to Mellow will be documented in this file.
