@@ -133,7 +133,7 @@ export default {
         ],
         handlers: {
             cooldown: 5000,
-            requiredRoles: []
+            requiredRoles: ['OWNER']
         }
     },
 

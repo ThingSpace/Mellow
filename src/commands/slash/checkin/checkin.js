@@ -47,28 +47,33 @@ export default {
         const note = interaction.options.getString('note')
         const userId = interaction.user.id
 
-        // 12-hour check-in cooldown logic
+        // Get or create user preferences for check-in
+        const prefs = await client.db.users.findById(BigInt(userId), {
+            include: { preferences: true }
+        })
+
+        // Get user's configured check-in interval (default to 12 hours if not set)
+        const userCheckInInterval = prefs?.preferences?.checkInInterval ?? 720 // minutes
+
+        // Check cooldown based on user's configured interval
         const lastCheckInArr = await client.db.moodCheckIns.getAllForUser(userId, 1)
         if (lastCheckInArr.length > 0) {
             const lastCheckIn = lastCheckInArr[0]
             const lastTime = new Date(lastCheckIn.createdAt)
             const now = new Date()
             const diffMs = now - lastTime
-            const hours12 = 12 * 60 * 60 * 1000
-            if (diffMs < hours12) {
-                const remainingMs = hours12 - diffMs
+            const cooldownMs = userCheckInInterval * 60 * 1000 // Convert minutes to milliseconds
+            if (diffMs < cooldownMs) {
+                const remainingMs = cooldownMs - diffMs
                 const remainingHours = Math.floor(remainingMs / (60 * 60 * 1000))
                 const remainingMinutes = Math.floor((remainingMs % (60 * 60 * 1000)) / (60 * 1000))
+                const intervalHours = Math.floor(userCheckInInterval / 60)
+                const intervalMinutes = userCheckInInterval % 60
                 return interaction.reply({
-                    content: `You can only check in once every 12 hours. Please wait ${remainingHours}h ${remainingMinutes}m before checking in again.`
+                    content: `You can only check in once every ${intervalHours}h ${intervalMinutes}m (your configured interval). Please wait ${remainingHours}h ${remainingMinutes}m before checking in again.`
                 })
             }
         }
-
-        // Get or create user preferences for check-in
-        const prefs = await client.db.users.findById(BigInt(userId), {
-            include: { preferences: true }
-        })
 
         let nextCheckInTime
 

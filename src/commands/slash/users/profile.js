@@ -116,7 +116,8 @@ export default {
                               `**Check-in Interval:** ${userPrefs.checkInInterval / 60}h`,
                               `**AI Personality:** ${userPrefs.aiPersonality || 'gentle'}`,
                               `**Language:** ${userPrefs.language || 'en'}`,
-                              `**Theme:** ${userPrefs.profileTheme || 'blue'}`
+                              `**Theme:** ${userPrefs.profileTheme || 'blue'}`,
+                              `**Context Logging:** ${!userPrefs.disableContextLogging ? '✅ Enabled' : '❌ Disabled'}`
                           ].join('\n')
                         : 'No preferences set',
                     inline: false

@@ -2,6 +2,13 @@ import { PerformanceTool } from './tools/performance.js'
 import { buildCopingPrompt } from './tools/copingTool.js'
 import { MessageFormattingTool } from './tools/messageFormatting.js'
 import { MessageHistoryTool } from './tools/messageHistory.js'
+import {
+    isLateNight,
+    isEarlyMorning,
+    isLateEvening,
+    getTimePeriod,
+    getSleepSuggestion
+} from '../functions/timeHelper.js'
 import { db } from '../database/client.js'
 import { openai } from '@ai-sdk/openai'
 import { generateText } from 'ai'
@@ -102,8 +109,9 @@ export class AIService {
      * GENERATE A RESPONSE WITH FORMATTING, HISTORY AND PERFORMANCE TRACKING
      * @param message The users message/request
      * @param userId The Discord ID of the user
+     * @param context Additional context (channelId, guildId, etc.)
      */
-    async generateResponse(message, userId) {
+    async generateResponse(message, userId, context = {}) {
         const perfId = `resp-${Date.now()}-${userId}`
 
         try {
@@ -124,14 +132,69 @@ export class AIService {
             const userPrefs = await db.userPreferences.findById(userId)
             const personality = userPrefs?.aiPersonality || 'gentle'
 
-            // Get chat history using the MessageHistoryTool
-            const chatHistory = await this.messageHistory.getRecentHistory(userId, 50)
+            // Get enhanced chat history with channel context
+            const chatHistory = await this.messageHistory.getEnhancedContext(
+                userId,
+                context.channelId,
+                100, // User history limit - increased for better context
+                20 // Channel context limit - increased for better context
+            )
+
+            // Get conversation summary for additional context
+            const conversationSummary = await this.messageHistory.getConversationSummary(userId, 7)
 
             // Build enhanced prompt from database with personality customization
             let enhancedPrompt = this.config.systemPrompt
 
+            // Add conversation summary if available
+            if (conversationSummary) {
+                enhancedPrompt += `\n\n**User Context Summary:**\n${conversationSummary}`
+            }
+
             // Add personality-specific instructions
             enhancedPrompt += this.getPersonalityInstructions(personality)
+
+            // Add late-night mode instructions if applicable
+            if (userPrefs?.timezone) {
+                const lateNightInstructions = this.getLateNightInstructions(userPrefs.timezone)
+                if (lateNightInstructions) {
+                    enhancedPrompt += lateNightInstructions
+                }
+            }
+
+            // Add context awareness instructions
+            if (context.channelId) {
+                enhancedPrompt += `\n\n**Context & Memory Instructions:**
+- You are responding in a Discord ${context.guildId ? 'guild channel' : 'direct message'}
+- You have access to previous conversation history with this user
+- Pay attention to channel context messages marked with [Recent channel message from username]
+- Maintain conversation continuity and reference previous messages when relevant
+- Be aware of the broader conversation flow in the channel
+- Remember details about the user from previous interactions (their concerns, progress, preferences)
+- If you see patterns in their messages or mood over time, acknowledge this thoughtfully
+- Build upon previous conversations naturally - don't treat each message as isolated
+- Use context from previous interactions to provide more personalized and relevant support`
+            } else {
+                enhancedPrompt += `\n\n**Context & Memory Instructions:**
+- This is a direct message conversation
+- You have access to your full conversation history with this user
+- Reference previous conversations and build upon them naturally
+- Remember their concerns, progress, and preferences from past interactions
+- Provide continuity in your support and acknowledge their journey over time`
+            }
+
+            // Late-night companion mode: Adjust tone and provide sleep-related suggestions
+            const currentHour = new Date().getHours()
+            if (isLateNight(currentHour)) {
+                enhancedPrompt += `\n\n**Late-Night Companion Mode:**
+- It's currently late at night. Your tone should be extra gentle and calming.
+- Prioritize the user's comfort and emotional safety.
+- If the user is expressing distress, gently encourage relaxation and provide coping strategies.
+- Consider suggesting a wind-down routine or sleep hygiene tips if appropriate.
+- Avoid suggesting activities that are too stimulating or demanding.
+
+`
+            }
 
             if (typeof enhancedPrompt !== 'string') {
                 console.error(`System prompt is not a valid string:`, enhancedPrompt)
@@ -146,6 +209,18 @@ export class AIService {
                 { role: 'user', content: message }
             ]
 
+            // Debug logging for context analysis
+            if (process.env.NODE_ENV === 'development') {
+                console.log(`AI Context for user ${userId}:`)
+                console.log(`- Total messages in context: ${messages.length - 1}`) // Exclude system prompt
+                console.log(`- User history messages: ${chatHistory.filter(m => m.role === 'user').length}`)
+                console.log(`- AI response messages: ${chatHistory.filter(m => m.role === 'assistant').length}`)
+                console.log(`- Channel context messages: ${chatHistory.filter(m => m.role === 'system').length}`)
+                if (conversationSummary) {
+                    console.log(`- Has conversation summary: Yes`)
+                }
+            }
+
             const { text: fullResponse } = await generateText({
                 model: this.model,
                 messages,
@@ -155,9 +230,19 @@ export class AIService {
                 frequencyPenalty: this.config.frequencyPenalty
             })
 
-            // Save both the user message and AI response to history
-            await this.messageHistory.saveMessage(userId, message, false)
-            await this.messageHistory.saveMessage(userId, fullResponse, true)
+            // Save both the user message and AI response to history with context
+            await this.messageHistory.saveMessage(userId, message, false, {
+                channelId: context.channelId,
+                guildId: context.guildId,
+                messageId: context.messageId,
+                contextType: 'conversation'
+            })
+
+            await this.messageHistory.saveMessage(userId, fullResponse, true, {
+                channelId: context.channelId,
+                guildId: context.guildId,
+                contextType: 'conversation'
+            })
 
             return this.messageFormatting.formatForDiscord(fullResponse)
         } catch (error) {
@@ -236,6 +321,66 @@ export class AIService {
         }
 
         return personalityInstructions[personality] || personalityInstructions.gentle
+    }
+
+    /**
+     * Get late-night companion mode instructions based on user's timezone
+     * @param {string} timezone - User's timezone preference
+     * @returns {string} - Additional instructions for late-night mode
+     */
+    getLateNightInstructions(timezone) {
+        if (!timezone) {
+            return '' // No timezone set, skip late-night mode
+        }
+
+        const timePeriod = getTimePeriod(timezone)
+        const sleepSuggestion = getSleepSuggestion(timezone)
+
+        let instructions = ''
+
+        if (isLateNight(timezone)) {
+            instructions += `
+
+**Late-Night Companion Mode Active**
+- It's currently late night (${timePeriod}) in the user's timezone
+- Use a calmer, more gentle tone than usual
+- Be extra supportive and understanding - late nights can be difficult emotionally
+- Acknowledge that late-night thoughts and feelings can feel more intense
+- If appropriate, gently suggest relaxation techniques or coping strategies
+- Be present and patient - avoid rushing the conversation
+- Consider the user might be dealing with insomnia, anxiety, or emotional struggles
+- Offer comfort without judgment about being up late`
+
+            if (sleepSuggestion) {
+                instructions += `
+- Sleep hygiene note: ${sleepSuggestion}`
+            }
+        } else if (isEarlyMorning(timezone)) {
+            instructions += `
+
+**Early Morning Mode Active**
+- It's currently early morning (${timePeriod}) in the user's timezone
+- The user might be starting their day or having trouble sleeping
+- Use gentle, warm language appropriate for the morning
+- Consider offering positive affirmations for the day ahead
+- Be mindful they might be feeling groggy or need gentle encouragement`
+
+            if (sleepSuggestion) {
+                instructions += `
+- Morning wellness note: ${sleepSuggestion}`
+            }
+        } else if (isLateEvening(timezone)) {
+            instructions += `
+
+**Evening Wind-Down Mode**
+- It's currently late evening (${timePeriod}) in the user's timezone
+- The user might be winding down from their day
+- Use calming, reflective language
+- Consider offering relaxation suggestions if appropriate
+- Be supportive of end-of-day reflections and feelings`
+        }
+
+        return instructions
     }
 
     async getCopingResponse({ tool, feeling, userId }) {

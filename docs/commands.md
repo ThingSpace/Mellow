@@ -81,11 +81,19 @@ Manage your personal settings and privacy controls.
 
 **Settings:**
 
--   **Check-in Intervals:** 1-72 hours
--   **AI Personality:** supportive, professional, friendly
--   **Theme Colors:** purple, blue, green, pink
--   **Language:** Currently English
--   **Privacy:** Journal visibility settings
+-   **Check-in Intervals:** 1-24 hours
+-   **AI Personality:** gentle, supportive, direct, playful, professional, encouraging
+-   **Theme Colors:** blue, purple, green, orange, pink, red, teal, yellow
+-   **Language:** English, Spanish, French, German, Italian, Portuguese, Dutch, Japanese
+-   **Timezone:** 25+ timezone options including US, Canada, Europe, Asia-Pacific
+-   **Privacy:** Journal visibility and context logging settings
+-   **Reminder Method:** DM or channel notifications
+
+**Special Features:**
+
+-   **Late-Night Companion Mode:** Automatically enabled based on your timezone for gentler support during late hours (10 PM - 6 AM)
+-   **Context Logging:** Allow AI to remember conversations for better personalized support
+-   **Smart Reminders:** Timezone-aware check-in scheduling
 
 ## 🛠️ Coping & Support
 
@@ -306,6 +314,29 @@ Moderation tools for server management.
 -   User-specific log filtering
 -   Audit trail maintenance
 
+---
+
+### `/guildcontext`
+
+View server-level conversation context statistics for administrators.
+
+**Usage:** `/guildcontext`
+
+**Admin-Only Features:**
+
+-   **Guild Message Context:** Total messages, user messages, AI responses, channels involved
+-   **Activity Breakdown:** Recent activity (24h, 7 days), context types, direct conversations
+-   **Privacy Settings:** Context logging status, individual opt-outs respected, data retention info
+-   **Privacy Information:** Clear transparency about what data is tracked (counts only, not content)
+
+**Permission Requirements:**
+
+-   Server Administrator or Manage Guild permissions required
+-   Displays server-wide context statistics while respecting individual privacy
+-   Shows notification if guild context logging is disabled
+
+**Privacy Note:** Only shows message counts and statistics - never actual message content. Respects both server-wide and individual user privacy settings.
+
 ## 📚 Information & Help
 
 ### `/help`
@@ -346,33 +377,39 @@ Learn about Mellow's mission and capabilities.
 
 ### `/stats`
 
-View bot usage statistics and community metrics.
+View Mellow community statistics and impact metrics.
 
 **Usage:** `/stats`
 
-**Statistics:**
+**Enhanced Features:**
 
--   Server and user counts
--   Total check-ins processed
--   Coping tools used
--   Community engagement metrics
--   Bot performance data
+-   **Community Reach:** Server counts, user base, total conversations, feedback received
+-   **Mental Health Support:** Mood check-ins, coping tools used, ghost letters, gratitude entries
+-   **Recent Activity:** 30-day activity breakdown and engagement trends
+-   **Safety & Moderation:** Reports handled, crisis interventions, privacy compliance
+
+**Visual Display:** Rich embed with organized metrics and community impact visualization
 
 ---
 
 ### `/status`
 
-Get current bot performance and system status.
+Get comprehensive system status and performance metrics.
 
 **Usage:** `/status`
 
-**Metrics:**
+**Enhanced Metrics:**
 
--   System performance indicators
--   AI service status
--   Database connectivity
--   Response time metrics
--   Error rates and uptime
+-   **System Performance:** Real-time status indicators, uptime, memory usage, latency
+-   **Connection Status:** Server count, user count, shard information, loaded commands
+-   **AI Service Status:** AI performance metrics and health indicators
+-   **Privacy & Safety:** Status of context logging, crisis detection, privacy controls
+
+**Features:**
+
+-   Color-coded status indicators (🟢 Excellent, 🟡 Good, 🔴 Monitoring)
+-   Performance alerts for high-load situations
+-   Fallback status display if detailed metrics are unavailable
 
 ---
 
@@ -389,6 +426,109 @@ Open source project information and repository links.
 -   Contributing guidelines
 -   Project features overview
 -   Development information
+
+---
+
+### `/context`
+
+Check what conversation history the AI has access to for personalized support.
+
+**Usage:** `/context`
+
+**Features:**
+
+-   View total conversation messages stored
+-   See recent messages used for AI context
+-   Check conversation themes detected
+-   Understand AI's memory of your interactions
+
+**Privacy Note:** Only shows data when context logging is enabled in your preferences.
+
+---
+
+### `/timemode`
+
+Check what time-based companion mode is currently active for you.
+
+**Usage:** `/timemode`
+
+**Features:**
+
+-   **Late-Night Mode (10 PM - 6 AM):** Extra gentle, calming responses with sleep-friendly suggestions
+-   **Early Morning Mode (6 AM - 10 AM):** Gentle encouragement and morning support
+-   **Evening Wind-Down Mode (8 PM - 10 PM):** Calming, reflective responses for day's end
+-   **Standard Mode:** Regular supportive interactions
+
+**Automatic Activation:** Based on your timezone preference set in `/preferences`
+
+## ---
+
+### `/version`
+
+View version information, changelogs, and repository details.
+
+**Usage:** `/version [subcommand] [options]`
+
+**Subcommands:**
+
+#### `/version current`
+
+Display current version information and update status.
+
+**Example:** `/version current`
+
+#### `/version latest`
+
+Check for updates and show the latest release information.
+
+**Example:** `/version latest`
+
+#### `/version changelog`
+
+View changelog for a specific version or list all available versions. Changelogs are sourced primarily from GitHub release descriptions, with fallback to repository markdown files.
+
+**Options:**
+
+-   `version` - Specific version to view (e.g., "1.1.0") - Optional
+
+**Examples:**
+
+-   `/version changelog` - List all available versions
+-   `/version changelog version:1.1.0` - View changelog for v1.1.0
+
+**Features:**
+
+-   Changelogs sourced from GitHub release descriptions
+-   Full release information including publish dates and links
+-   Automatic version normalization (works with or without 'v' prefix)
+-   Fallback to markdown files when GitHub releases unavailable
+
+#### `/version releases`
+
+View recent releases from the repository.
+
+**Options:**
+
+-   `count` - Number of releases to show (1-10, default: 5) - Optional
+
+**Example:** `/version releases count:10`
+
+#### `/version repo`
+
+View repository information including stats, contributors, and recent commits.
+
+**Example:** `/version repo`
+
+**Features:**
+
+-   Real-time version checking and update notifications
+-   Changelogs sourced directly from GitHub release descriptions
+-   Automatic fallback to repository markdown files
+-   Direct links to GitHub releases and repository
+-   Repository statistics and contributor insights
+-   Recent commit history and development activity
+-   Recent commit history
+-   Contributor information
 
 ## Command Permissions
 

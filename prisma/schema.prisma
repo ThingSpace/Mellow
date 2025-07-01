@@ -53,38 +53,46 @@ model User {
 }
 
 model Guild {
-    id                 BigInt      @id
-    name               String
-    ownerId            BigInt
-    joinedAt           DateTime    @default(now())
-    isBanned           Boolean     @default(false)
-    bannedUntil        DateTime?
-    banReason          String?
-    systemRoleId       String?
-    systemChannelId    String?
-    systemLogsEnabled  Boolean     @default(false)
-    auditLogChannelId  String?
-    modAlertChannelId  String?
-    modLogChannelId    String?
-    checkInChannelId   String?
-    copingToolLogId    String?
-    enableCheckIns     Boolean     @default(true)
-    enableGhostLetters Boolean     @default(true)
-    enableCrisisAlerts Boolean     @default(true)
-    moderatorRoleId    String?
-    autoModEnabled     Boolean     @default(false)
-    autoModLevel       Int?
-    language           String?     @default("en")
-    modActions         ModAction[]
+    id                    BigInt      @id
+    name                  String
+    ownerId               BigInt
+    joinedAt              DateTime    @default(now())
+    isBanned              Boolean     @default(false)
+    bannedUntil           DateTime?
+    banReason             String?
+    systemRoleId          String?
+    systemChannelId       String?
+    systemLogsEnabled     Boolean     @default(false)
+    auditLogChannelId     String?
+    modAlertChannelId     String?
+    modLogChannelId       String?
+    checkInChannelId      String?
+    copingToolLogId       String?
+    enableCheckIns        Boolean     @default(true)
+    enableGhostLetters    Boolean     @default(true)
+    enableCrisisAlerts    Boolean     @default(true)
+    moderatorRoleId       String?
+    autoModEnabled        Boolean     @default(false)
+    autoModLevel          Int?
+    language              String?     @default("en")
+    disableContextLogging Boolean     @default(false) // Privacy setting for guild message context logging
+    modActions            ModAction[]
 }
 
 model ConversationHistory {
-    id           Int      @id @default(autoincrement())
-    user         User     @relation(fields: [userId], references: [id])
-    userId       BigInt
-    content      String
-    isAiResponse Boolean
-    timestamp    DateTime @default(now())
+    id            Int      @id @default(autoincrement())
+    user          User     @relation(fields: [userId], references: [id])
+    userId        BigInt
+    content       String
+    isAiResponse  Boolean
+    timestamp     DateTime @default(now())
+    channelId     String?  // Discord channel ID for guild messages
+    guildId       String?  // Discord guild ID for guild messages
+    messageId     String?  // Discord message ID for reference
+    contextType   String   @default("conversation") // "conversation", "channel_context", "system"
+    parentId      Int?     // For threading/reply relationships
+    parent        ConversationHistory? @relation("ConversationThread", fields: [parentId], references: [id])
+    replies       ConversationHistory[] @relation("ConversationThread")
 }
 
 model MoodCheckIn {
@@ -138,20 +146,21 @@ model ModAction {
 }
 
 model UserPreferences {
-    id               BigInt    @id
-    user             User      @relation(fields: [id], references: [id])
-    checkInInterval  Int       @default(720)
-    lastReminder     DateTime?
-    nextCheckIn      DateTime?
-    remindersEnabled Boolean   @default(true)
-    reminderMethod   String?   @default("dm")
-    journalPrivacy   Boolean   @default(true)
-    aiPersonality    String?   @default("gentle")
-    profileTheme     String?   @default("blue")
-    language         String?   @default("en")
-    timezone         String?
-    createdAt        DateTime  @default(now())
-    updatedAt        DateTime  @updatedAt
+    id                    BigInt    @id
+    user                  User      @relation(fields: [id], references: [id])
+    checkInInterval       Int       @default(720)
+    lastReminder          DateTime?
+    nextCheckIn           DateTime?
+    remindersEnabled      Boolean   @default(true)
+    reminderMethod        String?   @default("dm")
+    journalPrivacy        Boolean   @default(true)
+    aiPersonality         String?   @default("gentle")
+    profileTheme          String?   @default("blue")
+    language              String?   @default("en")
+    timezone              String?
+    disableContextLogging Boolean   @default(false) // Privacy setting for message context logging
+    createdAt             DateTime  @default(now())
+    updatedAt             DateTime  @updatedAt
 }
 
 model Feedback {
@@ -207,5 +216,6 @@ enum Role {
     OWNER
     ADMIN
     MOD
+    SUPPORT
     USER
 }

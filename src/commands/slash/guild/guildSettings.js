@@ -93,6 +93,12 @@ export default {
                         description: 'Enable system logging',
                         type: 5, // BOOLEAN
                         required: false
+                    },
+                    {
+                        name: 'context_logging',
+                        description: 'Allow AI to use server messages for conversation context',
+                        type: 5, // BOOLEAN
+                        required: false
                     }
                 ]
             },
@@ -200,7 +206,8 @@ export default {
                                     `**Check-ins:** ${guild.enableCheckIns ? '✅' : '❌'}`,
                                     `**Ghost Letters:** ${guild.enableGhostLetters ? '✅' : '❌'}`,
                                     `**Crisis Alerts:** ${guild.enableCrisisAlerts ? '✅' : '❌'}`,
-                                    `**System Logs:** ${guild.systemLogsEnabled ? '✅' : '❌'}`
+                                    `**System Logs:** ${guild.systemLogsEnabled ? '✅' : '❌'}`,
+                                    `**Context Logging:** ${!guild.disableContextLogging ? '✅' : '❌'}`
                                 ].join('\n'),
                                 inline: true
                             },
@@ -227,7 +234,7 @@ export default {
                         .setFooter({ text: client.footer, iconURL: client.logo })
                         .setTimestamp()
 
-                    return interaction.reply({ embeds: [embed], ephemeral: true })
+                    return interaction.reply({ embeds: [embed] })
                 }
 
                 case 'channels': {
@@ -277,8 +284,7 @@ export default {
                     }
 
                     return interaction.reply({
-                        content: `✅ **Channel settings updated:**\n${changes.join('\n')}`,
-                        ephemeral: true
+                        content: `✅ **Channel settings updated:**\n${changes.join('\n')}`
                     })
                 }
 
@@ -290,13 +296,19 @@ export default {
                         { option: 'check_ins', field: 'enableCheckIns', name: 'Check-ins' },
                         { option: 'ghost_letters', field: 'enableGhostLetters', name: 'Ghost Letters' },
                         { option: 'crisis_alerts', field: 'enableCrisisAlerts', name: 'Crisis Alerts' },
-                        { option: 'system_logs', field: 'systemLogsEnabled', name: 'System Logs' }
+                        { option: 'system_logs', field: 'systemLogsEnabled', name: 'System Logs' },
+                        {
+                            option: 'context_logging',
+                            field: 'disableContextLogging',
+                            name: 'Context Logging',
+                            inverted: true
+                        }
                     ]
 
-                    for (const { option, field, name } of featureOptions) {
+                    for (const { option, field, name, inverted } of featureOptions) {
                         const value = interaction.options.getBoolean(option)
                         if (value !== null) {
-                            updates[field] = value
+                            updates[field] = inverted ? !value : value // Handle inverted logic
                             changes.push(`**${name}:** ${value ? '✅ Enabled' : '❌ Disabled'}`)
                         }
                     }
@@ -332,8 +344,7 @@ export default {
                     }
 
                     return interaction.reply({
-                        content: `✅ **Feature settings updated:**\n${changes.join('\n')}`,
-                        ephemeral: true
+                        content: `✅ **Feature settings updated:**\n${changes.join('\n')}`
                     })
                 }
 
@@ -397,8 +408,7 @@ export default {
                     }
 
                     return interaction.reply({
-                        content: `✅ **Moderation settings updated:**\n${changes.join('\n')}`,
-                        ephemeral: true
+                        content: `✅ **Moderation settings updated:**\n${changes.join('\n')}`
                     })
                 }
 
@@ -445,8 +455,7 @@ export default {
                     }
 
                     return interaction.reply({
-                        content: `✅ **General settings updated:**\n${changes.join('\n')}`,
-                        ephemeral: true
+                        content: `✅ **General settings updated:**\n${changes.join('\n')}`
                     })
                 }
 

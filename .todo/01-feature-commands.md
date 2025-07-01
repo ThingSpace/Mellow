@@ -1,4 +1,9 @@
-# 01: Scaffold Feature Commands/Handlers
+# 01: Scaffold Feature Commands/Handler- [x] Late-Night Companion Mode
+
+    -   [x] Implement timezone-aware time detection
+    -   [x] Integrate late-night companion mode into AI responses
+    -   [x] Update presence/status based on user timezones
+    -   [x] **AI-powered late-night support and check-ins**
 
 ## Goal
 
@@ -30,7 +35,7 @@ Implement commands and handlers for Mellow's unique features.
     -   [x] Create `/music` command for calming music suggestions
     -   [x] Create `/support` command for crisis resources
     -   [x] Create `/streaks` command for coping tool usage tracking
-    -   [ ] **[PLANNED] Enhanced AI-powered coping tools and personalized suggestions**
+    -   [x] Enhanced AI-powered coping tools and personalized suggestions
 -   [x] Crisis Routing
     -   [x] Implement distress keyword detection
     -   [x] Scaffold mod alert/help suggestion logic
@@ -38,8 +43,8 @@ Implement commands and handlers for Mellow's unique features.
     -   [x] Crisis detection in message handler
     -   [x] Comprehensive crisis analysis and response system
 -   [x] Late-Night Companion Mode
-    -   [ ] Implement night-time presence/response logic
-    -   [ ] **[PLANNED] AI-powered late-night support and check-ins**
+    -   [x] Implement night-time presence/response logic
+    -   [x] **AI-powered late-night support and check-ins**
 -   [x] Moderation Capabilities
     -   [x] Scaffold `/mod` command group
     -   [x] Implement user timeout/untimeout commands (using Discord's native timeout)
@@ -58,7 +63,7 @@ Implement commands and handlers for Mellow's unique features.
 -   [x] Create `/ghostletter` command with private storage
 -   [x] Create `/coping` command with tools library
 -   [x] Implement crisis detection in message handler
--   [ ] Add late-night mode detection and responses
+-   [x] Add late-night mode detection and responses (✅ **COMPLETED** - Fully implemented with timezone-aware companion mode)
 -   [x] Update help command to reflect new bot name
 -   [x] Update message handler to use "Mellow" branding
 -   [x] Create moderation command group (`/mod`)
@@ -164,4 +169,4 @@ Implement commands and handlers for Mellow's unique features.
 -   ✅ System-wide logging and monitoring capabilities.
 -   ✅ Moderators and admins have tools to manage the community and the bot safely and effectively.
 -   ✅ All permissions are robustly enforced via Discord and database roles.
--   **Planned:** Enhanced AI-powered features, late-night support, and community features.
+-   ✅ **Planned:** Enhanced AI-powered features, late-night support, and community features. (**Late-night support completed**, community features remain planned)

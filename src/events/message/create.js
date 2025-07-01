@@ -4,6 +4,42 @@ import { handleMessageModeration } from '../../functions/moderationHandler.js'
 import { handleAIResponse, shouldTriggerAI, isReplyToBot } from '../../functions/aiResponseHandler.js'
 import { handleTextCommand } from '../../functions/commandHandler.js'
 
+/**
+ * Log message for AI context (respects privacy settings)
+ * @param {Object} message - Discord message
+ * @param {Object} client - Discord client
+ */
+async function logMessageForContext(message, client) {
+    try {
+        // Skip if user has opted out of message logging for context
+        const userPrefs = await client.db.userPreferences.findById(message.author.id)
+        if (userPrefs?.disableContextLogging) return
+
+        // Only log non-sensitive information for context
+        const contextData = {
+            content: message.content,
+            isAiResponse: false,
+            contextType: 'conversation', // Changed from 'channel_context' to 'conversation'
+            messageId: message.id
+        }
+
+        // Add channel/guild context for guild messages
+        if (message.guild) {
+            contextData.channelId = message.channel.id
+            contextData.guildId = message.guild.id
+
+            // Skip logging in private channels or DMs unless user consents
+            const guildSettings = await client.db.guilds.findById(message.guild.id)
+            if (guildSettings?.disableContextLogging) return
+        }
+
+        await client.db.conversationHistory.create(message.author.id, contextData)
+    } catch (error) {
+        // Don't log errors for context logging to avoid spam
+        console.debug('Failed to log message for context:', error.message)
+    }
+}
+
 export default {
     event: Events.MessageCreate,
     run: async (client, message) => {
@@ -11,6 +47,9 @@ export default {
         if (message.author.bot) return
 
         try {
+            // 0. MESSAGE LOGGING - Log for AI context (privacy-aware) BEFORE other processing
+            await logMessageForContext(message, client)
+
             // 1. CRISIS ANALYSIS - Always run for all messages
             const crisisResult = await handleMessageCrisis(message, client)
             if (crisisResult?.needsSupport && crisisResult.response?.modAlert) {

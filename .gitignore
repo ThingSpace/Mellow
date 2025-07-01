@@ -10,8 +10,6 @@
 !.yarn/releases
 !.yarn/versions
 
-CHANGELOG.md
-
 # testing
 /coverage
 

@@ -118,31 +118,116 @@ model Guild {
 
 ### AI Service
 
-The AI service handles crisis detection and personalized responses.
+The AI service provides comprehensive mental health support with advanced features including crisis detection, personalized responses, and time-aware companion modes.
 
 ```javascript
 // filepath: src/services/ai.service.js
 
 class AIService {
     /**
-     * Analyze message for crisis indicators
-     * @param {string} message - Message content
-     * @param {Object} user - User context
-     * @returns {Promise<Object>} Crisis analysis result
+     * Generate personalized AI response with context and personality
+     * @param {string} message - User's message
+     * @param {string} userId - Discord user ID
+     * @param {Object} context - Additional context (channelId, guildId, etc.)
+     * @returns {Promise<Object>} AI response with formatting and crisis analysis
      */
-    async analyzeCrisis(message, user) {
-        // Returns: { severity, confidence, resources, action }
+    async generateResponse(message, userId, context = {}) {
+        // Returns: {
+        //   text: string,
+        //   crisisDetected: boolean,
+        //   severity: string,
+        //   resources: Array,
+        //   needsModAlert: boolean
+        // }
     }
 
     /**
-     * Generate personalized coping suggestions
-     * @param {string} mood - Current mood
-     * @param {Array} history - Recent check-ins
-     * @returns {Promise<Array>} Suggested coping tools
+     * Analyze message for crisis indicators with multi-level detection
+     * @param {string} message - Message content
+     * @param {Object} user - User context including history
+     * @returns {Promise<Object>} Comprehensive crisis analysis
      */
-    async suggestCopingTools(mood, history) {
-        // Returns array of personalized tool suggestions
+    async analyzeCrisis(message, user) {
+        // Returns: {
+        //   severity: 'safe'|'low'|'medium'|'high'|'critical',
+        //   confidence: number,
+        //   resources: Array,
+        //   action: string,
+        //   needsModAlert: boolean,
+        //   keywords: Array
+        // }
     }
+
+    /**
+     * Get AI-powered crisis support resources based on user context
+     * @param {Object} context - User crisis context and recent events
+     * @param {string} userId - User ID for personality preferences
+     * @returns {Promise<Object>} Structured crisis resources with AI guidance
+     */
+    async getCrisisResources(context, userId = null) {
+        // Returns: {
+        //   immediate: Array,    // Immediate safety actions
+        //   hotlines: Array,     // Crisis hotlines and contacts
+        //   coping: Array,       // Immediate coping strategies
+        //   longterm: Array,     // Long-term support options
+        //   aiResponse: string   // Personalized AI message
+        // }
+    }
+
+    /**
+     * Generate personalized coping tool suggestions
+     * @param {string} mood - Current mood state
+     * @param {Array} history - Recent check-ins and tool usage
+     * @param {Object} preferences - User personality and preferences
+     * @returns {Promise<Array>} AI-curated coping tool recommendations
+     */
+    async suggestCopingTools(mood, history, preferences) {
+        // Returns array of personalized tool suggestions with reasoning
+    }
+
+    /**
+     * Get personality-specific instructions for AI responses
+     * @param {string} personality - User's preferred AI personality
+     * @returns {string} Additional instructions for personality adaptation
+     */
+    getPersonalityInstructions(personality) {
+        // Supports: gentle, supportive, direct, playful, professional, encouraging
+    }
+
+    /**
+     * Get late-night companion mode instructions based on user's timezone
+     * @param {string} timezone - User's timezone preference
+     * @returns {string} Time-appropriate response instructions
+     */
+    getLateNightInstructions(timezone) {
+        // Provides time-aware response adaptation:
+        // - Late-night mode (10 PM - 6 AM): Gentle, calming responses
+        // - Early morning mode (6 AM - 10 AM): Encouraging support
+        // - Evening wind-down (8 PM - 10 PM): Reflective, calming
+        // - Standard mode: Regular supportive interactions
+    }
+}
+```
+
+### Crisis Detection System
+
+Advanced multi-layered crisis detection with AI and keyword-based backup systems.
+
+```javascript
+// Crisis Detection Flow:
+// 1. OpenAI Moderation API analysis
+// 2. Custom AI crisis severity assessment
+// 3. Keyword-based backup detection
+// 4. Context-aware resource provision
+// 5. Automated moderator alerts (when configured)
+
+// Crisis Severity Levels:
+const CRISIS_LEVELS = {
+    SAFE: 'safe', // No crisis indicators detected
+    LOW: 'low', // Mild distress, general support needed
+    MEDIUM: 'medium', // Moderate distress, coping resources provided
+    HIGH: 'high', // Significant distress, immediate support + mod alert
+    CRITICAL: 'critical' // Severe crisis, emergency resources + urgent mod alert
 }
 ```
 
@@ -572,6 +657,88 @@ describe('Crisis Detection', () => {
         expect(analysis.action).toBe('immediate_help')
     })
 })
+```
+
+### Conversation History & Context System
+
+Advanced context management for personalized AI interactions with privacy controls.
+
+```javascript
+// filepath: src/database/modules/conversationHistory.js
+
+class ConversationHistory {
+    /**
+     * Store user message for AI context (respects privacy settings)
+     * @param {string} userId - Discord user ID
+     * @param {string} message - Message content
+     * @param {Object} context - Channel/guild context
+     * @returns {Promise<Object>} Stored conversation entry
+     */
+    async storeMessage(userId, message, context) {
+        // Respects user and server privacy settings
+        // Automatically cleans up old messages (90+ days)
+    }
+
+    /**
+     * Get conversation history for AI context
+     * @param {string} userId - Discord user ID
+     * @param {number} limit - Maximum messages to retrieve
+     * @returns {Promise<Array>} Recent conversation history
+     */
+    async getRecentHistory(userId, limit = 10) {
+        // Returns contextual conversation history
+        // Includes conversation themes and patterns
+    }
+
+    /**
+     * Build enhanced context for AI responses
+     * @param {string} userId - Discord user ID
+     * @param {Object} context - Current conversation context
+     * @returns {Promise<Object>} Enhanced context with history and preferences
+     */
+    async buildContextForAI(userId, context) {
+        // Returns: {
+        //   recentMessages: Array,
+        //   conversationThemes: Array,
+        //   userPreferences: Object,
+        //   mentalHealthContext: Object,
+        //   crisisHistory: Array
+        // }
+    }
+
+    /**
+     * Clear user's conversation history (privacy controls)
+     * @param {string} userId - Discord user ID
+     * @returns {Promise<boolean>} Success status
+     */
+    async clearUserHistory(userId) {
+        // Complete history deletion for privacy/reset
+    }
+}
+```
+
+### Context Privacy Controls
+
+```javascript
+// Privacy Settings Interaction Matrix:
+const CONTEXT_POLICY = {
+    // User enabled, Server enabled = Full context logging
+    userEnabled_serverEnabled: 'FULL_LOGGING',
+
+    // User enabled, Server disabled = DM-only logging
+    userEnabled_serverDisabled: 'DM_ONLY_LOGGING',
+
+    // User disabled, Server enabled = No logging for user
+    userDisabled_serverEnabled: 'NO_LOGGING',
+
+    // User disabled, Server disabled = No logging for user
+    userDisabled_serverDisabled: 'NO_LOGGING'
+}
+
+// Automatic Data Cleanup:
+// - Conversation history: 90 days retention
+// - Crisis events: Longer retention for safety analysis
+// - System logs: Variable retention based on type
 ```
 
 ---
