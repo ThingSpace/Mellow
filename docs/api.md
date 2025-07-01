@@ -1,7 +1,8 @@
 ---
 layout: default
 title: API Reference
-nav_order: 5
+nav_order: 6
+description: "Technical API documentation for developers and advanced users"
 ---
 
 # API Reference

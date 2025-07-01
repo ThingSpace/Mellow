@@ -1,3 +1,11 @@
+---
+layout: default
+title: Terms of Service
+nav_order: 16
+description: "Terms of service and usage agreement"
+permalink: /terms-of-service/
+---
+
 # Terms of Service
 
 _Last updated: June 25th, 2025_

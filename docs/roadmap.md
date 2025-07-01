@@ -1,3 +1,10 @@
+---
+layout: default
+title: Roadmap
+nav_order: 14
+description: "Development roadmap and future feature plans"
+---
+
 # 🎯 Mellow v1.1.0 - Implementation Complete & Future Roadmap
 
 ## ✅ v1.1.0 Implementation Summary
@@ -56,7 +63,7 @@ Mellow v1.1.0 has been successfully implemented with all major features complete
 
 Based on analysis of the .todo files and current implementation, here are the recommended enhancements for future versions:
 
-### 🎯 v1.2.0 - Advanced AI & Performance (Recommended Next)
+### 🎯 v1.2.0 - Advanced AI & Performance
 
 #### Advanced Mood Analysis & Predictions
 

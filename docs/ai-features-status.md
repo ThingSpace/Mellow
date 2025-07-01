@@ -1,3 +1,11 @@
+---
+layout: default
+title: AI Features Status
+nav_order: 12
+description: "Current status and development roadmap for AI features"
+parent: Technical Documentation
+---
+
 # AI Features Implementation Status
 
 ## ✅ **Completed AI Features**
