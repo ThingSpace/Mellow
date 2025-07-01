@@ -29,9 +29,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### Jekyll Collections Implementation
 
 -   **Created**: Three organized collections for better content organization:
-     - **Guides Collection**: Setup, privacy controls, and troubleshooting guides
-     - **Reference Collection**: Commands, features, and API documentation  
-     - **Technical Collection**: Developer resources, implementation details, and technical commands
+    -   **Guides Collection**: Setup, privacy controls, and troubleshooting guides
+    -   **Reference Collection**: Commands, features, and API documentation
+    -   **Technical Collection**: Developer resources, implementation details, and technical commands
 -   **Added**: Collection landing pages with comprehensive navigation and quick access
 -   **Enhanced**: Permalink structure for better SEO and user-friendly URLs
 -   **Improved**: Cross-collection linking and navigation consistency

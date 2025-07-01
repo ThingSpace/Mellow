@@ -1,10 +1,9 @@
 ---
 layout: default
 title: Technical Commands
-nav_order: 13
+nav_order: 3
 description: 'Debug, health, and diagnostic commands for technical users'
 parent: Technical Documentation
-collection: technical
 ---
 
 # Technical Commands Implementation
