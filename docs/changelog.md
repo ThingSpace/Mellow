@@ -1,7 +1,8 @@
 ---
 layout: default
 title: Change Logs
-nav_order: 8
+nav_order: 10
+description: "Version history and release notes for Mellow updates"
 ---
 
 # Changelog
@@ -10,6 +11,107 @@ All notable changes to Mellow will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [1.1.1] - 2025-07-01 - Documentation Organization & Context Command Enhancements
+
+### 📚 Documentation Improvements
+
+#### Major Documentation Restructure
+- **Reorganized**: Complete GitHub Pages documentation structure with logical navigation hierarchy
+- **Fixed**: Navigation order conflicts and duplicate nav_order values across all documentation pages
+- **Added**: Comprehensive SEO descriptions and meta tags for better discoverability
+- **Created**: Parent-child documentation structure for technical resources
+- **Added**: Site map page (`docs/sitemap.md`) for comprehensive navigation assistance
+- **Enhanced**: Main index page with improved quick links and user flow
+
+#### Technical Documentation Organization
+- **Created**: Technical Documentation parent page (`docs/technical.md`) for developer resources
+- **Reorganized**: AI Features Status, Implementation Summary, and Technical Commands under technical hierarchy
+- **Added**: Proper front matter with descriptions and navigation structure to all technical pages
+- **Enhanced**: Cross-linking between related technical documentation pages
+
+#### Enhanced User Experience
+- **Added**: Jekyll plugins for SEO, redirects, and last-modified tracking
+- **Improved**: Search functionality with better content organization
+- **Added**: Redirect support for common URL patterns (`/commands/`, `/reference/`, `/cmd/`)
+- **Enhanced**: Footer and navigation with improved external links
+- **Added**: Social media meta tags and Open Graph integration
+
+### ✨ Context Command Enhancements
+
+#### `/context` Command Major Improvements
+- **Enhanced**: Detailed explanation of how conversation summaries work with smart compression and pattern recognition
+- **Added**: Comprehensive breakdown of all context types including future context features
+- **Improved**: Privacy explanations with step-by-step data control instructions
+- **Added**: Detection and display of advanced context types (crisis, therapeutic, moderation)
+- **Enhanced**: Context analysis with memory effectiveness ratings and personalized tips
+- **Added**: Better explanations of AI memory processing and adaptive learning capabilities
+
+#### Context Types & Documentation
+- **Enhanced**: Context type descriptions with detailed purposes, retention policies, and privacy information
+- **Added**: Support for future context types (crisis, therapeutic, moderation) with proper counting
+- **Improved**: User education about context logging benefits and privacy controls
+- **Added**: Smart tips for users to get better personalized support through context settings
+
+### 🛠️ Technical Improvements
+
+#### Documentation Infrastructure
+- **Added**: Jekyll SEO plugin for improved search engine optimization
+- **Enhanced**: Gemfile with additional useful plugins for documentation features
+- **Improved**: Site configuration with better metadata and social media integration
+- **Added**: Proper permalink structure for important pages (privacy policy, terms of service)
+- **Enhanced**: Navigation structure with callouts and collections support
+
+#### Code Quality
+- **Fixed**: Import statement corruption in context command that was causing module loading issues
+- **Enhanced**: Context command with better error handling and user feedback
+- **Improved**: Documentation consistency across all pages with proper YAML front matter
+- **Added**: Comprehensive descriptions for all documentation pages to improve SEO
+
+### 📋 Navigation Structure
+
+#### Logical Page Organization (New nav_order)
+1. **Home** - Main landing page with overview
+2. **Getting Started** - Setup and configuration guide
+3. **Commands** - Complete command reference
+4. **Features Overview** - Comprehensive feature descriptions
+5. **Privacy Controls** - Privacy settings and data management
+6. **API Reference** - Technical API documentation
+7. **Contributing** - Development contribution guide
+8. **FAQ** - Frequently asked questions
+9. **Troubleshooting** - Support and problem resolution
+10. **Change Logs** - Version history and release notes
+11. **Technical Documentation** - Developer and advanced resources
+12. **AI Features Status** - Implementation status and roadmap
+13. **Technical Commands** - Debug and diagnostic tools
+14. **Roadmap** - Development plans and future features
+15. **Privacy Policy** - Official privacy policy
+16. **Terms of Service** - Usage terms and agreement
+17. **Site Map** - Complete navigation assistance
+
+### 🔧 User Experience Improvements
+
+#### Better Discoverability
+- **Added**: Comprehensive site map with quick links and search tips
+- **Enhanced**: Main page quick links with better organization and clear call-to-actions
+- **Improved**: Cross-referencing between related documentation sections
+- **Added**: Multiple pathways for users to find support (Discord, GitHub, email)
+- **Enhanced**: Command documentation with redirect support for common URL patterns
+
+#### Enhanced Context Understanding
+- **Improved**: User education about how AI context and conversation summaries work
+- **Added**: Clear explanations of different context types and their benefits
+- **Enhanced**: Privacy control explanations with actionable steps for users
+- **Added**: Memory effectiveness indicators to help users understand AI capabilities
+
+### 🐛 Bug Fixes
+
+- **Fixed**: Broken import statement in context command causing module loading failures
+- **Fixed**: Duplicate navigation orders causing inconsistent page ordering in documentation
+- **Fixed**: Missing front matter in several documentation pages causing Jekyll build issues
+- **Fixed**: Incorrect parent-child relationships in technical documentation navigation
+
+---
 
 ## [1.1.0] - 2025-07-01 - Enhanced Context & Privacy Controls
 

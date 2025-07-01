@@ -1,3 +1,10 @@
+---
+layout: default
+title: Privacy Controls
+nav_order: 5
+description: "Comprehensive guide to privacy controls, context logging, and data management in Mellow"
+---
+
 # Privacy Controls & Context Logging
 
 Mellow prioritizes your privacy while providing personalized AI support. This document explains how you can control what information the AI has access to and how your data is used.

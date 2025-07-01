@@ -625,6 +625,24 @@ Be compassionate, practical, and provide specific, actionable resources. Focus o
 
         return this.generateResponse(prompt, userId)
     }
+
+    /**
+     * Check if AI service is properly connected and initialized
+     * @returns {boolean} Whether the AI service is connected and ready
+     */
+    isConnected() {
+        try {
+            // Check if service is initialized with config and model
+            const hasConfig = this.config !== null && typeof this.config === 'object'
+            const hasModel = this.model !== null
+            const hasRequiredTools = this.messageFormatting && this.performance && this.messageHistory
+
+            return hasConfig && hasModel && hasRequiredTools
+        } catch (error) {
+            console.error('Error checking AI service connection:', error)
+            return false
+        }
+    }
 }
 
 export const aiService = new AIService()

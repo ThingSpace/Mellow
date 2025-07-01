@@ -1,3 +1,11 @@
+---
+layout: default
+title: Privacy Policy
+nav_order: 15
+description: "Official privacy policy and data handling practices"
+permalink: /privacy-policy/
+---
+
 # Privacy Policy
 
 _Last updated: June 25th, 2025_

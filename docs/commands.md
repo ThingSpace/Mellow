@@ -2,6 +2,11 @@
 layout: default
 title: Commands
 nav_order: 3
+description: "Complete reference guide for all Mellow commands including mental health, moderation, and technical features"
+redirect_from:
+  - /commands/
+  - /reference/
+  - /cmd/
 ---
 
 # Command Reference
@@ -413,6 +418,80 @@ Get comprehensive system status and performance metrics.
 
 ---
 
+## 🔧 Technical Commands & Diagnostics
+
+### `/health`
+
+Quick system health check - verify all core services and components are operational.
+
+**Usage:** `/health`
+
+**Health Checks:**
+
+-   **Discord Connection:** Latency and connection readiness
+-   **Database:** Query performance and connectivity status
+-   **AI Service:** Service availability and error rates
+-   **Memory Usage:** Process memory analysis and health
+-   **System Logger:** Configuration and operational status
+-   **Commands:** Registry completeness and loading status
+
+**Features:**
+
+-   Overall health assessment (healthy/degraded/unhealthy)
+-   Component-specific health indicators
+-   Performance recommendations for issues
+-   Quick action suggestions
+-   Emergency fallback response if health check fails
+
+---
+
+### `/metrics`
+
+View detailed performance metrics, analytics, and system resource usage.
+
+**Usage:** `/metrics`
+
+**Comprehensive Analytics:**
+
+-   **Performance Overview:** Overall status, uptime, response time, error rate
+-   **Connection Metrics:** Discord latency, database query time, server/user counts
+-   **Memory Usage:** Process memory, heap usage, system memory percentages
+-   **System Resources:** CPU usage, system load, available/total memory
+-   **Performance Analytics:** Commands loaded, database records, cache efficiency
+
+**Smart Features:**
+
+-   Performance alerts for high resource usage
+-   Optimization suggestions based on current metrics
+-   Real-time status indicators and color coding
+-   Fallback metrics for error scenarios
+
+---
+
+### `/debug` (Owner Only)
+
+Advanced debugging tools for system diagnostics and troubleshooting.
+
+**Usage:** `/debug <subcommand>`
+
+**Subcommands:**
+
+-   **`database`** - Test database connectivity and performance
+-   **`ai`** - Diagnose AI service health and performance
+-   **`commands`** - Inspect command registry and loading status
+-   **`logs`** - View recent error logs and system events
+-   **`memory`** - Detailed memory usage analysis and GC info
+-   **`performance`** - Performance profiling and bottleneck analysis
+
+**Owner-Only Features:**
+
+-   Deep system diagnostics and sensitive performance data
+-   Detailed error logs and debugging information
+-   Memory analysis and garbage collection recommendations
+-   Performance bottleneck identification and suggestions
+
+---
+
 ### `/source`
 
 Open source project information and repository links.
@@ -431,18 +510,44 @@ Open source project information and repository links.
 
 ### `/context`
 
-Check what conversation history the AI has access to for personalized support.
+View your AI conversation context, understand how conversation summaries work, and see how your chat history personalizes support.
 
-**Usage:** `/context`
+**Usage:** `/context [details:true/false]`
+
+**Options:**
+- `details` (optional) - Show detailed information about context types and how they work
 
 **Features:**
 
--   View total conversation messages stored
--   See recent messages used for AI context
--   Check conversation themes detected
--   Understand AI's memory of your interactions
+#### Standard View (`/context`)
+-   **Total Conversation History:** Your messages, AI responses, and data storage status
+-   **Active Context Memory:** Current messages I remember for ongoing conversations
+-   **Context Types Breakdown:** Conversation, channel context, system notes, and advanced features
+-   **Context Analysis & Summary:** Conversation summary status, history timeline, and memory effectiveness
+-   **Smart Tips:** Suggestions for getting better personalized support
 
-**Privacy Note:** Only shows data when context logging is enabled in your preferences.
+#### Detailed View (`/context details:true`)
+-   **Context Types & How They Work:** Detailed breakdown of conversation, channel, and system context with purposes and retention
+-   **Conversation Summaries Explained:** How smart compression, pattern recognition, and context preservation work
+-   **Context Processing & AI Memory:** Recent memory, context blending, adaptive learning, and crisis detection
+-   **Advanced Context Features:** Crisis, therapeutic, and moderation context when available
+-   **Privacy & Data Control:** Complete privacy controls and data management options
+
+**Context Types:**
+- **Conversation Context:** Direct messages between you and Mellow (90-day retention)
+- **Channel Context:** Recent server messages that help understand ongoing discussions (90-day retention)
+- **System Context:** Internal notes about preferences and interaction patterns (extended retention)
+- **Crisis Context:** Safety intervention and support patterns (when applicable)
+- **Therapeutic Context:** Coping tool usage and therapeutic insights (when applicable)
+- **Moderation Context:** Administrative interactions and warnings (when applicable)
+
+**How Conversation Summaries Work:**
+- **Smart Compression:** Long conversations are intelligently summarized to preserve key information
+- **Pattern Recognition:** Identifies important themes, mood patterns, and coping strategies
+- **Memory Efficiency:** Allows remembering more history without overwhelming detail
+- **Context Preservation:** Maintains emotional context and ongoing situations
+
+**Privacy Note:** Only shows data when context logging is enabled in your preferences. Use `/preferences update context_logging:true` to enable context logging for better personalized support.
 
 ---
 
