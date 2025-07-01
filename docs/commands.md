@@ -485,21 +485,31 @@ Check for updates and show the latest release information.
 
 #### `/version changelog`
 
-View changelog for a specific version or list all available versions.
+View changelog for a specific version or list all available versions. Changelogs are sourced primarily from GitHub release descriptions, with fallback to repository markdown files.
 
 **Options:**
-- `version` - Specific version to view (e.g., "1.1.0") - Optional
+
+-   `version` - Specific version to view (e.g., "1.1.0") - Optional
 
 **Examples:**
-- `/version changelog` - List all available versions
-- `/version changelog version:1.1.0` - View changelog for v1.1.0
+
+-   `/version changelog` - List all available versions
+-   `/version changelog version:1.1.0` - View changelog for v1.1.0
+
+**Features:**
+
+-   Changelogs sourced from GitHub release descriptions
+-   Full release information including publish dates and links
+-   Automatic version normalization (works with or without 'v' prefix)
+-   Fallback to markdown files when GitHub releases unavailable
 
 #### `/version releases`
 
 View recent releases from the repository.
 
 **Options:**
-- `count` - Number of releases to show (1-10, default: 5) - Optional
+
+-   `count` - Number of releases to show (1-10, default: 5) - Optional
 
 **Example:** `/version releases count:10`
 
@@ -510,12 +520,15 @@ View repository information including stats, contributors, and recent commits.
 **Example:** `/version repo`
 
 **Features:**
-- Real-time version checking
-- Automatic update notifications
-- Direct links to GitHub releases
-- Repository statistics and insights
-- Recent commit history
-- Contributor information
+
+-   Real-time version checking and update notifications
+-   Changelogs sourced directly from GitHub release descriptions
+-   Automatic fallback to repository markdown files
+-   Direct links to GitHub releases and repository
+-   Repository statistics and contributor insights
+-   Recent commit history and development activity
+-   Recent commit history
+-   Contributor information
 
 ## Command Permissions
 

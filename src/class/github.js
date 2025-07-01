@@ -162,62 +162,142 @@ export class GithubClient {
      * @returns {Promise<Object>} Changelog content
      */
     async getChangelog() {
-        try {
-            const response = await GithubClient.client.get(
-                `/repos/${GithubClient.repoOwner}/${GithubClient.repoName}/contents/CHANGELOG.md`
-            )
+        const paths = ['CHANGELOG.md', 'ignored/CHANGELOG.md', 'docs/CHANGELOG.md']
+        let lastError = null
 
-            if (response.data.content) {
-                const content = Buffer.from(response.data.content, 'base64').toString('utf8')
-                return {
-                    success: true,
-                    content,
-                    lastModified: response.data.last_modified,
-                    size: response.data.size
-                }
-            }
-        } catch (error) {
-            // Try alternative paths
-            const altPaths = ['ignored/CHANGELOG.md', 'docs/CHANGELOG.md']
+        // Try GitHub API first
+        for (const path of paths) {
+            try {
+                const response = await GithubClient.client.get(
+                    `/repos/${GithubClient.repoOwner}/${GithubClient.repoName}/contents/${path}`
+                )
 
-            for (const path of altPaths) {
-                try {
-                    const altResponse = await GithubClient.client.get(
-                        `/repos/${GithubClient.repoOwner}/${GithubClient.repoName}/contents/${path}`
-                    )
-                    if (altResponse.data.content) {
-                        const content = Buffer.from(altResponse.data.content, 'base64').toString('utf8')
-                        return {
-                            success: true,
-                            content,
-                            path,
-                            lastModified: altResponse.data.last_modified,
-                            size: altResponse.data.size
-                        }
+                if (response.data.content) {
+                    const content = Buffer.from(response.data.content, 'base64').toString('utf8')
+                    return {
+                        success: true,
+                        content,
+                        path,
+                        source: 'github',
+                        lastModified: response.data.last_modified,
+                        size: response.data.size
                     }
-                } catch (altError) {
+                }
+            } catch (error) {
+                lastError = error
+                // Continue to next path
+                continue
+            }
+        }
+
+        // Fallback to local file if GitHub API fails
+        try {
+            const localPaths = [
+                join(__dirname, '../../ignored/CHANGELOG.md'),
+                join(__dirname, '../../CHANGELOG.md'),
+                join(__dirname, '../../docs/CHANGELOG.md')
+            ]
+
+            for (const localPath of localPaths) {
+                try {
+                    const content = readFileSync(localPath, 'utf8')
+                    return {
+                        success: true,
+                        content,
+                        path: localPath,
+                        source: 'local',
+                        note: 'Retrieved from local file (GitHub API unavailable)'
+                    }
+                } catch (localError) {
+                    // Continue to next local path
                     continue
                 }
             }
+        } catch (fallbackError) {
+            // Ignore fallback errors
+        }
 
-            return {
-                success: false,
-                error: error.message,
-                status: error.response?.status
-            }
+        // If we get here, no changelog was found anywhere
+        return {
+            success: false,
+            error:
+                lastError?.response?.status === 404
+                    ? 'Changelog file not found in repository or locally'
+                    : lastError?.message || 'Failed to retrieve changelog',
+            status: lastError?.response?.status,
+            notFound: lastError?.response?.status === 404
         }
     }
 
     /**
      * Parse changelog and get version-specific entries
+     * Uses GitHub release bodies as the primary source, falls back to markdown files
      * @param {string} version - Version to get changelog for (optional)
      * @returns {Promise<Object>} Parsed changelog data
      */
     async getVersionChangelog(version = null) {
         try {
+            // First, try to get changelogs from GitHub releases (primary source)
+            const releasesResult = await this.getReleases(50) // Get more releases for comprehensive version list
+
+            if (releasesResult.success && releasesResult.data.length > 0) {
+                const releases = releasesResult.data
+
+                // Create sections from GitHub releases
+                const sections = releases.map(release => ({
+                    version: release.tagName.replace(/^v/, ''), // Normalize version
+                    content: release.body || 'No changelog content available for this release.',
+                    name: release.name,
+                    publishedAt: release.publishedAt,
+                    htmlUrl: release.htmlUrl,
+                    source: 'github-release'
+                }))
+
+                if (version) {
+                    // Normalize version input - remove 'v' prefix if present
+                    const normalizedVersion = version.replace(/^v/, '')
+
+                    // Find version in GitHub releases
+                    const versionData = sections.find(s => s.version === normalizedVersion)
+
+                    if (versionData) {
+                        return {
+                            success: true,
+                            version: normalizedVersion,
+                            content: versionData.content,
+                            found: true,
+                            source: 'github-release',
+                            releaseInfo: {
+                                name: versionData.name,
+                                publishedAt: versionData.publishedAt,
+                                htmlUrl: versionData.htmlUrl
+                            }
+                        }
+                    }
+
+                    // Version not found in releases, try markdown fallback below
+                }
+
+                // Return all versions from GitHub releases
+                if (!version) {
+                    return {
+                        success: true,
+                        versions: sections,
+                        totalVersions: sections.length,
+                        source: 'github-releases'
+                    }
+                }
+            }
+
+            // Fallback to markdown changelog parsing if GitHub releases failed or version not found
             const changelog = await this.getChangelog()
             if (!changelog.success) {
-                return changelog
+                return {
+                    success: false,
+                    error: changelog.error,
+                    notFound: changelog.notFound,
+                    status: changelog.status
+                }
             }
 
             const content = changelog.content
@@ -235,7 +315,7 @@ export class GithubClient {
                 })
             }
 
-            // Extract content for each version
+            // Extract content for each version from markdown
             for (let i = 0; i < positions.length; i++) {
                 const current = positions[i]
                 const next = positions[i + 1]
@@ -244,24 +324,32 @@ export class GithubClient {
                 const versionContent = content.substring(current.headerEnd, endPos).trim()
                 sections.push({
                     version: current.version,
-                    content: versionContent
+                    content: versionContent,
+                    source: 'markdown-file'
                 })
             }
 
             if (version) {
-                const versionData = sections.find(s => s.version === version)
+                // Normalize version input - remove 'v' prefix if present
+                const normalizedVersion = version.replace(/^v/, '')
+
+                // Find version with normalized matching
+                const versionData = sections.find(s => s.version === normalizedVersion)
+
                 return {
                     success: true,
-                    version,
-                    content: versionData?.content || `No changelog found for version ${version}`,
-                    found: !!versionData
+                    version: normalizedVersion,
+                    content: versionData?.content || `No changelog found for version ${normalizedVersion}`,
+                    found: !!versionData,
+                    source: 'markdown-fallback'
                 }
             }
 
             return {
                 success: true,
                 versions: sections,
-                totalVersions: sections.length
+                totalVersions: sections.length,
+                source: 'markdown-fallback'
             }
         } catch (error) {
             return {

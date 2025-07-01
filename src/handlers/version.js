@@ -156,22 +156,66 @@ export class VersionHandler {
                 const changelog = await this.github.getVersionChangelog(version)
 
                 if (!changelog.success) {
-                    return this.sendErrorEmbed(client, interaction, 'Could not retrieve changelog from repository.')
+                    if (changelog.notFound) {
+                        return this.sendErrorEmbed(
+                            client,
+                            interaction,
+                            'No changelog information found. Version data may not be publicly available.'
+                        )
+                    }
+                    return this.sendErrorEmbed(client, interaction, `Failed to retrieve changelog: ${changelog.error}`)
                 }
 
                 const embed = new client.Gateway.EmbedBuilder()
-                    .setColor(client.colors.primary)
-                    .setTitle(`📝 Changelog for v${version}`)
-                    .setDescription(
-                        changelog.content?.substring(0, 4000) || 'No changelog content found for this version.'
-                    )
                     .setThumbnail(client.logo)
                     .setTimestamp()
                     .setFooter({ text: client.footer, iconURL: client.logo })
 
-                if (!changelog.found) {
-                    embed.setColor(client.colors.warning || '#ffa500')
-                    embed.setTitle(`⚠️ Version v${version} not found`)
+                if (changelog.found) {
+                    let title = `📝 Changelog for v${changelog.version}`
+
+                    // Add release name if available (from GitHub release)
+                    if (changelog.releaseInfo?.name && changelog.releaseInfo.name !== changelog.version) {
+                        title = `📝 ${changelog.releaseInfo.name}`
+                    }
+
+                    embed
+                        .setColor(client.colors.primary)
+                        .setTitle(title)
+                        .setDescription(
+                            changelog.content?.substring(0, 4000) || 'No changelog content found for this version.'
+                        )
+
+                    // Add additional information for GitHub releases
+                    if (changelog.source === 'github-release' && changelog.releaseInfo) {
+                        const fields = [{ name: '🏷️ Version', value: `v${changelog.version}`, inline: true }]
+
+                        if (changelog.releaseInfo.publishedAt) {
+                            fields.push({
+                                name: '📅 Published',
+                                value: new Date(changelog.releaseInfo.publishedAt).toLocaleDateString(),
+                                inline: true
+                            })
+                        }
+
+                        if (changelog.releaseInfo.htmlUrl) {
+                            fields.push({
+                                name: '🔗 Release Page',
+                                value: `[View on GitHub](${changelog.releaseInfo.htmlUrl})`,
+                                inline: true
+                            })
+                        }
+
+                        embed.addFields(fields)
+                    }
+                } else {
+                    embed
+                        .setColor(client.colors.warning || '#ffa500')
+                        .setTitle(`⚠️ Version v${changelog.version} not found`)
+                        .setDescription(
+                            `Changelog for version \`${changelog.version}\` was not found.\n\n` +
+                                `Use \`/version changelog\` without specifying a version to see all available versions.`
+                        )
                 }
 
                 await interaction.editReply({ embeds: [embed] })
@@ -180,25 +224,70 @@ export class VersionHandler {
                 const changelog = await this.github.getVersionChangelog()
 
                 if (!changelog.success) {
-                    return this.sendErrorEmbed(client, interaction, 'Could not retrieve changelog from repository.')
+                    if (changelog.notFound) {
+                        return this.sendErrorEmbed(
+                            client,
+                            interaction,
+                            'No changelog information found. Version data may not be publicly available.'
+                        )
+                    }
+                    return this.sendErrorEmbed(client, interaction, `Failed to retrieve changelog: ${changelog.error}`)
                 }
 
                 const embed = new client.Gateway.EmbedBuilder()
                     .setColor(client.colors.primary)
                     .setTitle('📝 Available Versions')
-                    .setDescription('Use `/version changelog version:<version>` to view specific changelog.')
                     .setThumbnail(client.logo)
                     .setTimestamp()
                     .setFooter({ text: client.footer, iconURL: client.logo })
 
+                // Add description with source information
+                let description = 'Use `/version changelog version:<version>` to view specific changelog.'
+
+                if (changelog.source === 'github-releases') {
+                    description += '\n\n*Changelogs sourced from GitHub releases*'
+                } else if (changelog.source === 'markdown-fallback') {
+                    description += '\n\n*Changelogs sourced from repository markdown files*'
+                } else if (changelog.source === 'local') {
+                    description += '\n\n*Note: Retrieved from local file (GitHub API unavailable)*'
+                }
+
+                embed.setDescription(description)
+
                 const versions = changelog.versions?.slice(0, 10) // Show latest 10 versions
                 if (versions && versions.length > 0) {
-                    const versionList = versions.map(v => `• v${v.version}`).join('\n')
+                    const versionList = versions
+                        .map(v => {
+                            let versionText = `• v${v.version}`
+                            if (v.name && v.name !== v.version) {
+                                versionText += ` - ${v.name}`
+                            }
+                            return versionText
+                        })
+                        .join('\n')
+
                     embed.addFields({
                         name: '📋 Recent Versions',
                         value: versionList,
                         inline: false
                     })
+
+                    if (changelog.totalVersions > 10) {
+                        embed.addFields({
+                            name: 'ℹ️ Note',
+                            value: `Showing ${versions.length} of ${changelog.totalVersions} total versions`,
+                            inline: false
+                        })
+                    }
+                } else {
+                    embed
+                        .setColor(client.colors.warning || '#ffa500')
+                        .setDescription('No versions found.')
+                        .addFields({
+                            name: '⚠️ No Versions Available',
+                            value: 'No version information could be found or parsed.',
+                            inline: false
+                        })
                 }
 
                 await interaction.editReply({ embeds: [embed] })
