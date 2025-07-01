@@ -1,10 +1,9 @@
 ---
 layout: default
 title: Implementation Summary
-nav_order: 11
+nav_order: 2
 description: 'Technical implementation details and development status'
 parent: Technical Documentation
-collection: technical
 ---
 
 # Context Commands & Statistics Implementation Summary

@@ -2,6 +2,7 @@
 layout: default
 title: Reference
 nav_order: 19
+has_children: true
 description: 'Complete reference documentation for commands, features, and APIs'
 permalink: /reference/
 ---
@@ -14,22 +15,13 @@ Complete reference materials for Mellow's commands, features, and technical spec
 
 Find detailed information about every command Mellow offers.
 
-### [Commands Reference]({{ site.baseurl }}/reference/commands/)
-Complete documentation for all Mellow commands including mental health tools, moderation features, and technical diagnostics. Includes usage examples, options, and detailed explanations.
-
 ## ⭐ Feature Documentation
 
 Explore all of Mellow's capabilities and mental health features.
 
-### [Features Overview]({{ site.baseurl }}/reference/features/)
-Comprehensive overview of Mellow's mental health features including AI support, mood tracking, coping tools, crisis support, and server management capabilities.
-
 ## 🔌 API Documentation
 
 Technical reference for developers and advanced users.
-
-### [API Reference]({{ site.baseurl }}/reference/api/)
-Complete API documentation including database schema, endpoints, data models, and integration guidelines for developers.
 
 ---
 

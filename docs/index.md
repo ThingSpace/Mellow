@@ -33,10 +33,10 @@ Mellow is designed to be a gentle, empathetic, and private support system that p
 
 ## Quick Links
 
--   **[🚀 Get Started]({{ site.baseurl }}/guides/getting-started/)** - Setup guide and first steps
--   **[⭐ Complete Features Overview]({{ site.baseurl }}/reference/features/)** - All capabilities and tools
--   **[📋 Commands Reference]({{ site.baseurl }}/reference/commands/)** - Every command documented
--   **[🔒 Privacy Controls Documentation]({{ site.baseurl }}/guides/privacy-controls/)** - Data and privacy management
+-   **[🚀 Get Started](getting-started)** - Setup guide and first steps
+-   **[⭐ Complete Features Overview](features)** - All capabilities and tools
+-   **[📋 Commands Reference](commands)** - Every command documented
+-   **[🔒 Privacy Controls Documentation](privacy-controls)** - Data and privacy management
 -   **[💬 Join Support Server](https://discord.gg/C3ZuXPP7Hc)** - Community help and discussion
 -   **[📂 View Source Code](https://github.com/ThingSpace/Mellow)** - Open source repository
 -   **[🗺️ Site Map](sitemap.md)** - Find any documentation page

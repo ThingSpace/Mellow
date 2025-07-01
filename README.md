@@ -13,17 +13,20 @@
 **Complete documentation is available at: [mellow.athing.space](https://mellow.athing.space)**
 
 ### 📖 User Guides
--   [Getting Started Guide](https://mellow.athing.space/guides/getting-started) - Complete setup and configuration
--   [Privacy Controls Guide](https://mellow.athing.space/guides/privacy-controls) - Data management and privacy settings
--   [Troubleshooting Guide](https://mellow.athing.space/guides/troubleshooting) - Solutions to common issues
+
+-   [Getting Started Guide](https://mellow.athing.space/getting-started) - Complete setup and configuration
+-   [Privacy Controls Guide](https://mellow.athing.space/privacy-controls) - Data management and privacy settings
+-   [Troubleshooting Guide](https://mellow.athing.space/troubleshooting) - Solutions to common issues
 
 ### 📚 Reference Documentation
--   [Command Reference](https://mellow.athing.space/reference/commands) - Complete command documentation
--   [Features Overview](https://mellow.athing.space/reference/features) - All capabilities and tools
--   [API Documentation](https://mellow.athing.space/reference/api) - Technical API reference
+
+-   [Command Reference](https://mellow.athing.space/commands) - Complete command documentation
+-   [Features Overview](https://mellow.athing.space/features) - All capabilities and tools
+-   [API Documentation](https://mellow.athing.space/api) - Technical API reference
 
 ### 🛠️ Technical Resources
--   [Technical Documentation](https://mellow.athing.space/technical/) - Developer and advanced resources
+
+-   [Technical Documentation](https://mellow.athing.space/technical) - Developer and advanced resources
 -   [Contributing Guide](https://mellow.athing.space/contributing) - Development contribution guide
 
 ---

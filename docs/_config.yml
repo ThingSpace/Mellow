@@ -51,42 +51,6 @@ callouts:
         title: 'Warning'
         color: red
 
-# Collections for better organization
-collections:
-    guides:
-        output: true
-        permalink: /guides/:name/
-        sort_by: nav_order
-    reference:
-        output: true
-        permalink: /reference/:name/
-        sort_by: nav_order
-    technical:
-        output: true
-        permalink: /technical/:name/
-        sort_by: nav_order
-
-# Default front matter for collections
-defaults:
-    - scope:
-          path: ""
-          type: "guides"
-      values:
-          layout: "default"
-          collection: "guides"
-    - scope:
-          path: ""
-          type: "reference"
-      values:
-          layout: "default"
-          collection: "reference"
-    - scope:
-          path: ""
-          type: "technical"
-      values:
-          layout: "default"
-          collection: "technical"
-
 # Table of contents
 nav_external_links:
     - title: Mellow on GitHub
