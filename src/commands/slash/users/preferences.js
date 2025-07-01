@@ -1,5 +1,10 @@
 import { cmdTypes } from '../../../configs/cmdTypes.config.js'
-import { personalityChoices, themeChoices, languageChoices } from '../../../configs/userPreferences.config.js'
+import {
+    personalityChoices,
+    themeChoices,
+    languageChoices,
+    timezoneChoices
+} from '../../../configs/userPreferences.config.js'
 
 export default {
     structure: {
@@ -75,6 +80,13 @@ export default {
                         choices: languageChoices
                     },
                     {
+                        name: 'timezone',
+                        description: 'Your timezone for scheduling reminders',
+                        required: false,
+                        type: cmdTypes.STRING,
+                        choices: timezoneChoices
+                    },
+                    {
                         name: 'context_logging',
                         description: 'Allow AI to use your messages for conversation context (improves responses)',
                         required: false,
@@ -128,6 +140,7 @@ export default {
                                         `**AI Personality:** ${settings.aiPersonality || 'gentle'}`,
                                         `**Theme:** ${settings.profileTheme || 'blue'}`,
                                         `**Language:** ${settings.language || 'en'}`,
+                                        `**Timezone:** ${settings.timezone || 'Not set'}`,
                                         `**Journal Privacy:** ${settings.journalPrivacy ? '🔒 Private' : '🌐 Public'}`,
                                         `**Context Logging:** ${!settings.disableContextLogging ? '✅ Enabled' : '❌ Disabled'}`
                                     ].join('\n'),
@@ -187,6 +200,11 @@ export default {
                 const language = interaction.options.getString('language')
                 if (language) {
                     updates.language = language
+                }
+
+                const timezone = interaction.options.getString('timezone')
+                if (timezone) {
+                    updates.timezone = timezone
                 }
 
                 const contextLogging = interaction.options.getBoolean('context_logging')

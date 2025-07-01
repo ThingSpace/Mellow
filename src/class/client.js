@@ -7,6 +7,7 @@ import { db } from '../database/client.js'
 import deploy from '../handlers/deploy.js'
 import commands from '../handlers/commands.js'
 import events from '../handlers/events.js'
+import { version } from '../../package.json'
 
 class Mellow extends Client {
     slash = new Collection()
@@ -61,7 +62,7 @@ class Mellow extends Client {
         this.cmd_types = cmdTypes
 
         this.logo = 'https://codemeapixel.dev/mellow/mellow.png'
-        this.footer = 'Mellow - Your AI Mental Health Companion'
+        this.footer = `Mellow - v${version} | © 2025 ByteBrush Studios`
 
         this.colors = {
             primary: '#7289DA',
