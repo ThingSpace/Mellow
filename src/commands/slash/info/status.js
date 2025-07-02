@@ -1,5 +1,3 @@
-import { aiService } from '../../../services/ai.service.js'
-
 export default {
     structure: {
         name: 'status',
@@ -14,7 +12,7 @@ export default {
     run: async (client, interaction) => {
         try {
             // Get performance metrics
-            const report = aiService.performance.formatMetricsReport()
+            const report = client.ai.performance.formatMetricsReport()
 
             // Get basic system information
             const uptime = Math.floor(client.uptime / 1000)

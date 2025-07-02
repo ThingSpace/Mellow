@@ -4,7 +4,7 @@ export default {
         category: 'ModAction',
         description: 'Admin/mod tools for viewing moderation logs.',
         handlers: {
-            requiredRoles: ['ADMIN', 'MOD']
+            requiredRoles: ['ADMIN', 'MOD', 'SUPPORT']
         },
         options: [
             {
