@@ -4,7 +4,6 @@ title: User Guides
 nav_order: 18
 has_children: true
 description: 'Step-by-step guides to help you get the most out of Mellow'
-permalink: /guides/
 ---
 
 # User Guides 📖

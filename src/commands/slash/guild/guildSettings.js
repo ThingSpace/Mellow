@@ -4,6 +4,7 @@ export default {
     structure: {
         name: 'guildsettings',
         description: 'View or update guild settings',
+        category: 'Guild',
         handlers: {
             requiredRoles: [],
             requiredPerms: [PermissionFlagsBits.Administrator, PermissionFlagsBits.ManageGuild],
@@ -269,6 +270,7 @@ export default {
                     console.log('Updating guild with:', updates)
 
                     await client.db.guilds.upsert(guildId, {
+                        ...updates,
                         name: interaction.guild.name,
                         ownerId: interaction.guild.ownerId
                     })

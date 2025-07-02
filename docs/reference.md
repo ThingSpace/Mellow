@@ -4,7 +4,6 @@ title: Reference
 nav_order: 19
 has_children: true
 description: 'Complete reference documentation for commands, features, and APIs'
-permalink: /reference/
 ---
 
 # Reference Documentation 📚

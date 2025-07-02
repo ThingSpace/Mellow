@@ -33,7 +33,7 @@ export default {
 
         const userId = BigInt(interaction.user.id)
 
-        const breathing = await client.aiService.getCopingResponse({
+        const breathing = await client.ai.getCopingResponse({
             tool: 'breathing',
             feeling,
             userId
