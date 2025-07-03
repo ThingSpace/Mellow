@@ -1,6 +1,6 @@
 /**
  * Example: Custom Twitter Integration Examples
- * 
+ *
  * This file demonstrates various ways to integrate and use the Twitter service
  * in custom code, commands, or automated workflows.
  */
@@ -94,7 +94,7 @@ export async function postWeeklyCommunityHighlight() {
     try {
         // Get weekly community data
         const weeklyData = await getWeeklyCommunityData()
-        
+
         const content = await client.ai.generateTwitterContent({
             type: 'weeklyUpdate',
             topic: `This week: ${weeklyData.newMembers} new members joined our supportive community, ${weeklyData.supportiveMessages} supportive messages shared`,
@@ -124,16 +124,16 @@ export async function postMilestoneAchievement(milestone) {
 
     try {
         let content
-        
+
         switch (milestone.type) {
             case 'user_milestone':
                 content = `🎉 Milestone achieved! We've now supported over ${milestone.count.toLocaleString()} individuals on their mental health journey. Thank you for being part of our caring community! 💚`
                 break
-                
+
             case 'guild_milestone':
                 content = `🌟 Amazing news! Mellow is now active in ${milestone.count.toLocaleString()} supportive communities, spreading mental health awareness and support everywhere! 🤖💙`
                 break
-                
+
             case 'feature_launch':
                 content = await client.ai.generateTwitterContent({
                     type: 'botUpdates',
@@ -141,7 +141,7 @@ export async function postMilestoneAchievement(milestone) {
                     maxLength: 200
                 })
                 break
-                
+
             default:
                 content = `🎊 Exciting milestone reached! ${milestone.description} Thank you for your continued support! #MentalHealthMatters`
         }
@@ -171,11 +171,11 @@ export async function smartScheduledPosting() {
         const now = new Date()
         const hour = now.getUTCHours()
         const dayOfWeek = now.getUTCDay()
-        
+
         // Different content for different times
         let contentType
         let topic = null
-        
+
         if (hour >= 6 && hour <= 10) {
             // Morning motivation
             contentType = 'dailyTip'
@@ -194,7 +194,8 @@ export async function smartScheduledPosting() {
         }
 
         // Weekly content on specific days
-        if (dayOfWeek === 1 && hour === 12) { // Monday noon
+        if (dayOfWeek === 1 && hour === 12) {
+            // Monday noon
             contentType = 'weeklyUpdate'
             topic = 'Monday motivation and weekly mental health goals'
         }
@@ -220,7 +221,7 @@ export async function handleUserRequestedPost(interaction, postType, customMessa
     // Verify user permissions
     const userRoles = await client.db.users.getUserRoles(interaction.user.id)
     const canPost = userRoles?.includes('OWNER') || userRoles?.includes('ADMIN')
-    
+
     if (!canPost) {
         return {
             success: false,
@@ -237,7 +238,7 @@ export async function handleUserRequestedPost(interaction, postType, customMessa
 
     try {
         let result
-        
+
         if (customMessage) {
             // Post custom message
             result = await client.twitterService.postTweet(customMessage, {
@@ -257,16 +258,11 @@ export async function handleUserRequestedPost(interaction, postType, customMessa
 
         // Log the activity
         if (client.systemLogger) {
-            await client.systemLogger.logUserEvent(
-                interaction.user.id,
-                interaction.user.username,
-                'twitter_post',
-                {
-                    postType,
-                    success: result.success,
-                    tweetId: result.tweetId
-                }
-            )
+            await client.systemLogger.logUserEvent(interaction.user.id, interaction.user.username, 'twitter_post', {
+                postType,
+                success: result.success,
+                tweetId: result.tweetId
+            })
         }
 
         return result
@@ -289,29 +285,29 @@ export async function performTwitterHealthCheck() {
     try {
         // Test connection
         const connectionTest = await client.twitterService.testConnection()
-        
+
         if (!connectionTest.success) {
             console.log('Twitter connection failed, attempting recovery...')
-            
+
             // Attempt to reinitialize
             const reinitResult = await client.twitterService.initialize()
-            
+
             if (reinitResult) {
                 console.log('Twitter service recovery successful')
                 return { healthy: true, recovered: true }
             } else {
                 console.log('Twitter service recovery failed')
-                return { 
-                    healthy: false, 
+                return {
+                    healthy: false,
                     reason: 'Recovery failed',
-                    error: connectionTest.error 
+                    error: connectionTest.error
                 }
             }
         }
 
         // Check rate limits
         const rateCheck = client.twitterService.checkRateLimit()
-        
+
         return {
             healthy: true,
             connection: connectionTest,
@@ -320,10 +316,10 @@ export async function performTwitterHealthCheck() {
         }
     } catch (error) {
         console.error('Twitter health check error:', error)
-        return { 
-            healthy: false, 
+        return {
+            healthy: false,
             reason: 'Health check error',
-            error: error.message 
+            error: error.message
         }
     }
 }
@@ -333,7 +329,7 @@ export async function performTwitterHealthCheck() {
  */
 async function getWeeklyCommunityData() {
     const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
-    
+
     return {
         newMembers: await client.db.users.countSince(oneWeekAgo),
         supportiveMessages: await client.db.conversationHistory.countSince(oneWeekAgo),
@@ -344,7 +340,7 @@ async function getWeeklyCommunityData() {
 
 /**
  * Example Integration in Discord Command
- * 
+ *
  * Here's how you might use these functions in a Discord command:
  */
 /*
@@ -370,7 +366,7 @@ export default {
 
 /**
  * Example Integration in Event Handler
- * 
+ *
  * Here's how you might trigger posts based on events:
  */
 /*

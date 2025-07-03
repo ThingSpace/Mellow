@@ -178,6 +178,7 @@ export default {
 
                     let connectionStatus = '❌ Not Connected'
                     let username = 'Unknown'
+                    let diagnostics = []
 
                     if (isInitialized && client.twitterService) {
                         try {
@@ -185,12 +186,39 @@ export default {
                             if (testResult.success) {
                                 connectionStatus = '✅ Connected'
                                 username = testResult.username
+                                diagnostics.push('✅ API connection successful')
                             } else {
                                 connectionStatus = `❌ Connection Failed: ${testResult.error}`
+
+                                // Add specific diagnostics for common errors
+                                if (testResult.statusCode === 403) {
+                                    diagnostics.push('🔐 **403 Forbidden Error Detected**')
+                                    diagnostics.push('• Check API credentials in environment variables')
+                                    diagnostics.push('• Verify Twitter Developer Portal app permissions')
+                                    diagnostics.push('• Ensure API v2 write access is enabled')
+                                    diagnostics.push('• Check if account is suspended or restricted')
+                                } else if (testResult.statusCode === 401) {
+                                    diagnostics.push('🔑 **401 Authentication Error**')
+                                    diagnostics.push('• Verify API key and secret are correct')
+                                    diagnostics.push('• Check access tokens are valid')
+                                    diagnostics.push('• Ensure all credentials are properly set')
+                                } else if (testResult.statusCode === 429) {
+                                    diagnostics.push('⏰ **429 Rate Limit Exceeded**')
+                                    diagnostics.push('• Wait before retrying connection')
+                                    diagnostics.push('• Check if too many requests were made')
+                                } else {
+                                    diagnostics.push(`❌ Error: ${testResult.error}`)
+                                }
                             }
                         } catch (error) {
                             connectionStatus = `❌ Error: ${error.message}`
+                            diagnostics.push(`❌ Connection test failed: ${error.message}`)
                         }
+                    } else {
+                        diagnostics.push('❌ Service not initialized')
+                        diagnostics.push('• Check Twitter API credentials')
+                        diagnostics.push('• Verify TWITTER_POSTING_ENABLED=true')
+                        diagnostics.push('• Restart bot after configuration changes')
                     }
 
                     const embed = new client.Gateway.EmbedBuilder()
@@ -231,8 +259,17 @@ export default {
                                 inline: false
                             }
                         )
-                        .setFooter({ text: client.footer, iconURL: client.logo })
-                        .setTimestamp()
+
+                    // Add diagnostics if there are any issues
+                    if (diagnostics.length > 0) {
+                        embed.addFields({
+                            name: '🔍 Diagnostics',
+                            value: diagnostics.join('\n'),
+                            inline: false
+                        })
+                    }
+
+                    embed.setFooter({ text: client.footer, iconURL: client.logo }).setTimestamp()
 
                     // Add daily statistics if available
                     if (client.twitterService) {

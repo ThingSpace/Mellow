@@ -30,12 +30,25 @@ export class TwitterService {
             const validation = validateTwitterConfig()
 
             if (!validation.isValid) {
-                log('Twitter service disabled due to configuration issues', 'warn')
+                const message = 'Twitter service disabled due to configuration issues'
+                if (this.client.systemLogger) {
+                    await this.client.systemLogger.logError('twitter_service', 'initialization_failed', message, {
+                        issues: validation.issues,
+                        warnings: validation.warnings
+                    })
+                } else {
+                    log(message, 'warn')
+                }
                 return false
             }
 
             if (!validation.enabled) {
-                log('Twitter service disabled in configuration', 'info')
+                const message = 'Twitter service disabled in configuration'
+                if (this.client.systemLogger) {
+                    await this.client.systemLogger.logInfo('twitter_service', 'service_disabled', message)
+                } else {
+                    log(message, 'info')
+                }
                 return false
             }
 
@@ -46,7 +59,23 @@ export class TwitterService {
             // Test the connection
             const connectionTest = await this.testConnection()
             if (!connectionTest.success) {
-                log(`Twitter service failed connection test: ${connectionTest.error}`, 'error')
+                const message = `Twitter service failed connection test: ${connectionTest.error}`
+                if (this.client.systemLogger) {
+                    await this.client.systemLogger.logError('twitter_service', 'connection_test_failed', message, {
+                        error: connectionTest.originalError,
+                        statusCode: connectionTest.statusCode,
+                        suggestions:
+                            connectionTest.statusCode === 403
+                                ? [
+                                      'Check Twitter API credentials in environment variables',
+                                      'Verify Twitter Developer Portal app permissions',
+                                      'Ensure API v2 write access is enabled'
+                                  ]
+                                : []
+                    })
+                } else {
+                    log(message, 'error')
+                }
                 return false
             }
 
@@ -57,21 +86,37 @@ export class TwitterService {
             this.startScheduledPosting()
 
             this.initialized = true
-            log(`Twitter service initialized successfully - Connected as @${connectionTest.username}`, 'done')
 
-            // Log initialization
+            const successMessage = `Twitter service initialized successfully - Connected as @${connectionTest.username}`
             if (this.client.systemLogger) {
-                await this.logActivity('service_initialized', 'Twitter service started successfully', {
+                await this.client.systemLogger.logInfo('twitter_service', 'service_initialized', successMessage, {
                     username: connectionTest.username,
+                    userId: connectionTest.userId,
                     features: Object.keys(this.config.contentTypes).filter(
                         type => this.config.contentTypes[type].enabled
                     )
                 })
+            } else {
+                log(successMessage, 'done')
             }
+
+            // Log initialization activity
+            await this.logActivity('service_initialized', 'Twitter service started successfully', {
+                username: connectionTest.username,
+                features: Object.keys(this.config.contentTypes).filter(type => this.config.contentTypes[type].enabled)
+            })
 
             return true
         } catch (error) {
-            log(`Failed to initialize Twitter service: ${error.message}`, 'error')
+            const message = `Failed to initialize Twitter service: ${error.message}`
+            if (this.client.systemLogger) {
+                await this.client.systemLogger.logError('twitter_service', 'initialization_error', message, {
+                    error: error.message,
+                    stack: error.stack
+                })
+            } else {
+                log(message, 'error')
+            }
             return false
         }
     }
@@ -88,9 +133,22 @@ export class TwitterService {
                 userId: user.data.id
             }
         } catch (error) {
+            let errorMessage = error.message
+
+            // Provide specific guidance for common connection issues
+            if (error.code === 403 || error.status === 403) {
+                errorMessage = 'Twitter API access forbidden (403). Check API credentials and permissions.'
+            } else if (error.code === 401 || error.status === 401) {
+                errorMessage = 'Twitter API authentication failed (401). Verify API key and tokens.'
+            } else if (error.code === 429 || error.status === 429) {
+                errorMessage = 'Twitter API rate limit exceeded (429). Wait before retrying.'
+            }
+
             return {
                 success: false,
-                error: error.message
+                error: errorMessage,
+                originalError: error.message,
+                statusCode: error.code || error.status
             }
         }
     }
@@ -143,14 +201,57 @@ export class TwitterService {
                 content: formattedContent
             }
         } catch (error) {
-            log(`Failed to post tweet: ${error.message}`, 'error')
-
-            await this.logActivity('tweet_failed', content, {
+            // Enhanced error handling for specific HTTP codes
+            let errorMessage = error.message
+            let errorDetails = {
                 error: error.message,
-                type: options.type || 'manual'
-            })
+                type: options.type || 'manual',
+                content: content.substring(0, 100)
+            }
 
-            return { success: false, error: error.message }
+            // Handle specific error codes
+            if (error.code === 403 || error.status === 403) {
+                errorMessage =
+                    'Twitter API access forbidden (403). This usually indicates:' +
+                    '\n  - Invalid or expired API credentials' +
+                    '\n  - Insufficient API permissions (need Twitter API v2 write access)' +
+                    '\n  - Account may be suspended or restricted' +
+                    '\n  - Twitter app may need approval for posting' +
+                    '\n  - Check your Twitter Developer Portal settings'
+
+                errorDetails.errorType = 'authentication_failed'
+                errorDetails.httpCode = 403
+                errorDetails.suggestions = [
+                    'Verify Twitter API credentials in environment variables',
+                    'Check Twitter Developer Portal for app status',
+                    'Ensure API v2 write permissions are enabled',
+                    'Verify account is not suspended or restricted'
+                ]
+            } else if (error.code === 429 || error.status === 429) {
+                errorMessage = 'Twitter API rate limit exceeded (429)'
+                errorDetails.errorType = 'rate_limit'
+                errorDetails.httpCode = 429
+            } else if (error.code === 401 || error.status === 401) {
+                errorMessage = 'Twitter API authentication failed (401) - check credentials'
+                errorDetails.errorType = 'invalid_credentials'
+                errorDetails.httpCode = 401
+            }
+
+            // Log with systemLogger if available, fallback to regular logger
+            if (this.client.systemLogger) {
+                await this.client.systemLogger.logError(
+                    'twitter_service',
+                    'tweet_posting_failed',
+                    errorMessage,
+                    errorDetails
+                )
+            } else {
+                log(`Failed to post tweet: ${errorMessage}`, 'error')
+            }
+
+            await this.logActivity('tweet_failed', content, errorDetails)
+
+            return { success: false, error: errorMessage, details: errorDetails }
         }
     }
 
@@ -537,6 +638,97 @@ export class TwitterService {
             scheduledTasks: Array.from(this.scheduledIntervals.keys()),
             rateLimitStatus: this.checkRateLimit()
         }
+    }
+
+    /**
+     * Get comprehensive diagnostic information
+     */
+    async getDiagnostics() {
+        const diagnostics = {
+            service: {
+                initialized: this.initialized,
+                enabled: this.config.posting.enabled,
+                hasCredentials: this.hasValidCredentials()
+            },
+            connection: {
+                status: 'unknown',
+                username: null,
+                error: null,
+                statusCode: null
+            },
+            configuration: {
+                apiKey: !!this.config.credentials.apiKey,
+                apiSecret: !!this.config.credentials.apiSecret,
+                accessToken: !!this.config.credentials.accessToken,
+                accessTokenSecret: !!this.config.credentials.accessTokenSecret,
+                bearerToken: !!this.config.credentials.bearerToken,
+                botUsername: this.config.botUsername
+            },
+            recommendations: []
+        }
+
+        // Test connection if service is initialized
+        if (this.initialized && this.twitterClient) {
+            try {
+                const connectionTest = await this.testConnection()
+                diagnostics.connection.status = connectionTest.success ? 'connected' : 'failed'
+                diagnostics.connection.username = connectionTest.username
+                diagnostics.connection.error = connectionTest.error
+                diagnostics.connection.statusCode = connectionTest.statusCode
+            } catch (error) {
+                diagnostics.connection.status = 'error'
+                diagnostics.connection.error = error.message
+            }
+        }
+
+        // Generate recommendations based on diagnostics
+        if (!diagnostics.service.initialized) {
+            diagnostics.recommendations.push('Service not initialized - check API credentials')
+        }
+
+        if (!diagnostics.service.enabled) {
+            diagnostics.recommendations.push('Posting disabled - set TWITTER_POSTING_ENABLED=true')
+        }
+
+        if (!diagnostics.configuration.apiKey || !diagnostics.configuration.apiSecret) {
+            diagnostics.recommendations.push('Missing API credentials - set TWITTER_API_KEY and TWITTER_API_SECRET')
+        }
+
+        if (!diagnostics.configuration.accessToken || !diagnostics.configuration.accessTokenSecret) {
+            diagnostics.recommendations.push(
+                'Missing access tokens - set TWITTER_ACCESS_TOKEN and TWITTER_ACCESS_TOKEN_SECRET'
+            )
+        }
+
+        if (diagnostics.connection.statusCode === 403) {
+            diagnostics.recommendations.push('403 Forbidden - check API permissions in Twitter Developer Portal')
+            diagnostics.recommendations.push('Ensure API v2 write access is enabled')
+            diagnostics.recommendations.push('Verify account is not suspended or restricted')
+        }
+
+        if (diagnostics.connection.statusCode === 401) {
+            diagnostics.recommendations.push('401 Unauthorized - verify API credentials are correct')
+            diagnostics.recommendations.push('Consider regenerating access tokens')
+        }
+
+        if (diagnostics.connection.statusCode === 429) {
+            diagnostics.recommendations.push('429 Rate Limit - wait before retrying')
+            diagnostics.recommendations.push('Consider increasing post cooldown period')
+        }
+
+        return diagnostics
+    }
+
+    /**
+     * Check if valid credentials are configured
+     */
+    hasValidCredentials() {
+        return !!(
+            this.config.credentials.apiKey &&
+            this.config.credentials.apiSecret &&
+            this.config.credentials.accessToken &&
+            this.config.credentials.accessTokenSecret
+        )
     }
 
     /**

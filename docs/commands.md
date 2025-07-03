@@ -327,6 +327,7 @@ Post content to your connected Twitter/X account.
 Check Twitter service connection, configuration, and daily statistics.
 
 **Information Displayed:**
+
 -   Connection status and authenticated username
 -   Service configuration (posting enabled, limits, cooldowns)
 -   Content type settings (daily tips, weekly updates, etc.)
@@ -337,22 +338,26 @@ Check Twitter service connection, configuration, and daily statistics.
 Manage automated posting schedules.
 
 **Actions:**
+
 -   `view` - Show current scheduled posting configuration
 -   `start` - Enable automatic posting according to configuration
 -   `stop` - Disable all automatic posting
 
 **Features:**
+
 -   **Automated Daily Tips** - Morning mental health tips
 -   **Weekly Updates** - Regular community and progress updates
 -   **Smart Rate Limiting** - Prevents spam and respects Twitter limits
 -   **Content Moderation** - Automatic filtering of inappropriate content
 
 **Permission Requirements:**
+
 -   OWNER or ADMIN role in Mellow system required
 -   Twitter/X API credentials must be configured
 -   See [Twitter Integration Guide]({{ site.baseurl }}/technical/twitter-integration/) for setup
 
 **Example Usage:**
+
 ```
 /twitter post type:dailyTip topic:"mindfulness techniques"
 /twitter post type:custom content:"🌟 Mellow is here to support your mental health journey!"
@@ -576,6 +581,7 @@ Comprehensive guild debugging and support request system for troubleshooting and
 #### Support Request (`/guilddebug request-support`)
 
 **Parameters:**
+
 -   `issue` (required) - Brief description of the problem (max 1000 chars)
 -   `severity` (required) - Issue severity level:
     -   🔴 **Critical** - Bot completely broken (2-4 hour response)
@@ -585,12 +591,14 @@ Comprehensive guild debugging and support request system for troubleshooting and
 -   `contact` (optional) - How to contact you for follow-up
 
 **Features:**
+
 -   Automatic routing to support team
 -   Thread creation for request tracking
 -   Severity-based response time commitments
 -   Integration with external support systems
 
 **Example:**
+
 ```
 /guilddebug request-support issue:"Crisis alerts not working" severity:critical contact:"admin@example.com"
 ```
@@ -598,6 +606,7 @@ Comprehensive guild debugging and support request system for troubleshooting and
 #### Diagnostic Tools (Team Only)
 
 **System Health Diagnostics:**
+
 -   Guild overview and basic information
 -   Bot permission and access verification
 -   Channel configuration health checks
@@ -605,6 +614,7 @@ Comprehensive guild debugging and support request system for troubleshooting and
 -   Database connectivity and performance metrics
 
 **Detailed Configuration Review:**
+
 -   Complete guild settings and feature flags
 -   Channel and role configuration validation
 -   Moderation and automation settings
