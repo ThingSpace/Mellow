@@ -39,7 +39,14 @@ export async function handleAIResponse(message, client) {
         }
 
         // Generate AI response with enhanced context
-        const aiResponse = await client.ai.generateResponse(message.content, message.author.id, context)
+        let aiResponse
+
+        // Use smart DM response for direct messages to be less overwhelming
+        if (message.channel.type === ChannelType.DM) {
+            aiResponse = await client.ai.generateSmartDMResponse(message.content, message.author.id, context)
+        } else {
+            aiResponse = await client.ai.generateResponse(message.content, message.author.id, context)
+        }
 
         await message.reply({
             content: aiResponse,

@@ -64,13 +64,48 @@ export default {
                 )
             }
 
-            const gratitude = await client.ai.getCopingResponse({
-                tool: 'gratitude',
-                feeling: null,
-                userId
-            })
+            try {
+                const gratitude = await client.ai.getCopingResponse({
+                    tool: 'gratitude',
+                    feeling: null,
+                    userId,
+                    context: {
+                        guildId: interaction.guildId,
+                        channelId: interaction.channelId
+                    }
+                })
 
-            return interaction.editReply({ content: gratitude })
+                return interaction.editReply({ content: gratitude })
+            } catch (aiError) {
+                console.error('AI gratitude response failed:', aiError)
+
+                // Log the error
+                if (client.systemLogger) {
+                    await client.systemLogger.logError(
+                        'AI_COPING_ERROR',
+                        'Failed to generate AI gratitude response: ' + aiError.message,
+                        {
+                            userId: interaction.user.id,
+                            command: 'gratitude add',
+                            error: aiError.stack
+                        }
+                    )
+                }
+
+                // Fallback gratitude response
+                const fallbackResponse =
+                    `Thank you for sharing what you're grateful for: **${item}** 🌟\n\n` +
+                    `Gratitude is one of the most powerful practices for mental well-being. By acknowledging what we appreciate, we train our minds to notice the positive aspects of our lives.\n\n` +
+                    `💝 **Benefits of gratitude practice:**\n` +
+                    `• Increases happiness and life satisfaction\n` +
+                    `• Reduces stress and anxiety\n` +
+                    `• Improves relationships and empathy\n` +
+                    `• Enhances sleep quality\n` +
+                    `• Builds resilience during tough times\n\n` +
+                    `Keep building this healthy habit - even small moments of gratitude can make a big difference! 🌱`
+
+                return interaction.editReply({ content: fallbackResponse })
+            }
         }
 
         if (sub === 'view') {

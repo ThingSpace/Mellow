@@ -91,6 +91,18 @@ export default {
                         description: 'Allow AI to use your messages for conversation context (improves responses)',
                         required: false,
                         type: cmdTypes.BOOLEAN
+                    },
+                    {
+                        name: 'crisis_detection',
+                        description: 'Allow the bot to detect and respond to crisis situations in your messages',
+                        required: false,
+                        type: cmdTypes.BOOLEAN
+                    },
+                    {
+                        name: 'crisis_support_dms',
+                        description: 'Allow the bot to send you supportive DMs during crisis situations',
+                        required: false,
+                        type: cmdTypes.BOOLEAN
                     }
                 ]
             },
@@ -210,6 +222,16 @@ export default {
                 const contextLogging = interaction.options.getBoolean('context_logging')
                 if (contextLogging !== null) {
                     updates.disableContextLogging = !contextLogging // Note: inverted logic
+                }
+
+                const crisisDetection = interaction.options.getBoolean('crisis_detection')
+                if (crisisDetection !== null) {
+                    updates.disableCrisisDetection = !crisisDetection // Note: inverted logic
+                }
+
+                const crisisSupportDMs = interaction.options.getBoolean('crisis_support_dms')
+                if (crisisSupportDMs !== null) {
+                    updates.disableCrisisSupportDMs = !crisisSupportDMs // Note: inverted logic
                 }
 
                 if (Object.keys(updates).length === 0) {

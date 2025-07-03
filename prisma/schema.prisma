@@ -50,6 +50,8 @@ model User {
     gratitudeEntries      GratitudeEntry[]
     copingPlans           CopingPlan[]
     favoriteCopingTools   FavoriteCopingTool[]
+    systemLogs            SystemLog[]
+    discordId             String?              @unique
 }
 
 model Guild {
@@ -75,8 +77,10 @@ model Guild {
     autoModEnabled        Boolean     @default(false)
     autoModLevel          Int?
     language              String?     @default("en")
-    disableContextLogging Boolean     @default(false) // Privacy setting for guild message context logging
+    disableContextLogging Boolean     @default(false)
     modActions            ModAction[]
+    systemLogs            SystemLog[]
+    discordId             String?     @unique
 }
 
 model ConversationHistory {
@@ -86,11 +90,11 @@ model ConversationHistory {
     content       String
     isAiResponse  Boolean
     timestamp     DateTime @default(now())
-    channelId     String?  // Discord channel ID for guild messages
-    guildId       String?  // Discord guild ID for guild messages
-    messageId     String?  // Discord message ID for reference
-    contextType   String   @default("conversation") // "conversation", "channel_context", "system"
-    parentId      Int?     // For threading/reply relationships
+    channelId     String?
+    guildId       String?
+    messageId     String?
+    contextType   String   @default("conversation")
+    parentId      Int?
     parent        ConversationHistory? @relation("ConversationThread", fields: [parentId], references: [id])
     replies       ConversationHistory[] @relation("ConversationThread")
 }
@@ -146,21 +150,23 @@ model ModAction {
 }
 
 model UserPreferences {
-    id                    BigInt    @id
-    user                  User      @relation(fields: [id], references: [id])
-    checkInInterval       Int       @default(720)
-    lastReminder          DateTime?
-    nextCheckIn           DateTime?
-    remindersEnabled      Boolean   @default(true)
-    reminderMethod        String?   @default("dm")
-    journalPrivacy        Boolean   @default(true)
-    aiPersonality         String?   @default("gentle")
-    profileTheme          String?   @default("blue")
-    language              String?   @default("en")
-    timezone              String?
-    disableContextLogging Boolean   @default(false) // Privacy setting for message context logging
-    createdAt             DateTime  @default(now())
-    updatedAt             DateTime  @updatedAt
+    id                      BigInt    @id
+    user                    User      @relation(fields: [id], references: [id])
+    checkInInterval         Int       @default(720)
+    lastReminder            DateTime?
+    nextCheckIn             DateTime?
+    remindersEnabled        Boolean   @default(true)
+    reminderMethod          String?   @default("dm")
+    journalPrivacy          Boolean   @default(true)
+    aiPersonality           String?   @default("gentle")
+    profileTheme            String?   @default("blue")
+    language                String?   @default("en")
+    timezone                String?
+    disableContextLogging   Boolean   @default(false)
+    disableCrisisDetection  Boolean   @default(false)
+    disableCrisisSupportDMs Boolean   @default(false)
+    createdAt               DateTime  @default(now())
+    updatedAt               DateTime  @updatedAt
 }
 
 model Feedback {
@@ -210,6 +216,25 @@ model FavoriteCopingTool {
     user   User   @relation(fields: [userId], references: [id])
     userId BigInt
     tool   String
+}
+
+model SystemLog {
+    id          Int      @id @default(autoincrement())
+    guildId     BigInt?  // Null for global logs (e.g., bot startup)
+    userId      BigInt?  // User associated with the log event (if applicable)
+    logType     String   // command, crisis, moderation, system, user, support, startup, error
+    title       String   // Log event title
+    description String?  // Detailed description
+    metadata    String?  // JSON metadata for additional context
+    severity    String   @default("info") // info, warning, error, critical
+    createdAt   DateTime @default(now())
+    
+    // Relations
+    guild       Guild?   @relation(fields: [guildId], references: [id])
+    user        User?    @relation(fields: [userId], references: [id])
+    
+    @@index([guildId, logType, createdAt])
+    @@index([logType, createdAt])
 }
 
 enum Role {

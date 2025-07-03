@@ -347,4 +347,18 @@ export class ConversationHistoryModule {
             }
         })
     }
+
+    /**
+     * Count conversation history entries for a specific guild
+     *
+     * @param {string|number} guildId - Discord guild ID
+     * @returns {Promise<number>} Number of conversation history entries for this guild
+     */
+    async countByGuild(guildId) {
+        return this.prisma.conversationHistory.count({
+            where: {
+                guildId: BigInt(guildId)
+            }
+        })
+    }
 }

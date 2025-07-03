@@ -9,36 +9,21 @@ export class SystemLogger {
         this.client = client
         this.enabled = false
         this.channels = new Map()
+        // In-memory log storage
+        this.logs = new Map() // guildId -> array of logs
+        this.globalLogs = [] // for global logs (startup, etc.)
+        this.maxLogsPerGuild = 100 // Keep last 100 logs per guild
+        this.maxGlobalLogs = 200 // Keep last 200 global logs
     }
 
     /**
-     * Initialize system logger with guild configurations
+     * Initialize system logger - defer channel fetching until needed
      */
     async initialize() {
         try {
-            // Get all guilds with system logging enabled
-            const guilds = await this.client.db.guilds.findMany({
-                where: {
-                    systemLogsEnabled: true,
-                    systemChannelId: { not: null }
-                }
-            })
-
-            for (const guild of guilds) {
-                try {
-                    const guildInstance = await this.client.guilds.fetch(guild.id.toString())
-                    const channel = await guildInstance.channels.fetch(guild.systemChannelId).catch(() => null)
-
-                    if (channel && channel.isTextBased()) {
-                        this.channels.set(guild.id.toString(), channel)
-                    }
-                } catch (error) {
-                    console.error(`Failed to initialize system logging for guild ${guild.id}:`, error)
-                }
-            }
-
-            this.enabled = this.channels.size > 0
-            log(`System logger initialized with ${this.channels.size} channels`, 'info')
+            // Mark as ready for lazy initialization
+            this.enabled = true
+            log('System logger initialized - channels will be loaded on demand', 'info')
         } catch (error) {
             console.error('Failed to initialize system logger:', error)
         }
@@ -83,7 +68,33 @@ export class SystemLogger {
             .setTimestamp()
             .setFooter({ text: this.client.footer, iconURL: this.client.logo })
 
-        await this.sendToChannels(embed)
+        // Log to database
+        await this.logToDatabase(
+            'command',
+            'Command Usage',
+            `/${commandName} command ${success ? 'executed successfully' : 'failed'}`,
+            {
+                guildId: interaction.guild?.id,
+                userId: interaction.user.id,
+                metadata: {
+                    command: commandName,
+                    category: category,
+                    success: success,
+                    guild: interaction.guild
+                        ? {
+                              id: interaction.guild.id,
+                              name: interaction.guild.name
+                          }
+                        : null
+                },
+                severity: success ? 'info' : 'warning'
+            }
+        )
+
+        await this.sendToChannels(embed, {
+            logType: 'command',
+            guildId: interaction.guild?.id
+        })
     }
 
     /**
@@ -122,52 +133,30 @@ export class SystemLogger {
             .setTimestamp()
             .setFooter({ text: this.client.footer, iconURL: this.client.logo })
 
-        await this.sendToChannels(embed)
-    }
-
-    /**
-     * Log guild settings updates
-     */
-    async logGuildSettingsUpdate(guildId, guildName, updates, moderatorId) {
-        if (!this.enabled) return
-
-        const embed = new this.client.Gateway.EmbedBuilder()
-            .setTitle('⚙️ Guild Settings Updated')
-            .setColor(this.client.colors.primary)
-            .addFields(
-                {
-                    name: 'Guild',
-                    value: `${guildName} (${guildId})`,
-                    inline: false
+        // Log to database
+        await this.logToDatabase(
+            'system',
+            isJoin ? 'Guild Joined' : 'Guild Left',
+            `Bot ${isJoin ? 'joined' : 'left'} guild: ${guild.name}`,
+            {
+                guildId: isJoin ? guild.id : null, // Don't associate with guild if we left it
+                metadata: {
+                    guild: {
+                        id: guild.id,
+                        name: guild.name,
+                        memberCount: guild.memberCount,
+                        ownerId: guild.ownerId
+                    },
+                    action: type
                 },
-                {
-                    name: 'Updated By',
-                    value: `<@${moderatorId}>`,
-                    inline: true
-                },
-                {
-                    name: 'Changes',
-                    value: Object.entries(updates)
-                        .map(([key, value]) => {
-                            if (key.includes('ChannelId') && value) {
-                                return `**${key}:** <#${value}>`
-                            }
-                            if (key.includes('RoleId') && value) {
-                                return `**${key}:** <@&${value}>`
-                            }
-                            if (typeof value === 'boolean') {
-                                return `**${key}:** ${value ? '✅ Enabled' : '❌ Disabled'}`
-                            }
-                            return `**${key}:** ${value}`
-                        })
-                        .join('\n'),
-                    inline: false
-                }
-            )
-            .setTimestamp()
-            .setFooter({ text: this.client.footer, iconURL: this.client.logo })
+                severity: 'info'
+            }
+        )
 
-        await this.sendToChannels(embed)
+        await this.sendToChannels(embed, {
+            logType: 'system',
+            supportOnly: true
+        })
     }
 
     /**
@@ -204,7 +193,36 @@ export class SystemLogger {
             .setTimestamp()
             .setFooter({ text: this.client.footer, iconURL: this.client.logo })
 
-        await this.sendToChannels(embed)
+        // Log to database
+        await this.logToDatabase(
+            'crisis',
+            'Crisis Event Detected',
+            `${severity.toUpperCase()} severity crisis event detected`,
+            {
+                guildId: guildId !== 'DM' ? guildId : null,
+                userId: userId,
+                metadata: {
+                    severity: severity,
+                    handled: handled,
+                    location: guildId !== 'DM' ? 'guild' : 'dm'
+                },
+                severity: severity === 'critical' ? 'error' : 'warning'
+            }
+        )
+
+        // Send to guild's crisis management channel (if configured)
+        if (guildId && guildId !== 'DM') {
+            await this.sendToChannels(embed, {
+                logType: 'crisis',
+                guildId: guildId
+            })
+        }
+
+        // Also send to support server for monitoring and backup response
+        await this.sendToChannels(embed, {
+            logType: 'crisis',
+            supportOnly: true
+        })
     }
 
     /**
@@ -249,42 +267,118 @@ export class SystemLogger {
             })
         }
 
-        await this.sendToChannels(embed)
+        // Log to database
+        await this.logToDatabase(
+            'moderation',
+            'Moderation Action',
+            `${action.toUpperCase()} action taken against user`,
+            {
+                guildId: guildId,
+                userId: targetUserId,
+                metadata: {
+                    action: action,
+                    targetUserId: targetUserId,
+                    moderatorId: moderatorId,
+                    reason: reason
+                },
+                severity: 'warning'
+            }
+        )
+
+        await this.sendToChannels(embed, {
+            logType: 'moderation',
+            guildId: guildId
+        })
     }
 
     /**
-     * Log system errors
+     * Enhanced error logging with additional context
      */
-    async logError(error, context = 'Unknown') {
+    async logError(type, message, context = {}) {
         if (!this.enabled) return
+
+        // Handle both old and new error signature
+        let errorType, errorMessage, errorContext
+
+        if (typeof type === 'string' && typeof message === 'string') {
+            // New signature: logError(type, message, context)
+            errorType = type
+            errorMessage = message
+            errorContext = context
+        } else {
+            // Old signature: logError(error, context)
+            const error = type
+            const contextStr = message || 'Unknown'
+            errorType = 'System Error'
+            errorMessage = error.message || error.toString()
+            errorContext = {
+                error: error.stack,
+                context: contextStr,
+                ...context
+            }
+        }
 
         const embed = new this.client.Gateway.EmbedBuilder()
             .setTitle('❌ System Error')
             .setColor(this.client.colors.error)
             .addFields(
                 {
-                    name: 'Context',
-                    value: context,
+                    name: 'Error Type',
+                    value: errorType,
                     inline: true
                 },
                 {
-                    name: 'Error Message',
-                    value: error.message.substring(0, 1000),
+                    name: 'Message',
+                    value: errorMessage.substring(0, 1000),
                     inline: false
                 }
             )
             .setTimestamp()
             .setFooter({ text: this.client.footer, iconURL: this.client.logo })
 
-        if (error.stack) {
+        if (errorContext.guildId) {
+            embed.addFields({
+                name: 'Guild',
+                value: errorContext.guildId,
+                inline: true
+            })
+        }
+
+        if (errorContext.userId) {
+            embed.addFields({
+                name: 'User',
+                value: `<@${errorContext.userId}>`,
+                inline: true
+            })
+        }
+
+        if (errorContext.error) {
             embed.addFields({
                 name: 'Stack Trace',
-                value: `\`\`\`${error.stack.substring(0, 1000)}\`\`\``,
+                value: `\`\`\`${errorContext.error.substring(0, 1000)}\`\`\``,
                 inline: false
             })
         }
 
-        await this.sendToChannels(embed)
+        // Log to database
+        await this.logToDatabase('error', errorType, errorMessage, {
+            guildId: errorContext.guildId || null,
+            userId: errorContext.userId || null,
+            metadata: {
+                errorType: errorType,
+                stack: errorContext.error,
+                context: errorContext
+            },
+            severity: 'error'
+        })
+
+        await this.sendToChannels(embed, {
+            logType: 'error',
+            supportOnly: true
+        })
+
+        // Also log to console
+        log(`${errorType}: ${errorMessage}`, 'error')
     }
 
     /**
@@ -319,14 +413,224 @@ export class SystemLogger {
             })
         }
 
-        await this.sendToChannels(embed)
+        // Log to database
+        await this.logToDatabase(
+            'user',
+            `User ${event.charAt(0).toUpperCase() + event.slice(1)}`,
+            details || `User ${event} event`,
+            {
+                userId: userId,
+                metadata: {
+                    username: username,
+                    event: event,
+                    details: details
+                },
+                severity: 'info'
+            }
+        )
+
+        await this.sendToChannels(embed, {
+            logType: 'user',
+            supportOnly: true
+        })
     }
 
     /**
-     * Send embed to all configured system log channels
+     * Log support requests from guilds
      */
-    async sendToChannels(embed) {
-        for (const [guildId, channel] of this.channels) {
+    async logSupportRequest(guildId, guildName, userId, username, severity, issue, contact, hasAdminPerms) {
+        if (!this.enabled) return
+
+        const severityEmoji = {
+            critical: '🔴',
+            high: '🟡',
+            medium: '🟢',
+            low: '🔵'
+        }
+
+        const embed = new this.client.Gateway.EmbedBuilder()
+            .setTitle('🎫 Guild Support Request')
+            .setColor(
+                severity === 'critical'
+                    ? this.client.colors.error
+                    : severity === 'high'
+                      ? this.client.colors.warning
+                      : severity === 'medium'
+                        ? this.client.colors.secondary
+                        : this.client.colors.primary
+            )
+            .addFields(
+                {
+                    name: '🏠 Guild',
+                    value: `${guildName} (\`${guildId}\`)`,
+                    inline: true
+                },
+                {
+                    name: '👤 Requester',
+                    value: `<@${userId}> (${username})`,
+                    inline: true
+                },
+                {
+                    name: '🔒 Admin Perms',
+                    value: hasAdminPerms ? '✅ Yes' : '❌ No',
+                    inline: true
+                },
+                {
+                    name: '⚠️ Severity',
+                    value: `${severityEmoji[severity]} ${severity.toUpperCase()}`,
+                    inline: true
+                },
+                {
+                    name: '📞 Contact',
+                    value: contact,
+                    inline: true
+                },
+                {
+                    name: '📝 Issue',
+                    value: issue.length > 1000 ? issue.substring(0, 997) + '...' : issue,
+                    inline: false
+                }
+            )
+            .setTimestamp()
+            .setFooter({ text: this.client.footer, iconURL: this.client.logo })
+
+        // Log to database
+        await this.logToDatabase(
+            'support',
+            'Guild Support Request',
+            `${severity.toUpperCase()} support request from ${guildName}`,
+            {
+                guildId: guildId,
+                userId: userId,
+                metadata: {
+                    guildName: guildName,
+                    username: username,
+                    severity: severity,
+                    issue: issue,
+                    contact: contact,
+                    hasAdminPerms: hasAdminPerms
+                },
+                severity: severity === 'critical' ? 'error' : severity === 'high' ? 'warning' : 'info'
+            }
+        )
+
+        await this.sendToChannels(embed, {
+            logType: 'support',
+            supportOnly: true
+        })
+
+        // Also log to console for debugging
+        log(
+            `Support request from ${guildName} (${guildId}) by ${username}: ${severity} - ${issue.substring(0, 100)}`,
+            'info'
+        )
+    }
+
+    /**
+     * Log system startup events
+     */
+    async logStartupEvent(title, description, metadata = {}) {
+        if (!this.enabled) return
+
+        // Log to database
+        await this.logToDatabase('startup', title, description, {
+            metadata: metadata,
+            severity: 'info'
+        })
+    }
+
+    /**
+     * Log guild settings updates
+     * @param {string} guildId - Guild ID
+     * @param {string} guildName - Guild name
+     * @param {Object} updates - Settings that were updated
+     * @param {string} updatedBy - User ID who made the update
+     */
+    async logGuildSettingsUpdate(guildId, guildName, updates, updatedBy) {
+        // Create console log
+        log(`Guild settings updated in ${guildName} (${guildId}) by ${updatedBy}`, 'guild')
+
+        // Store in database
+        await this.logToDatabase('system', `Guild Settings Updated`, `Settings updated in guild ${guildName}`, {
+            guildId: guildId,
+            updatedBy: updatedBy,
+            metadata: {
+                guildName: guildName,
+                updates: updates,
+                timestamp: new Date().toISOString()
+            },
+            severity: 'info'
+        })
+    }
+
+    /**
+     * Log an event to the database
+     * This provides persistent storage for all log events
+     */
+    async logToDatabase(logType, title, description, options = {}) {
+        if (!this.client.db || !this.client.db.systemLogs) {
+            console.warn('Database not available for logging')
+            return null
+        }
+
+        try {
+            const logData = {
+                guildId: options.guildId || null,
+                userId: options.userId || null,
+                logType: logType,
+                title: title,
+                description: description,
+                metadata: options.metadata || null,
+                severity: options.severity || 'info'
+            }
+
+            return await this.client.db.systemLogs.create(logData)
+        } catch (error) {
+            console.error('Failed to log to database:', error)
+            return null
+        }
+    }
+
+    /**
+     * Get recent logs for a specific guild
+     * Queries the database for persistent log storage
+     */
+    async getGuildLogs(guildId, logType = 'all', limit = 10) {
+        try {
+            // Use the database module to get logs
+            const logs = await this.client.db.systemLogs.getGuildLogs(guildId, logType, limit)
+
+            // Format logs for display
+            return logs.map(log => ({
+                id: log.id,
+                type: log.logType,
+                title: log.title,
+                description: log.description,
+                severity: log.severity,
+                timestamp: log.createdAt,
+                user: log.user
+                    ? {
+                          id: log.user.id.toString(),
+                          username: log.user.username,
+                          role: log.user.role
+                      }
+                    : null,
+                metadata: log.metadata ? JSON.parse(log.metadata) : null
+            }))
+        } catch (error) {
+            console.error('Failed to retrieve guild logs:', error)
+            return []
+        }
+    }
+
+    /**
+     * Send embed to appropriate log channels based on context
+     */
+    async sendToChannels(embed, options = {}) {
+        // Determine target channels based on log type and context
+        const targetChannels = await this.getTargetChannels(options)
+
+        for (const [guildId, channel] of targetChannels) {
             try {
                 await channel.send({ embeds: [embed] })
             } catch (error) {
@@ -335,6 +639,100 @@ export class SystemLogger {
                 this.channels.delete(guildId)
             }
         }
+    }
+
+    /**
+     * Get target channels based on log type and context
+     */
+    async getTargetChannels(options = {}) {
+        const { logType, guildId, supportOnly = false } = options
+        const targetChannels = new Map()
+
+        // Support requests and sensitive logs go only to support server
+        if (supportOnly || logType === 'support') {
+            const supportGuildId = process.env.SUPPORT_GUILD_ID
+            if (supportGuildId) {
+                const channel = await this.loadChannel(supportGuildId)
+                if (channel) {
+                    targetChannels.set(supportGuildId, channel)
+                }
+            }
+            return targetChannels
+        }
+
+        // Crisis events can go to both guild and support server (handled separately in logCrisisEvent)
+        if (logType === 'crisis' && guildId) {
+            const channel = await this.loadChannel(guildId)
+            if (channel) {
+                targetChannels.set(guildId, channel)
+            }
+            return targetChannels
+        }
+
+        // Guild-specific logs go only to that guild
+        if (guildId) {
+            const channel = await this.loadChannel(guildId)
+            if (channel) {
+                targetChannels.set(guildId, channel)
+            }
+            return targetChannels
+        }
+
+        // Global system events (bot startup, etc.) go to support server only
+        if (
+            logType === 'system' ||
+            logType === 'startup' ||
+            logType === 'error' ||
+            logType === 'command' ||
+            logType === 'user'
+        ) {
+            const supportGuildId = process.env.SUPPORT_GUILD_ID
+            if (supportGuildId) {
+                const channel = await this.loadChannel(supportGuildId)
+                if (channel) {
+                    targetChannels.set(supportGuildId, channel)
+                }
+            }
+        }
+
+        return targetChannels
+    }
+
+    /**
+     * Load a system log channel for a guild on demand
+     */
+    async loadChannel(guildId) {
+        // Return cached channel if available
+        if (this.channels.has(guildId)) {
+            return this.channels.get(guildId)
+        }
+
+        try {
+            // Fetch guild and look for system log channel
+            const guild = await this.client.guilds.fetch(guildId)
+            if (!guild) return null
+
+            // Check if this guild has system logging configured
+            const guildSettings = await this.client.db.guilds.findById(guildId)
+            const systemChannelId = guildSettings?.systemChannelId
+
+            if (!systemChannelId) {
+                // No system channel configured for this guild
+                return null
+            }
+
+            // Fetch the channel
+            const channel = await guild.channels.fetch(systemChannelId)
+            if (channel && channel.isTextBased()) {
+                // Cache the channel
+                this.channels.set(guildId, channel)
+                return channel
+            }
+        } catch (error) {
+            console.error(`Failed to load system log channel for guild ${guildId}:`, error)
+        }
+
+        return null
     }
 
     /**

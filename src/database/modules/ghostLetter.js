@@ -189,4 +189,18 @@ export class GhostLetterModule {
 
         return mellowConfig?.enabled && mellowConfig?.ghostTools
     }
+
+    /**
+     * Count ghost letters for a specific guild
+     *
+     * @param {string|number} guildId - Discord guild ID
+     * @returns {Promise<number>} Number of ghost letters for this guild
+     */
+    async countByGuild(guildId) {
+        return this.prisma.ghostLetter.count({
+            where: {
+                guildId: BigInt(guildId)
+            }
+        })
+    }
 }

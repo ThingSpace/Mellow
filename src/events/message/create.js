@@ -19,7 +19,7 @@ async function logMessageForContext(message, client) {
         const contextData = {
             content: message.content,
             isAiResponse: false,
-            contextType: 'conversation', // Changed from 'channel_context' to 'conversation'
+            contextType: 'conversation',
             messageId: message.id
         }
 

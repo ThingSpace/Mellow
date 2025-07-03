@@ -85,6 +85,16 @@ export default {
             })
         } catch (error) {
             console.error('Error submitting feedback:', error)
+
+            // Log to system logger
+            if (client.systemLogger) {
+                await client.systemLogger.logError('FEEDBACK_ERROR', 'Failed to submit feedback: ' + error.message, {
+                    guildId: interaction.guild?.id,
+                    userId: interaction.user.id,
+                    error: error.stack
+                })
+            }
+
             return interaction.reply({
                 content: '❌ Failed to submit feedback. Please try again later.',
                 ephemeral: true

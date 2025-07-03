@@ -207,6 +207,22 @@ export default {
                     })
                 } catch (error) {
                     console.error('Failed to timeout user:', error)
+
+                    // Log to system logger
+                    if (client.systemLogger) {
+                        await client.systemLogger.logError(
+                            'MODERATION_ERROR',
+                            'Failed to timeout user: ' + error.message,
+                            {
+                                guildId: interaction.guild?.id,
+                                userId: interaction.user.id,
+                                targetUserId: user.id,
+                                action: 'timeout',
+                                error: error.stack
+                            }
+                        )
+                    }
+
                     return interaction.reply({
                         content: '❌ Failed to timeout user. They may have higher permissions or be the server owner.',
                         ephemeral: true
@@ -251,6 +267,21 @@ export default {
                     })
                 } catch (error) {
                     console.error('Failed to remove timeout:', error)
+
+                    // Log to system logger
+                    if (client.systemLogger) {
+                        await client.systemLogger.logError(
+                            'MODERATION_ERROR',
+                            'Failed to remove timeout: ' + error.message,
+                            {
+                                guildId: interaction.guild?.id,
+                                userId: interaction.user.id,
+                                targetUserId: user.id,
+                                action: 'remove-timeout',
+                                error: error.stack
+                            }
+                        )
+                    }
                     return interaction.reply({
                         content: '❌ Failed to remove timeout from user.',
                         ephemeral: true

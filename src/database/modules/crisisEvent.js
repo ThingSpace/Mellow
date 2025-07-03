@@ -212,4 +212,42 @@ export class CrisisEventModule {
             }
         })
     }
+
+    /**
+     * Get recent crisis events for a specific guild
+     *
+     * @param {string|number} guildId - Discord guild ID
+     * @param {number} days - Number of days to look back (default: 7)
+     * @returns {Promise<Array>} Array of recent crisis events
+     */
+    async getRecentByGuild(guildId, days = 7) {
+        const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000)
+
+        // Note: Since CrisisEvent doesn't have guildId, return all recent events
+        // The calling code should filter by guild membership if needed
+        return this.prisma.crisisEvent.findMany({
+            where: {
+                detectedAt: { gte: since }
+            },
+            orderBy: { detectedAt: 'desc' },
+            take: 50,
+            include: {
+                user: {
+                    select: { id: true, username: true }
+                }
+            }
+        })
+    }
+
+    /**
+     * Count crisis events for a specific guild
+     *
+     * @param {string|number} guildId - Discord guild ID
+     * @returns {Promise<number>} Number of crisis events for this guild
+     */
+    async countByGuild(guildId) {
+        // Note: Since CrisisEvent doesn't have guildId, return total count for now.
+        // The calling code should filter by guild membership if needed.
+        return this.prisma.crisisEvent.count()
+    }
 }

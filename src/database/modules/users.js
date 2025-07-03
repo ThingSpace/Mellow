@@ -45,9 +45,9 @@ export class UserModule {
      */
     async upsert(id, data) {
         return this.prisma.user.upsert({
-            where: { id: BigInt(id) },
+            where: { id: BigInt(String(id)) },
             update: data,
-            create: { id: BigInt(id), ...data }
+            create: { id: BigInt(String(id)), ...data }
         })
     }
 
@@ -108,7 +108,7 @@ export class UserModule {
      */
     async findById(id, options = {}) {
         return this.prisma.user.findUnique({
-            where: { id: BigInt(id) },
+            where: { id: BigInt(String(id)) },
             ...options
         })
     }
@@ -124,7 +124,7 @@ export class UserModule {
      */
     async delete(id) {
         return this.prisma.user.delete({
-            where: { id: BigInt(id) }
+            where: { id: BigInt(String(id)) }
         })
     }
 
@@ -146,7 +146,7 @@ export class UserModule {
      */
     async ban(id, reason, until = null) {
         return this.prisma.user.update({
-            where: { id: BigInt(id) },
+            where: { id: BigInt(String(id)) },
             data: {
                 isBanned: true,
                 banReason: reason,
@@ -166,7 +166,7 @@ export class UserModule {
      */
     async unban(id) {
         return this.prisma.user.update({
-            where: { id: BigInt(id) },
+            where: { id: BigInt(String(id)) },
             data: {
                 isBanned: false,
                 banReason: null,
@@ -187,5 +187,40 @@ export class UserModule {
             where: { id },
             data: { permissions }
         })
+    }
+
+    /**
+     * Count total users in a specific guild
+     * Note: This is a simplified count. In a real implementation,
+     * you might want to track guild memberships more explicitly.
+     *
+     * @param {string|number} guildId - Discord guild ID
+     * @returns {Promise<number>} Number of users associated with this guild
+     */
+    async countGuildUsers(guildId) {
+        // This is a simplified implementation
+        // In practice, you might want to track guild memberships more explicitly
+        // For now, we'll return the total user count as a placeholder
+        return this.prisma.user.count({
+            where: {
+                // Add guild-specific filtering if you have guild membership tracking
+                // For now, just return general user count
+            }
+        })
+    }
+
+    /**
+     * Get user roles for authorization checks
+     *
+     * @param {string|number} userId - Discord user ID
+     * @returns {Promise<string[]>} Array of user roles
+     */
+    async getUserRoles(userId) {
+        const user = await this.prisma.user.findUnique({
+            where: { id: BigInt(String(userId)) },
+            select: { role: true }
+        })
+
+        return user?.role ? [user.role] : []
     }
 }

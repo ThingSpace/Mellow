@@ -20,6 +20,7 @@ This section contains technical resources for developers, contributors, and adva
 ### API & Integration
 
 -   **[API Reference](api.md)** - Complete API documentation for developers
+-   **[Twitter/X Integration](twitter-integration.md)** - Social media posting and automation setup
 -   **[Technical Commands](technical-commands.md)** - Debug and diagnostic commands
 
 ### Development

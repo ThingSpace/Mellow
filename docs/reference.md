@@ -12,7 +12,10 @@ Complete reference materials for Mellow's commands, features, and technical spec
 
 ## 📋 Command Reference
 
-Find detailed information about every command Mellow offers.
+Find detailed information about every command Mellow offers, including the new guild debugging tools.
+
+- **[Complete Commands List]({{ site.baseurl }}/commands.html)** - All commands with usage examples
+- **[Guild Debug Guide]({{ site.baseurl }}/guilddebug-command.html)** - Debugging and support tools
 
 ## ⭐ Feature Documentation
 

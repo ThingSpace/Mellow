@@ -3,7 +3,7 @@
  *
  * This module provides a flexible interface for managing mood check-in data in the database.
  * It uses Prisma's upsert functionality to handle both creation and updates seamlessly.
- * Respects Mellow configuration and user preferences for check-in features.
+ * Respects Mellow configuration and user preferences for privacy and functionality.
  *
  * @class MoodCheckInModule
  */
@@ -309,5 +309,47 @@ export class MoodCheckInModule {
             }
         })
         return `Check-ins in last 7 days: ${count}`
+    }
+
+    /**
+     * Get recent check-ins for a specific guild
+     * This queries based on users in the guild
+     *
+     * @param {string|number} guildId - Discord guild ID
+     * @param {number} hours - Number of hours to look back
+     * @returns {Promise<Array>} Recent check-ins for guild users
+     */
+    async getRecentByGuild(guildId, hours = 24) {
+        const since = new Date(Date.now() - hours * 60 * 60 * 1000)
+
+        // Note: Since we don't store guild membership in the database,
+        // we can't directly query by guild. We would need the Discord client
+        // to get guild member IDs first, then query those users.
+        // For now, return all recent check-ins and let the calling code
+        // filter by guild membership if needed.
+
+        return this.prisma.moodCheckIn.findMany({
+            where: {
+                createdAt: { gte: since }
+            },
+            include: {
+                user: true
+            },
+            orderBy: { createdAt: 'desc' },
+            take: 50 // Limit to prevent huge responses
+        })
+    }
+
+    /**
+     * Count check-ins for a specific guild
+     *
+     * @param {string|number} guildId - Discord guild ID
+     * @returns {Promise<number>} Number of check-ins for this guild
+     */
+    async countByGuild(guildId) {
+        // Note: Since we don't store guild membership in the database,
+        // we can't directly count by guild. Return total count for now.
+        // The calling code should filter by guild membership if needed.
+        return this.prisma.moodCheckIn.count()
     }
 }
