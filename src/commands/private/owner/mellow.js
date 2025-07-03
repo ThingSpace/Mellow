@@ -1,5 +1,3 @@
-import { aiService } from '../../../services/ai.service.js'
-
 export default {
     structure: {
         name: 'mellow',
@@ -166,7 +164,7 @@ export default {
 
             switch (subcommand) {
                 case 'view': {
-                    const summary = await aiService.getConfigSummary()
+                    const summary = await client.ai.getConfigSummary()
                     const mellowConfig = await client.db.mellow.get()
 
                     const embed = new client.Gateway.EmbedBuilder()
@@ -283,7 +281,7 @@ export default {
                         })
                     }
 
-                    await aiService.updateConfig(updateData)
+                    await client.ai.updateConfig(updateData)
 
                     const embed = new client.Gateway.EmbedBuilder()
                         .setTitle('Configuration Updated')
@@ -346,7 +344,7 @@ export default {
                 }
 
                 case 'validate': {
-                    const validation = await aiService.validateConfig()
+                    const validation = await client.ai.validateConfig()
 
                     const embed = new client.Gateway.EmbedBuilder()
                         .setTitle('Configuration Validation')
@@ -375,7 +373,7 @@ export default {
                 }
 
                 case 'reload': {
-                    await aiService.reloadConfig()
+                    await client.ai.reloadConfig()
 
                     const embed = new client.Gateway.EmbedBuilder()
                         .setTitle('Configuration Reloaded')

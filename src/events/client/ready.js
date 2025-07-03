@@ -67,6 +67,32 @@ export default {
                 log('GITHUB_TOKEN not provided - GitHub features will be disabled', 'warn')
             }
 
+            // Initialize Twitter service
+            if (process.env.TWITTER_ENABLED === 'true') {
+                try {
+                    const twitterInitialized = await client.twitterService.initialize()
+                    if (twitterInitialized) {
+                        log('Twitter service initialized successfully', 'done')
+                    } else {
+                        log('Twitter service disabled or failed to initialize', 'warn')
+                    }
+                } catch (error) {
+                    log(`Twitter service initialization failed: ${error.message}`, 'error')
+                }
+            }
+
+            // Initialize Support service
+            try {
+                const supportInitialized = await client.supportService.initialize()
+                if (supportInitialized) {
+                    log('Support service initialized successfully', 'done')
+                } else {
+                    log('Support service disabled or failed to initialize', 'warn')
+                }
+            } catch (error) {
+                log(`Support service initialization failed: ${error.message}`, 'error')
+            }
+
             log('All services initialized successfully!', 'done')
 
             const guildCount = await client.db.prisma.guild.count()
@@ -74,6 +100,18 @@ export default {
 
             // Log startup event using system logger
             if (client.systemLogger) {
+                // Log to database
+                await client.systemLogger.logStartupEvent(
+                    'Bot Started',
+                    `Mellow has started up and is ready for interactions. Connected to ${guildCount} guilds with ${userCount} users.`,
+                    {
+                        guildCount: guildCount,
+                        userCount: userCount,
+                        botTag: client.user.tag,
+                        startTime: new Date().toISOString()
+                    }
+                )
+
                 const embed = new client.Gateway.EmbedBuilder()
                     .setTitle('🟢 Mellow Online')
                     .setDescription('Mellow has started up and is ready for interactions')
@@ -93,7 +131,7 @@ export default {
                     .setTimestamp()
                     .setFooter({ text: client.footer, iconURL: client.logo })
 
-                await client.systemLogger.sendToChannels(embed)
+                await client.systemLogger.sendToChannels(embed, { logType: 'startup' })
             }
         } catch (error) {
             log(`${error.message}`, 'error')

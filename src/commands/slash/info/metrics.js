@@ -1,5 +1,3 @@
-import { aiService } from '../../../services/ai.service.js'
-
 export default {
     structure: {
         name: 'metrics',
@@ -14,7 +12,7 @@ export default {
     run: async (client, interaction) => {
         try {
             // Get comprehensive performance metrics
-            const performanceTool = aiService.performance
+            const performanceTool = client.ai.performance
             const metrics = performanceTool.getMetrics()
             const systemStats = performanceTool.getSystemStats()
 

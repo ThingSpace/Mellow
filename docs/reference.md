@@ -4,7 +4,6 @@ title: Reference
 nav_order: 19
 has_children: true
 description: 'Complete reference documentation for commands, features, and APIs'
-permalink: /reference/
 ---
 
 # Reference Documentation 📚
@@ -13,7 +12,10 @@ Complete reference materials for Mellow's commands, features, and technical spec
 
 ## 📋 Command Reference
 
-Find detailed information about every command Mellow offers.
+Find detailed information about every command Mellow offers, including the new guild debugging tools.
+
+- **[Complete Commands List]({{ site.baseurl }}/commands.html)** - All commands with usage examples
+- **[Guild Debug Guide]({{ site.baseurl }}/guilddebug-command.html)** - Debugging and support tools
 
 ## ⭐ Feature Documentation
 
@@ -28,22 +30,24 @@ Technical reference for developers and advanced users.
 ## 🎯 Quick Reference
 
 ### Essential Commands
-- **`/checkin`** - Daily mood check-ins and mental health tracking
-- **`/coping`** - Access breathing exercises and grounding techniques  
-- **`/preferences`** - Configure your personal settings and privacy
-- **`/help`** - Get help with any command
+
+-   **`/checkin`** - Daily mood check-ins and mental health tracking
+-   **`/coping`** - Access breathing exercises and grounding techniques
+-   **`/preferences`** - Configure your personal settings and privacy
+-   **`/help`** - Get help with any command
 
 ### Key Features
-- **Mental Health Tracking** - Mood check-ins, insights, and progress monitoring
-- **Coping Tools** - Breathing exercises, grounding techniques, and personalized toolbox
-- **Crisis Support** - Immediate help resources and professional support connections
-- **Privacy Controls** - Complete control over data retention and context logging
+
+-   **Mental Health Tracking** - Mood check-ins, insights, and progress monitoring
+-   **Coping Tools** - Breathing exercises, grounding techniques, and personalized toolbox
+-   **Crisis Support** - Immediate help resources and professional support connections
+-   **Privacy Controls** - Complete control over data retention and context logging
 
 ## 🔗 Related Resources
 
-- **[User Guides]({{ site.baseurl }}/guides/)** - Step-by-step setup and usage guides
-- **[Technical Documentation]({{ site.baseurl }}/technical/)** - Developer and advanced technical resources
-- **[Support Server](https://discord.gg/C3ZuXPP7Hc)** - Community help and discussion
+-   **[User Guides]({{ site.baseurl }}/guides/)** - Step-by-step setup and usage guides
+-   **[Technical Documentation]({{ site.baseurl }}/technical/)** - Developer and advanced technical resources
+-   **[Support Server](https://discord.gg/C3ZuXPP7Hc)** - Community help and discussion
 
 ---
 

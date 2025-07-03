@@ -5,12 +5,23 @@
  * @param userId The Discord ID of the user making the request
  * @param db The database client (attached for ease of use)
  * @param goal The users current coping goal(s)
+ * @param isDM Whether this is in a DM context (changes response style)
  */
-export async function buildCopingPrompt({ tool, feeling, userId, db, goal }) {
+export async function buildCopingPrompt({ tool, feeling, userId, db, goal, isDM = false }) {
     let prompt = 'A Discord user is seeking mental health support.'
 
     if (tool) prompt += `\n - Selected tool: ${tool}`
     if (feeling) prompt += `\n Described feeling: ${feeling}`
+
+    // Add context-specific guidance
+    if (isDM) {
+        prompt += `\n\n**DM Context Guidelines:**
+- This is a private conversation, so be gentle and non-overwhelming
+- Ask if they want a full coping exercise or just some gentle suggestions
+- Don't immediately provide a full therapeutic response unless they clearly want it
+- Offer simple, easy options they can choose from
+- Be conversational and check in with them about what feels right`
+    }
 
     // Recent mood history
     let moodHistory = []
@@ -111,7 +122,14 @@ export async function buildCopingPrompt({ tool, feeling, userId, db, goal }) {
     // Goal/intent
     if (goal) prompt += `\n- Current goal: ${goal}`
 
-    prompt += `\n- Respond with a gentle, step-by-step coping exercise or supportive message, tailored to their needs and communication preferences. Use a warm, empathetic tone. If no tool is selected, suggest one based on their feeling or context.`
+    if (isDM) {
+        prompt += `\n\n- Since this is a private conversation, start by acknowledging their feelings and ask what kind of support would be most helpful right now
+- Offer options like: "Would you like me to walk you through a coping exercise, share some quick techniques you can try, or would you prefer to talk about what's going on first?"
+- Be gentle and let them guide the level of support they want
+- Use a warm, conversational tone like talking to a friend who needs support`
+    } else {
+        prompt += `\n\n- Respond with a gentle, step-by-step coping exercise or supportive message, tailored to their needs and communication preferences. Use a warm, empathetic tone. If no tool is selected, suggest one based on their feeling or context.`
+    }
 
     return prompt
 }

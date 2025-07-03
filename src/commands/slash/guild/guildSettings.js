@@ -4,6 +4,7 @@ export default {
     structure: {
         name: 'guildsettings',
         description: 'View or update guild settings',
+        category: 'Guild',
         handlers: {
             requiredRoles: [],
             requiredPerms: [PermissionFlagsBits.Administrator, PermissionFlagsBits.ManageGuild],
@@ -177,12 +178,6 @@ export default {
                         })
                     }
 
-                    // Debug: Log the actual guild object
-                    console.log(
-                        'Guild data:',
-                        JSON.stringify(guild, (key, value) => (typeof value === 'bigint' ? value.toString() : value), 2)
-                    )
-
                     const embed = new client.Gateway.EmbedBuilder()
                         .setTitle(`🔧 Guild Settings for ${interaction.guild.name}`)
                         .setColor(client.colors.primary)
@@ -265,10 +260,8 @@ export default {
                         })
                     }
 
-                    // Debug: Log what we're trying to save
-                    console.log('Updating guild with:', updates)
-
                     await client.db.guilds.upsert(guildId, {
+                        ...updates,
                         name: interaction.guild.name,
                         ownerId: interaction.guild.ownerId
                     })
@@ -467,6 +460,21 @@ export default {
             }
         } catch (error) {
             console.error('Failed to update guild settings:', error)
+
+            // Log to system logger
+            if (client.systemLogger) {
+                await client.systemLogger.logError(
+                    'GUILD_SETTINGS_ERROR',
+                    'Failed to update guild settings: ' + error.message,
+                    {
+                        guildId: interaction.guild?.id,
+                        userId: interaction.user.id,
+                        subcommand: interaction.options.getSubcommand(),
+                        error: error.stack
+                    }
+                )
+            }
+
             return interaction.reply({
                 content: '❌ Failed to update guild settings. Please try again later.',
                 ephemeral: true

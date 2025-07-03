@@ -60,19 +60,63 @@ export default {
                 case 'suggest': {
                     await interaction.deferReply()
                     const goal = interaction.options.getString('goal') || undefined
-                    const aiSuggestion = await client.ai.generateSuggestion({
-                        userId,
-                        goal
-                    })
 
-                    const embed = new client.Gateway.EmbedBuilder()
-                        .setTitle('📝 Suggested Coping Plan')
-                        .setColor(client.colors.primary)
-                        .setDescription(aiSuggestion)
-                        .setFooter({ text: client.footer, iconURL: client.logo })
-                        .setTimestamp()
+                    try {
+                        const aiSuggestion = await client.ai.generateSuggestion({
+                            userId,
+                            goal
+                        })
 
-                    return interaction.editReply({ embeds: [embed] })
+                        const embed = new client.Gateway.EmbedBuilder()
+                            .setTitle('📝 Suggested Coping Plan')
+                            .setColor(client.colors.primary)
+                            .setDescription(aiSuggestion)
+                            .setFooter({ text: client.footer, iconURL: client.logo })
+                            .setTimestamp()
+
+                        return interaction.editReply({ embeds: [embed] })
+                    } catch (aiError) {
+                        console.error('AI suggestion failed for coping plan:', aiError)
+
+                        // Log the error
+                        if (client.systemLogger) {
+                            await client.systemLogger.logError(
+                                'AI_SUGGESTION_ERROR',
+                                'Failed to generate AI coping plan: ' + aiError.message,
+                                {
+                                    userId,
+                                    command: 'plan suggest',
+                                    goal,
+                                    error: aiError.stack
+                                }
+                            )
+                        }
+
+                        // Fallback coping plan template
+                        const fallbackPlan = goal
+                            ? `Here's a basic coping plan to help with **${goal}**:\n\n` +
+                              `🌅 **Morning**: Start with 5 minutes of deep breathing\n` +
+                              `🌞 **Midday**: Take mindful breaks and check in with yourself\n` +
+                              `🌙 **Evening**: Practice gratitude and reflection\n\n` +
+                              `**Quick Tools**: Grounding exercises, positive affirmations, journaling\n` +
+                              `**When struggling**: Reach out to support, use distraction techniques, focus on breathing`
+                            : `Here's a basic coping plan template:\n\n` +
+                              `🧘‍♀️ **Daily**: Practice mindfulness for 10 minutes\n` +
+                              `📝 **Weekly**: Journal about your thoughts and feelings\n` +
+                              `🚶‍♀️ **Regular**: Get fresh air and light exercise\n` +
+                              `💭 **Ongoing**: Build positive thought patterns\n\n` +
+                              `**Crisis Tools**: Deep breathing, grounding exercises, reaching out for support\n` +
+                              `**Self-Care**: Regular sleep, healthy eating, social connection`
+
+                        const embed = new client.Gateway.EmbedBuilder()
+                            .setTitle('📝 Suggested Coping Plan')
+                            .setColor(client.colors.primary)
+                            .setDescription(fallbackPlan)
+                            .setFooter({ text: client.footer, iconURL: client.logo })
+                            .setTimestamp()
+
+                        return interaction.editReply({ embeds: [embed] })
+                    }
                 }
 
                 case 'create': {

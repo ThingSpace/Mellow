@@ -2,6 +2,11 @@ import { PerformanceTool } from './tools/performance.js'
 import { buildCopingPrompt } from './tools/copingTool.js'
 import { MessageFormattingTool } from './tools/messageFormatting.js'
 import { MessageHistoryTool } from './tools/messageHistory.js'
+import { db } from '../database/client.js'
+import { openai } from '@ai-sdk/openai'
+import { generateText } from 'ai'
+import { log } from '../functions/logger.js'
+
 import {
     isLateNight,
     isEarlyMorning,
@@ -9,10 +14,6 @@ import {
     getTimePeriod,
     getSleepSuggestion
 } from '../functions/timeHelper.js'
-import { db } from '../database/client.js'
-import { openai } from '@ai-sdk/openai'
-import { generateText } from 'ai'
-import { log } from '../functions/logger.js'
 
 export class AIService {
     constructor() {
@@ -148,7 +149,7 @@ export class AIService {
 
             // Add conversation summary if available
             if (conversationSummary) {
-                enhancedPrompt += `\n\n**User Context Summary:**\n${conversationSummary}`
+                enhancedPrompt += '\n\n**User Context Summary:**\n' + conversationSummary
             }
 
             // Add personality-specific instructions
@@ -175,12 +176,20 @@ export class AIService {
 - Build upon previous conversations naturally - don't treat each message as isolated
 - Use context from previous interactions to provide more personalized and relevant support`
             } else {
-                enhancedPrompt += `\n\n**Context & Memory Instructions:**
-- This is a direct message conversation
-- You have access to your full conversation history with this user
-- Reference previous conversations and build upon them naturally
-- Remember their concerns, progress, and preferences from past interactions
-- Provide continuity in your support and acknowledge their journey over time`
+                enhancedPrompt += `\n\n**Direct Message Guidelines:**
+- This is a private conversation between you and the user
+- Be gentle and non-overwhelming - they came to you for a reason
+- Start by listening and understanding before offering tools or resources
+- Ask if they want support/resources or just want to talk/vent
+- Don't immediately jump to coping tools unless clearly needed
+- Vary your responses - avoid repetitive phrases like "How are you feeling?" 
+- Use natural, conversational language like a supportive friend would
+- Reference previous conversations naturally to show you remember them
+- If they seem to just need someone to listen, focus on validation and empathy
+- Only suggest tools/resources when it feels appropriate to the conversation flow
+- Generate basic empathetic responses naturally (e.g., "I'm sorry to hear that", "That sounds really tough")
+- Not every response needs to be deeply therapeutic - sometimes just acknowledge their feelings
+- Be a good listener first, support provider second`
             }
 
             // Late-night companion mode: Adjust tone and provide sleep-related suggestions
@@ -255,6 +264,148 @@ export class AIService {
             if (duration) {
                 console.log(`Full response generated in: ${duration.toFixed(2)}ms`)
             }
+        }
+    }
+
+    /**
+     * Generate more intelligent, context-aware responses for DMs
+     * @param {string} message - User's message
+     * @param {string} userId - User ID
+     * @param {Object} context - Message context
+     * @returns {Promise<string>} - Intelligent response
+     */
+    async generateSmartDMResponse(message, userId, context = {}) {
+        try {
+            // Get recent conversation history to understand context
+            const recentHistory = await this.messageHistory.getEnhancedContext(userId, null, 10, 0)
+            const userPrefs = await db.userPreferences.findById(userId)
+
+            // Analyze the message type and user's recent patterns
+            const messageAnalysis = await this.analyzeMessageIntent(message, recentHistory)
+
+            // Build context-appropriate system prompt
+            let contextPrompt = this.config.systemPrompt
+
+            // Add DM-specific guidance based on message analysis
+            if (messageAnalysis.needsSupport) {
+                contextPrompt += `\n\n**Support Response Mode:**
+- The user seems to need emotional support
+- Acknowledge their feelings first before offering any tools
+- Ask what kind of support would be most helpful
+- Be genuine and empathetic, not clinical`
+            } else if (messageAnalysis.isVenting) {
+                contextPrompt += `\n\n**Listening Mode:**
+- The user appears to be venting or processing
+- Focus on validation and empathy
+- Don't immediately offer solutions unless they ask
+- Use reflective listening techniques`
+            } else if (messageAnalysis.isConversational) {
+                contextPrompt += `\n\n**Conversational Mode:**
+- This seems like casual conversation
+- Be friendly and natural
+- Avoid being overly therapeutic or formal
+- Match their energy and tone appropriately`
+            }
+
+            // Add memory of recent conversations
+            if (messageAnalysis.hasRecentCrisis) {
+                contextPrompt += `\n\n**Continuity Note:** This user has had recent difficult conversations with you. Be mindful of their ongoing journey and reference it naturally if appropriate.`
+            }
+
+            const personality = userPrefs?.aiPersonality || 'gentle'
+            contextPrompt += this.getPersonalityInstructions(personality)
+
+            // Generate response with smart context
+            const messages = [
+                { role: 'system', content: contextPrompt },
+                ...recentHistory.slice(-5), // Last 5 messages for context
+                { role: 'user', content: message }
+            ]
+
+            const { text: response } = await generateText({
+                model: this.model,
+                messages,
+                temperature: this.config.temperature + 0.1, // Slightly more creative for DMs
+                maxTokens: this.config.maxTokens,
+                presencePenalty: this.config.presencePenalty,
+                frequencyPenalty: this.config.frequencyPenalty + 0.2 // Reduce repetition
+            })
+
+            return this.messageFormatting.formatForDiscord(response)
+        } catch (error) {
+            console.error('Error generating smart DM response:', error)
+            // Fallback to regular response
+            return this.generateResponse(message, userId, context)
+        }
+    }
+
+    /**
+     * Analyze message intent and context
+     * @param {string} message - User's message
+     * @param {Array} recentHistory - Recent conversation history
+     * @returns {Object} - Analysis of message intent
+     */
+    async analyzeMessageIntent(message, recentHistory) {
+        const lowerMessage = message.toLowerCase()
+
+        // Check for support-seeking language
+        const supportKeywords = [
+            'help',
+            'struggling',
+            'difficult',
+            'hard time',
+            'overwhelmed',
+            'stressed',
+            'anxious',
+            'depressed',
+            'sad',
+            'frustrated'
+        ]
+        const needsSupport = supportKeywords.some(keyword => lowerMessage.includes(keyword))
+
+        // Check for venting language
+        const ventingKeywords = [
+            'ugh',
+            'why does',
+            'i hate',
+            'so annoying',
+            "can't believe",
+            'terrible day',
+            'worst',
+            'fed up'
+        ]
+        const isVenting = ventingKeywords.some(keyword => lowerMessage.includes(keyword))
+
+        // Check for conversational language
+        const conversationalKeywords = [
+            'how are you',
+            "what's up",
+            'hey',
+            'hi',
+            'hello',
+            'good morning',
+            'good night',
+            'thanks',
+            'thank you'
+        ]
+        const isConversational = conversationalKeywords.some(keyword => lowerMessage.includes(keyword))
+
+        // Check recent history for crisis or difficult conversations
+        const hasRecentCrisis = recentHistory.some(
+            msg =>
+                msg.content &&
+                (msg.content.toLowerCase().includes('crisis') ||
+                    msg.content.toLowerCase().includes('difficult') ||
+                    msg.content.toLowerCase().includes('support'))
+        )
+
+        return {
+            needsSupport,
+            isVenting,
+            isConversational,
+            hasRecentCrisis,
+            messageLength: message.length,
+            recentMessageCount: recentHistory.length
         }
     }
 
@@ -383,7 +534,7 @@ export class AIService {
         return instructions
     }
 
-    async getCopingResponse({ tool, feeling, userId }) {
+    async getCopingResponse({ tool, feeling, userId, context = {} }) {
         try {
             // Check if coping tools are enabled
             const enabledFeatures = await db.mellow.getEnabledFeatures()
@@ -400,7 +551,10 @@ export class AIService {
             const userPrefs = await db.userPreferences.findById(userId)
             const personality = userPrefs?.aiPersonality || 'gentle'
 
-            const prompt = await buildCopingPrompt({ tool, feeling, userId, db })
+            // Determine if this is a DM context
+            const isDM = !context.guildId
+
+            const prompt = await buildCopingPrompt({ tool, feeling, userId, db, isDM })
 
             // Enhance system prompt with personality
             let systemPrompt = this.config.systemPrompt + this.getPersonalityInstructions(personality)
@@ -631,16 +785,159 @@ Be compassionate, practical, and provide specific, actionable resources. Focus o
      * @returns {boolean} Whether the AI service is connected and ready
      */
     isConnected() {
-        try {
-            // Check if service is initialized with config and model
-            const hasConfig = this.config !== null && typeof this.config === 'object'
-            const hasModel = this.model !== null
-            const hasRequiredTools = this.messageFormatting && this.performance && this.messageHistory
+        return this.config !== null && this.model !== null
+    }
 
-            return hasConfig && hasModel && hasRequiredTools
+    /**
+     * Generate Twitter content for social media posting
+     * @param {Object} options - Content generation options
+     * @param {string} options.type - Content type (dailyTip, weeklyUpdate, awarenessPost, etc.)
+     * @param {string} [options.topic] - Specific topic to focus on
+     * @param {string} [options.mood] - Target mood/tone
+     * @param {number} [options.maxLength] - Maximum character length (default: 240)
+     * @returns {Promise<string>} Generated Twitter content
+     */
+    async generateTwitterContent({ type, topic = null, mood = 'supportive', maxLength = 240 }) {
+        if (!this.isConnected()) {
+            throw new Error('AI service not connected')
+        }
+
+        try {
+            let systemPrompt = ''
+            let temperature = 0.7
+
+            switch (type) {
+                case 'dailyTip':
+                    systemPrompt = `You are Mellow, a supportive mental health Discord bot. Generate a helpful, empathetic mental health tip for Twitter/X.
+
+Requirements:
+- Keep it under ${maxLength} characters to leave room for hashtags
+- Be supportive and encouraging
+- Include actionable advice
+- Use warm, friendly tone
+- Avoid medical advice or diagnosis
+- Focus on general wellness and coping strategies
+- Make it accessible to everyone
+
+${topic ? `Focus on the topic: ${topic}` : ''}
+${mood ? `Use a ${mood} tone` : ''}
+
+Generate only the tweet text, no quotes or additional formatting.`
+                    temperature = 0.7
+                    break
+
+                case 'weeklyUpdate':
+                    systemPrompt = `You are Mellow, a supportive mental health Discord bot. Generate a weekly update tweet about mental health awareness or community support.
+
+Requirements:
+- Keep it under ${maxLength} characters
+- Share encouraging statistics, facts, or community highlights
+- Be positive and hopeful
+- Include a call to action or engagement
+- Focus on community and support
+- Make it inspiring
+
+${topic ? `Focus on the topic: ${topic}` : ''}
+
+Generate only the tweet text, no quotes or additional formatting.`
+                    temperature = 0.6
+                    break
+
+                case 'awarenessPost':
+                    systemPrompt = `You are Mellow, a supportive mental health Discord bot. Generate an educational mental health awareness tweet.
+
+Requirements:
+- Keep it under ${maxLength} characters
+- Share important mental health information
+- Be informative but not overwhelming
+- Include hope and support
+- Encourage seeking help when needed
+- Be inclusive and accessible
+
+${topic ? `Focus on the topic: ${topic}` : ''}
+
+Generate only the tweet text, no quotes or additional formatting.`
+                    temperature = 0.5
+                    break
+
+                case 'crisisSupport':
+                    systemPrompt = `You are Mellow, a supportive mental health Discord bot. Generate a compassionate tweet about crisis support and resources.
+
+Requirements:
+- Keep it under ${maxLength} characters
+- Be extremely gentle and supportive
+- Include hope and encouragement
+- Mention that help is available
+- Be careful not to be triggering
+- Focus on hope and recovery
+
+Generate only the tweet text, no quotes or additional formatting.`
+                    temperature = 0.4
+                    break
+
+                case 'motivational':
+                    systemPrompt = `You are Mellow, a supportive mental health Discord bot. Generate a motivational tweet to inspire and uplift.
+
+Requirements:
+- Keep it under ${maxLength} characters
+- Be genuinely encouraging
+- Include positive affirmations
+- Focus on strength and resilience
+- Be authentic and not overly cheerful
+- Include actionable inspiration
+
+${topic ? `Focus on the topic: ${topic}` : ''}
+
+Generate only the tweet text, no quotes or additional formatting.`
+                    temperature = 0.6
+                    break
+
+                default:
+                    systemPrompt = `You are Mellow, a supportive mental health Discord bot. Generate appropriate mental health content for Twitter/X.
+
+Requirements:
+- Keep it under ${maxLength} characters
+- Be supportive and helpful
+- Use appropriate tone for mental health content
+- Avoid medical advice
+- Focus on wellness and support
+
+${topic ? `Focus on the topic: ${topic}` : ''}
+
+Generate only the tweet text, no quotes or additional formatting.`
+                    temperature = 0.7
+            }
+
+            // Generate the content
+            const response = await generateText({
+                model: this.model,
+                prompt: systemPrompt,
+                temperature,
+                maxTokens: 150
+            })
+
+            // Clean and validate the response
+            let content = response.text?.trim() || ''
+
+            // Remove quotes and formatting
+            content = content.replace(/^["']|["']$/g, '')
+            content = content.replace(/^\w+:\s*/, '') // Remove "Tweet:" prefixes
+            content = content.trim()
+
+            // Ensure it's not too long
+            if (content.length > maxLength) {
+                content = content.substring(0, maxLength - 3) + '...'
+            }
+
+            // Validate content isn't empty
+            if (!content || content.length < 10) {
+                throw new Error('Generated content too short or empty')
+            }
+
+            return content
         } catch (error) {
-            console.error('Error checking AI service connection:', error)
-            return false
+            console.error('Failed to generate Twitter content:', error)
+            throw new Error(`Twitter content generation failed: ${error.message}`)
         }
     }
 }

@@ -3,11 +3,13 @@ import {
     requiresImmediateIntervention,
     generateCrisisResponse,
     checkCrisisKeywords,
-    handleCrisis
+    handleCrisis,
+    checkCrisisDetectionSettings
 } from '../services/tools/crisisTool.js'
 
 /**
  * Analyze message for crisis indicators and handle response
+ * Updated to respect user and guild privacy settings
  * @param {Object} message - Discord message object
  * @param {Object} client - Discord client
  * @returns {Promise<Object>} Crisis analysis result
@@ -17,20 +19,45 @@ export async function handleMessageCrisis(message, client) {
         // Skip bot messages
         if (message.author.bot) return null
 
+        // Check if crisis detection is enabled for this user/guild
+        const crisisSettings = await checkCrisisDetectionSettings(
+            message.author.id,
+            message.guild?.id || 'DM',
+            client.db
+        )
+
+        if (!crisisSettings.enabled) {
+            // Silently skip crisis detection if disabled
+            return null
+        }
+
+        // Perform initial keyword screening to avoid unnecessary AI calls
+        const keywordCheck = checkCrisisKeywords(message.content)
+
+        // Only proceed with AI analysis if we have potential crisis indicators
+        if (!keywordCheck.hasKeywords && !keywordCheck.hasPatterns) {
+            return null
+        }
+
         // Analyze message content for crisis indicators
         const analysis = await analyzeMessageContent(message.content)
-        const keywordCheck = checkCrisisKeywords(message.content)
 
         // Combine analyses
         const combinedAnalysis = {
             ...analysis,
             hasKeywords: keywordCheck.hasKeywords,
+            hasPatterns: keywordCheck.hasPatterns,
             keywords: keywordCheck.keywords,
-            crisisLevel: keywordCheck.severity === 'high' ? 'critical' : analysis.crisisLevel
+            patterns: keywordCheck.patterns,
+            keywordConfidence: keywordCheck.confidence,
+            crisisLevel:
+                keywordCheck.hasPatterns && keywordCheck.confidence === 'high' ? 'critical' : analysis.crisisLevel
         }
 
-        // Check if immediate support is needed
-        const needsSupport = requiresImmediateIntervention(combinedAnalysis) || keywordCheck.hasKeywords
+        // Check if intervention is needed based on improved criteria
+        const needsSupport =
+            requiresImmediateIntervention(combinedAnalysis) ||
+            (keywordCheck.hasPatterns && keywordCheck.confidence !== 'low')
 
         if (needsSupport) {
             // Handle crisis through comprehensive crisis management
@@ -42,8 +69,8 @@ export async function handleMessageCrisis(message, client) {
                 client.db
             )
 
-            // Send immediate response if needed
-            if (crisisResult.response.immediate) {
+            // Send immediate response if needed and allowed
+            if (crisisResult.response.immediate && crisisResult.actions.dmSent !== false) {
                 await sendCrisisResponse(message, crisisResult.response, client)
             }
 

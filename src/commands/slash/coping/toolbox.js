@@ -149,28 +149,70 @@ export default {
 
                 case 'suggest': {
                     const goal = interaction.options.getString('goal') || undefined
-                    const aiSuggestion = await client.ai.generateSuggestion({
-                        userId,
-                        goal
-                    })
 
-                    if (client.systemLogger) {
-                        await client.systemLogger.logUserEvent(
+                    try {
+                        const aiSuggestion = await client.ai.generateSuggestion({
                             userId,
-                            interaction.user.username,
-                            'coping_suggestion_requested',
-                            `AI suggested: ${aiSuggestion}`
-                        )
+                            goal
+                        })
+
+                        if (client.systemLogger) {
+                            await client.systemLogger.logUserEvent(
+                                userId,
+                                interaction.user.username,
+                                'coping_suggestion_requested',
+                                `AI suggested: ${aiSuggestion}`
+                            )
+                        }
+
+                        const embed = new client.Gateway.EmbedBuilder()
+                            .setTitle('💡 Coping Tool Suggestion')
+                            .setColor(client.colors.primary)
+                            .setDescription(`Here's a personalized suggestion for you:\n\n${aiSuggestion}`)
+                            .setFooter({ text: client.footer, iconURL: client.logo })
+                            .setTimestamp()
+
+                        return interaction.editReply({ embeds: [embed] })
+                    } catch (aiError) {
+                        console.error('AI suggestion failed:', aiError)
+
+                        // Log the error
+                        if (client.systemLogger) {
+                            await client.systemLogger.logError(
+                                'AI_SUGGESTION_ERROR',
+                                'Failed to generate AI suggestion: ' + aiError.message,
+                                {
+                                    userId,
+                                    command: 'toolbox suggest',
+                                    goal,
+                                    error: aiError.stack
+                                }
+                            )
+                        }
+
+                        // Fallback response without AI
+                        const fallbackSuggestions = [
+                            '🌬️ Try a **breathing exercise** - inhale for 4, hold for 4, exhale for 6',
+                            '📝 **Journal writing** can help process your thoughts and feelings',
+                            '🚶‍♀️ Take a **mindful walk** and focus on your surroundings',
+                            '🎵 Listen to **calming music** or sounds that help you relax',
+                            '💭 Practice **positive affirmations** to shift your mindset',
+                            '🧘‍♀️ Try a **grounding exercise** - name 5 things you can see, 4 you can touch, 3 you can hear',
+                            '📱 Use the **distraction technique** - find something engaging to focus on'
+                        ]
+
+                        const randomSuggestion =
+                            fallbackSuggestions[Math.floor(Math.random() * fallbackSuggestions.length)]
+
+                        const embed = new client.Gateway.EmbedBuilder()
+                            .setTitle('💡 Coping Tool Suggestion')
+                            .setColor(client.colors.primary)
+                            .setDescription(`Here's a suggestion for you:\n\n${randomSuggestion}`)
+                            .setFooter({ text: client.footer, iconURL: client.logo })
+                            .setTimestamp()
+
+                        return interaction.editReply({ embeds: [embed] })
                     }
-
-                    const embed = new client.Gateway.EmbedBuilder()
-                        .setTitle('💡 Coping Tool Suggestion')
-                        .setColor(client.colors.primary)
-                        .setDescription(`Here's a personalized suggestion for you:\n\n${aiSuggestion}`)
-                        .setFooter({ text: client.footer, iconURL: client.logo })
-                        .setTimestamp()
-
-                    return interaction.editReply({ embeds: [embed] })
                 }
 
                 default:

@@ -4,7 +4,6 @@ title: User Guides
 nav_order: 18
 has_children: true
 description: 'Step-by-step guides to help you get the most out of Mellow'
-permalink: /guides/
 ---
 
 # User Guides 📖
@@ -27,15 +26,15 @@ Having issues? Find solutions and get help.
 
 ## 💡 Quick Tips
 
-- **First time?** Start with the Getting Started Guide
-- **Privacy concerns?** Check the Privacy Controls Guide  
-- **Something not working?** Visit the Troubleshooting Guide
+-   **First time?** Start with the Getting Started Guide
+-   **Privacy concerns?** Check the Privacy Controls Guide
+-   **Something not working?** Visit the Troubleshooting Guide
 
 ## 🔗 Related Resources
 
-- **[Commands Reference]({{ site.baseurl }}/reference/)** - Complete command documentation
-- **[Features Overview]({{ site.baseurl }}/reference/features/)** - All available features
-- **[Support Server](https://discord.gg/C3ZuXPP7Hc)** - Community help and discussion
+-   **[Commands Reference]({{ site.baseurl }}/reference/)** - Complete command documentation
+-   **[Features Overview]({{ site.baseurl }}/reference/features/)** - All available features
+-   **[Support Server](https://discord.gg/C3ZuXPP7Hc)** - Community help and discussion
 
 ---
 

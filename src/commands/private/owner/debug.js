@@ -1,5 +1,4 @@
 import { cmdTypes } from '../../../configs/cmdTypes.config.js'
-import { aiService } from '../../../services/ai.service.js'
 
 export default {
     structure: {
@@ -80,6 +79,7 @@ export default {
 
             // Check if user is an owner
             const isOwner = await client.db.mellow.isOwner(userId)
+
             if (!isOwner) {
                 return interaction.editReply({
                     content: '❌ This command is restricted to bot owners only.',
@@ -171,12 +171,12 @@ export default {
 
                 case 'ai': {
                     try {
-                        const performanceReport = aiService.performance.formatMetricsReport()
-                        const metrics = aiService.performance.getMetrics()
+                        const performanceReport = client.ai.performance.formatMetricsReport()
+                        const metrics = client.ai.performance.getMetrics()
 
                         // Test AI service connectivity
                         const testStart = Date.now()
-                        const isConnected = aiService.isConnected()
+                        const isConnected = client.ai.isConnected()
                         const responseTime = Date.now() - testStart
 
                         const embed = new client.Gateway.EmbedBuilder()
@@ -412,7 +412,7 @@ export default {
                 case 'memory': {
                     try {
                         const memUsage = process.memoryUsage()
-                        const performanceTool = aiService.performance
+                        const performanceTool = client.ai.performance
                         const systemStats = performanceTool.getSystemStats()
 
                         const embed = new client.Gateway.EmbedBuilder()
@@ -482,7 +482,7 @@ export default {
 
                 case 'performance': {
                     try {
-                        const performanceTool = aiService.performance
+                        const performanceTool = client.ai.performance
                         const metrics = performanceTool.getMetrics()
                         const systemStats = performanceTool.getSystemStats()
 

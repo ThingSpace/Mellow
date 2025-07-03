@@ -176,4 +176,38 @@ export class ModActionModule {
             ...options
         })
     }
+
+    /**
+     * Get recent moderation actions for a guild within specified days
+     *
+     * @param {string|number} guildId - Discord guild ID
+     * @param {number} days - Number of days to look back (default: 7)
+     * @returns {Promise<Array>} Array of recent moderation actions
+     */
+    async getRecentByGuild(guildId, days = 7) {
+        const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000)
+
+        return this.prisma.modAction.findMany({
+            where: {
+                guildId: BigInt(guildId),
+                createdAt: { gte: since }
+            },
+            orderBy: { createdAt: 'desc' },
+            take: 50
+        })
+    }
+
+    /**
+     * Count moderation actions for a specific guild
+     *
+     * @param {string|number} guildId - Discord guild ID
+     * @returns {Promise<number>} Number of moderation actions for this guild
+     */
+    async countByGuild(guildId) {
+        return this.prisma.modAction.count({
+            where: {
+                guildId: BigInt(guildId)
+            }
+        })
+    }
 }

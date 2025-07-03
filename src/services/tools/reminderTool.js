@@ -70,7 +70,38 @@ export class ReminderTool {
 
                     if (reminderMethod === 'dm') {
                         // Send DM reminder
-                        await discordUser.send({ embeds: [embed] })
+                        try {
+                            await discordUser.send({ embeds: [embed] })
+                        } catch (dmError) {
+                            // Handle cases where user has DMs disabled
+                            if (dmError.code === 50007) {
+                                console.log(`User ${pref.id} has DMs disabled, disabling reminders`)
+
+                                // Disable reminders for this user
+                                await this.client.db.userPreferences.upsert(pref.id.toString(), {
+                                    remindersEnabled: false,
+                                    reminderFailureReason: 'DMs disabled'
+                                })
+
+                                // Log this event
+                                if (this.client.systemLogger) {
+                                    await this.client.systemLogger.logUserEvent(
+                                        pref.id.toString(),
+                                        pref.user?.username || 'Unknown',
+                                        'reminder_disabled_dm_blocked',
+                                        { reason: 'User has DMs disabled', errorCode: 50007 }
+                                    )
+                                }
+
+                                // Try to notify user in a shared guild if possible
+                                await this.tryNotifyUserInGuild(pref.id.toString(), embed)
+                                continue // Skip to next user - don't update nextCheckIn since reminders are disabled
+                            } else {
+                                // For other DM errors, just log and continue
+                                console.error(`Failed to send DM reminder to user ${pref.id}:`, dmError)
+                                continue // Skip to next user for other errors too
+                            }
+                        }
                     } else if (reminderMethod === 'channel') {
                         // Send to shared guild's check-in channel if available
                         let reminderSent = false
@@ -116,11 +147,33 @@ export class ReminderTool {
                                 await discordUser.send({ embeds: [embed] })
                                 console.log(`Fallback: Sent DM reminder to user ${pref.id} (channel method failed)`)
                             } catch (dmErr) {
-                                console.error(`Failed to send fallback DM to user ${pref.id}:`, dmErr)
+                                if (dmErr.code === 50007) {
+                                    console.log(`User ${pref.id} has DMs disabled, disabling reminders`)
+
+                                    // Disable reminders for this user
+                                    await this.client.db.userPreferences.upsert(pref.id.toString(), {
+                                        remindersEnabled: false,
+                                        reminderFailureReason: 'DMs disabled'
+                                    })
+
+                                    // Log this event
+                                    if (this.client.systemLogger) {
+                                        await this.client.systemLogger.logUserEvent(
+                                            pref.id.toString(),
+                                            pref.user?.username || 'Unknown',
+                                            'reminder_disabled_dm_blocked',
+                                            { reason: 'User has DMs disabled (fallback)', errorCode: 50007 }
+                                        )
+                                    }
+                                } else {
+                                    console.error(`Failed to send fallback DM to user ${pref.id}:`, dmErr)
+                                }
+                                continue // Skip to next user if DM failed
                             }
                         }
                     }
 
+                    // Only update nextCheckIn if reminder was sent successfully
                     const nextCheckIn = new Date(Date.now() + (pref.checkInInterval ?? 720) * 60 * 1000)
                     await this.client.db.userPreferences.upsert(pref.id.toString(), {
                         nextCheckIn,
@@ -129,11 +182,90 @@ export class ReminderTool {
 
                     console.log(`Sent reminder to user ${pref.id} via ${reminderMethod}`)
                 } catch (err) {
-                    console.error(`Failed to send reminder to user ${pref.id}:`, err)
+                    // Handle any other errors gracefully
+                    if (err.code === 50007) {
+                        console.log(`User ${pref.id} has DMs disabled, disabling reminders`)
+
+                        // Disable reminders for this user
+                        await this.client.db.userPreferences.upsert(pref.id.toString(), {
+                            remindersEnabled: false,
+                            reminderFailureReason: 'DMs disabled'
+                        })
+
+                        // Log this event
+                        if (this.client.systemLogger) {
+                            await this.client.systemLogger.logUserEvent(
+                                pref.id.toString(),
+                                pref.user?.username || 'Unknown',
+                                'reminder_disabled_dm_blocked',
+                                { reason: 'User has DMs disabled (catch-all)', errorCode: 50007 }
+                            )
+                        }
+                    } else {
+                        console.error(`Failed to send reminder to user ${pref.id}:`, err)
+                    }
                 }
             }
         } catch (err) {
             console.error('Error checking reminders:', err)
         }
+    }
+
+    /**
+     * Try to notify a user in a shared guild when DM fails
+     * @param {string} userId - Discord user ID
+     * @param {EmbedBuilder} originalEmbed - The original reminder embed
+     */
+    async tryNotifyUserInGuild(userId, originalEmbed) {
+        try {
+            // Get guilds where the user is a member and the bot can send messages
+            const enabledGuilds = await this.client.db.guilds.findMany({
+                where: {
+                    enableCheckIns: true,
+                    checkInChannelId: { not: null }
+                }
+            })
+
+            for (const guildData of enabledGuilds) {
+                try {
+                    const guildInstance = await this.client.guilds.fetch(guildData.id.toString())
+                    if (!guildInstance) continue
+
+                    const member = await guildInstance.members.fetch(userId).catch(() => null)
+                    if (!member) continue
+
+                    const channel = await guildInstance.channels
+                        .fetch(guildData.checkInChannelId.toString())
+                        .catch(() => null)
+                    if (!channel || !channel.isTextBased()) continue
+
+                    // Create a modified embed explaining the DM issue
+                    const notificationEmbed = new this.client.Gateway.EmbedBuilder()
+                        .setTitle('⚠️ Reminder Settings Update Needed')
+                        .setDescription(
+                            `Hey <@${userId}>! 👋\n\n` +
+                                `I tried to send you a check-in reminder via DM, but it looks like you have DMs disabled. ` +
+                                `I've automatically disabled your reminders for now.\n\n` +
+                                `If you'd like to continue receiving reminders, you can:\n` +
+                                `• Enable DMs from server members in your Discord privacy settings\n` +
+                                `• Use \`/preferences\` to set reminders to be sent in this channel instead\n` +
+                                `• Re-enable reminders with \`/preferences\` once you've updated your settings`
+                        )
+                        .setColor(this.client.colors.warning)
+                        .setFooter({ text: this.client.footer, iconURL: this.client.logo })
+
+                    await channel.send({ embeds: [notificationEmbed] })
+                    console.log(`Notified user ${userId} about DM issue in guild ${guildData.id}`)
+                    return true // Successfully notified, don't try other guilds
+                } catch (err) {
+                    // Silently continue to next guild
+                    continue
+                }
+            }
+        } catch (err) {
+            // Log but don't throw - this is a best-effort notification
+            console.error(`Failed to notify user ${userId} in guild:`, err)
+        }
+        return false
     }
 }

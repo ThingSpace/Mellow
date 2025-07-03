@@ -12,6 +12,147 @@ All notable changes to Mellow will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2025-07-03 - System Reliability & Service Infrastructure Improvements
+
+### 🛠️ Major Infrastructure Improvements
+
+#### Support Service Implementation
+- **Added**: Complete support service infrastructure (`src/services/support.service.js`)
+- **Added**: Support request handling and ticket management system
+- **Added**: Automated support routing and categorization
+- **Added**: Integration with guild debug system for comprehensive user assistance
+
+#### Twitter Service Integration
+- **Added**: Full Twitter service implementation (`src/services/twitter.service.js`)
+- **Added**: Automated posting capabilities and content management
+- **Added**: Tweet scheduling and engagement tracking
+- **Added**: Service health monitoring and error recovery
+- **Fixed**: Service initialization moved to client class for proper dependency management
+
+#### Guild Debug Command System
+- **Added**: `/guilddebug` command with comprehensive diagnostic capabilities
+- **Added**: Guild diagnostics with health checks and performance metrics
+- **Added**: System logs viewing and filtering by log type
+- **Added**: Database health monitoring and statistics
+- **Added**: Support request submission for users and administrators
+- **Added**: `/guilddebug join-guild` subcommand for staff to generate guild invites
+- **Enhanced**: Real-time guild configuration viewing and validation
+- **Fixed**: Redundant guild validation logic causing "guild not found" errors
+- **Simplified**: Guild ID handling with proper fallback to current guild
+- **Enhanced**: Error handling and graceful degradation for guild operations
+
+#### Guild Settings Command Overhaul
+- **Fixed**: Channel configuration was completely broken - now properly saves all channel settings
+- **Fixed**: Database upsert operations that were failing due to missing required fields
+- **Enhanced**: Feature toggles now work correctly (check-ins, crisis alerts, system logs, context logging)
+- **Fixed**: Moderation settings (auto-mod levels, moderator roles) now save properly
+- **Added**: Comprehensive error handling and user feedback
+- **Improved**: Settings validation and display formatting
+
+### 🔧 System Logger & Database Improvements
+
+#### Persistent System Logging
+- **Added**: `SystemLog` database model for persistent log storage
+- **Added**: `SystemLogModule` with comprehensive query capabilities (`src/database/modules/systemLog.js`)
+- **Enhanced**: SystemLogger now uses database for persistent storage across all log types
+- **Added**: `getGuildLogs()` method for retrieving historical logs by type and guild
+- **Fixed**: All systemLogger methods now properly use `logType` parameter for consistent categorization
+
+#### Command Error Handling Audit
+- **Enhanced**: All commands now use proper systemLogger.logError() with structured error data
+- **Fixed**: Commands that had console.error() now use proper system logging
+- **Added**: Consistent error logging across guild settings, moderation, user commands
+- **Removed**: Debug console.log statements that were polluting logs
+- **Fixed**: `guildsettings` command incorrectly referenced the Database
+- **Fixed**: `breathing` tool/command improperly used the AI Service
+
+#### AI Service & Coping Command Reliability
+- **Fixed**: Critical AI service bug - `this.getModel is not a function` error resolved
+- **Added**: Comprehensive error handling for all coping commands (breathing, grounding, journal, etc.)
+- **Added**: Fallback responses when AI services are unavailable
+- **Enhanced**: All coping commands now gracefully handle AI failures with helpful fallback content
+- **Added**: Proper error logging for AI service failures with context and debugging information
+
+### 🚀 User Experience Improvements
+
+#### Reminder System Reliability
+- **Fixed**: Discord error 50007 (Cannot send messages to this user) now handled gracefully
+- **Added**: Automatic reminder disabling when users have DMs blocked
+- **Added**: User notification in shared guilds when DM reminders fail
+- **Enhanced**: Comprehensive error handling for all reminder delivery methods
+- **Added**: Proper state management for users with failed reminder delivery
+
+#### Crisis Detection Enhancements
+- **Improved**: Crisis detection sensitivity reduced to prevent false positives
+- **Enhanced**: Crisis tool now respects both guild and user privacy settings
+- **Added**: More conservative intervention logic with better threshold management
+- **Fixed**: Crisis detection now properly respects user opt-out preferences
+
+#### DM Experience Improvements
+- **Enhanced**: AI responses in DMs are now less repetitive and more natural
+- **Added**: Bot asks if user wants resources or just wants to talk
+- **Improved**: Coping tool responses in DMs are gentler and less overwhelming
+- **Updated**: System prompts for more varied, empathetic language
+
+### 🐛 Critical Bug Fixes
+
+#### Discord ID Handling & Database Integrity
+- **Fixed**: Critical BigInt/Discord ID conversion bug causing database lookup failures
+- **Added**: Database migration scripts (`scripts/safe-bigint-to-string-migration.sql`) for converting corrupted BigInt IDs to strings
+- **Enhanced**: All Discord IDs now consistently stored and handled as strings throughout the codebase
+- **Created**: Analysis script (`scripts/README.md`) for detecting and fixing corrupted ID data
+- **Updated**: All database modules to use String type for Discord IDs instead of BigInt
+- **Prevented**: Future BigInt/number conversion issues in database operations
+
+#### Guild Management & Command Reliability
+- **Fixed**: `/guilddebug` command redundant guild validation causing failures
+- **Fixed**: Guild ID handling now properly falls back to current guild when specified guild not found
+- **Simplified**: Removed unnecessary guild fetching logic and redundant variables
+- **Enhanced**: Guild debug command now has consistent variable naming and cleaner code flow
+- **Added**: Proper guild module methods integration (`getSettings()`, `exists()`, `updateChannels()`, etc.)
+- **Fixed**: Critical BigInt/Discord ID conversion bug causing database lookup failures
+- **Added**: Database migration scripts for converting corrupted BigInt IDs to strings
+- **Enhanced**: All Discord IDs now consistently stored and handled as strings
+- **Refactored**: `/guilddebug` command to use single `targetGuildId` pattern for cleaner code
+- **Fixed**: Syntax errors and broken command handlers in guilddebug.js
+
+#### Database & Validation
+- **Fixed**: Prisma validation errors for models without `guildId` fields
+- **Fixed**: Database modules now properly handle queries for global vs guild-specific data
+- **Fixed**: Syntax errors in multiple database modules resolved
+- **Enhanced**: Database error handling and validation throughout
+
+#### Service Architecture
+- **Fixed**: Twitter service initialization moved to proper client initialization
+- **Fixed**: Service dependency management and startup order
+- **Fixed**: AI service method calls and error handling
+- **Enhanced**: Service health monitoring and recovery mechanisms
+
+#### Command System
+- **Fixed**: Guild settings channel configuration completely rewritten and functional
+- **Fixed**: System logger usage audit - all commands now provide proper logType parameters
+- **Fixed**: Missing error handling in commands replaced with proper systemLogger calls
+- **Enhanced**: Command reliability and user feedback across all categories
+- 
+
+### 📚 Documentation Updates
+- **Fixed**: Twitter integration examples now use correct systemLogger methods
+- **Enhanced**: Documentation examples updated to reflect proper API usage
+- **Added**: Error handling examples and best practices
+
+### 🔧 Technical Improvements
+- **Enhanced**: Guild module with comprehensive helper methods (`getSettings()`, `updateChannels()`, `updateRoles()`, `updateFeatures()`, `exists()`, `getBanStatus()`)
+- **Improved**: Database module organization with specialized methods for different operations
+- **Simplified**: Guild debug command architecture with cleaner code and better error handling
+- **Added**: Consistent Discord ID handling as strings throughout the codebase
+- **Enhanced**: Service architecture with proper dependency injection
+- **Improved**: Database module organization and query optimization
+- **Added**: Comprehensive logging for debugging and monitoring
+- **Enhanced**: Error recovery and graceful degradation throughout the system
+- **Improved**: Code organization and separation of concerns
+
+---
+
 ## [1.1.1] - 2025-07-01 - Documentation Organization & Context Command Enhancements
 
 ### 📚 Documentation Improvements

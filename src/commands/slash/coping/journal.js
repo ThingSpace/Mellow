@@ -106,17 +106,61 @@ export default {
                     )
                 }
 
-                const response = await client.ai.getCopingResponse({
-                    tool: 'journal',
-                    feeling,
-                    userId
-                })
+                try {
+                    const response = await client.ai.getCopingResponse({
+                        tool: 'journal',
+                        feeling,
+                        userId,
+                        context: {
+                            guildId: interaction.guildId,
+                            channelId: interaction.channelId
+                        }
+                    })
 
-                const fullResponse = `Your journal entry has been saved!\n\n${response}`
+                    const fullResponse = `Your journal entry has been saved!\n\n${response}`
 
-                return interaction.editReply({
-                    content: fullResponse
-                })
+                    return interaction.editReply({
+                        content: fullResponse
+                    })
+                } catch (aiError) {
+                    console.error('AI journal response failed:', aiError)
+
+                    // Log the error
+                    if (client.systemLogger) {
+                        await client.systemLogger.logError(
+                            'AI_COPING_ERROR',
+                            'Failed to generate AI journal response: ' + aiError.message,
+                            {
+                                userId: interaction.user.id,
+                                command: 'journal write',
+                                feeling,
+                                error: aiError.stack
+                            }
+                        )
+                    }
+
+                    // Fallback response
+                    const fallbackResponse = feeling
+                        ? `Your journal entry has been saved! 📝\n\n` +
+                          `Thank you for sharing that you're feeling **${feeling}**. Journaling is a powerful way to process emotions and thoughts.\n\n` +
+                          `💭 **Reflection prompts for later:**\n` +
+                          `• What led to this feeling?\n` +
+                          `• What would help you feel more balanced?\n` +
+                          `• What are you grateful for today?\n\n` +
+                          `Remember, all feelings are valid and temporary. You're taking great care of yourself by journaling. 💙`
+                        : `Your journal entry has been saved! 📝\n\n` +
+                          `Journaling is an excellent way to process your thoughts and feelings. You're doing something wonderful for your mental health.\n\n` +
+                          `💡 **Tips for your journaling journey:**\n` +
+                          `• Write regularly, even if it's just a few lines\n` +
+                          `• Don't worry about perfect grammar or structure\n` +
+                          `• Include both challenges and gratitude\n` +
+                          `• Review past entries to see your growth\n\n` +
+                          `Keep up this healthy habit! 🌱`
+
+                    return interaction.editReply({
+                        content: fallbackResponse
+                    })
+                }
             }
 
             /** LIST ALL JOURNAL ENTRIES */

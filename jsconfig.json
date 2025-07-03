@@ -17,6 +17,6 @@
         "allowSyntheticDefaultImports": true,
         "esModuleInterop": true
     },
-    "include": ["src/**/*.js"],
+    "include": ["src/**/*.js", "src/commands/slash/guild/guilddebug.js", "src/commands/private/owner/tools.js", "ignored/debug.js", "src/commands/private/owner/twitter.js"],
     "exclude": ["node_modules"]
 }
