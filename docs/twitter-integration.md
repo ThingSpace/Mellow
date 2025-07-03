@@ -1,3 +1,11 @@
+---
+layout: default
+title: Twitter Integration
+nav_order: 3
+description: 'Debug, health, and diagnostic commands for technical users'
+parent: Technical Documentation
+---
+
 # Twitter/X Integration Guide
 
 Mellow includes comprehensive Twitter/X integration capabilities, allowing the bot to automatically post mental health content, tips, and updates to your Twitter/X account.
@@ -5,50 +13,56 @@ Mellow includes comprehensive Twitter/X integration capabilities, allowing the b
 ## Features
 
 ### 🤖 AI-Powered Content Generation
-- **Daily Mental Health Tips** - Supportive, actionable wellness advice
-- **Weekly Progress Updates** - Community highlights and progress sharing
-- **Mental Health Awareness Posts** - Educational content and resources
-- **Crisis Support Resources** - Helpful resources and support information
-- **Custom Content** - Manual posting with AI assistance
+
+-   **Daily Mental Health Tips** - Supportive, actionable wellness advice
+-   **Weekly Progress Updates** - Community highlights and progress sharing
+-   **Mental Health Awareness Posts** - Educational content and resources
+-   **Crisis Support Resources** - Helpful resources and support information
+-   **Custom Content** - Manual posting with AI assistance
 
 ### ⏰ Automated Scheduling
-- **Daily Posting** - Schedule daily tips at specific times
-- **Weekly Updates** - Post weekly content on specific days
-- **Rate Limiting** - Built-in controls to prevent spam
-- **Content Moderation** - Automatic filtering of inappropriate content
+
+-   **Daily Posting** - Schedule daily tips at specific times
+-   **Weekly Updates** - Post weekly content on specific days
+-   **Rate Limiting** - Built-in controls to prevent spam
+-   **Content Moderation** - Automatic filtering of inappropriate content
 
 ### 📊 Management & Analytics
-- **Real-time Status** - Monitor connection and posting health
-- **Activity Logging** - Track all posting activity
-- **Rate Limit Management** - Automatic cooldown and daily limits
-- **Manual Controls** - Start/stop scheduling and manual posting
+
+-   **Real-time Status** - Monitor connection and posting health
+-   **Activity Logging** - Track all posting activity
+-   **Rate Limit Management** - Automatic cooldown and daily limits
+-   **Manual Controls** - Start/stop scheduling and manual posting
 
 ## Setup & Configuration
 
 ### 1. Twitter/X Developer Account Setup
 
 1. **Create Twitter Developer Account:**
-   - Go to [developer.twitter.com](https://developer.twitter.com)
-   - Apply for a developer account
-   - Create a new app for your bot
+
+    - Go to [developer.twitter.com](https://developer.twitter.com)
+    - Apply for a developer account
+    - Create a new app for your bot
 
 2. **Twitter API Use Case Information:**
    When applying for API access, provide these details:
-   - **Use Case:** Mental health support and awareness platform
-   - **Description:** "Automated posting of mental health tips, educational content, and community support resources. Our Discord bot serves mental health communities and uses Twitter to share helpful wellness content, crisis resources, and supportive messaging to reach people who need mental health support."
-   - **Will you make Twitter content available to government entities?** No
-   - **Will you display Twitter content?** No (we only post content)
-   - **Academic Research?** No
-   - **Tweet Volume:** Approximately 5-10 tweets per day, focused on mental health awareness and support resources
+
+    - **Use Case:** Mental health support and awareness platform
+    - **Description:** "Automated posting of mental health tips, educational content, and community support resources. Our Discord bot serves mental health communities and uses Twitter to share helpful wellness content, crisis resources, and supportive messaging to reach people who need mental health support."
+    - **Will you make Twitter content available to government entities?** No
+    - **Will you display Twitter content?** No (we only post content)
+    - **Academic Research?** No
+    - **Tweet Volume:** Approximately 5-10 tweets per day, focused on mental health awareness and support resources
 
 3. **Generate API Keys:**
-   - API Key and Secret
-   - Access Token and Secret
-   - Bearer Token (for v2 API features)
+
+    - API Key and Secret
+    - Access Token and Secret
+    - Bearer Token (for v2 API features)
 
 4. **Set Permissions:**
-   - Ensure "Read and Write" permissions are enabled
-   - This allows the bot to post tweets
+    - Ensure "Read and Write" permissions are enabled
+    - This allows the bot to post tweets
 
 ### 2. Environment Variables
 
@@ -80,6 +94,7 @@ TWITTER_ANALYTICS_WEBHOOK=https://your-analytics-webhook.com/twitter
 The Twitter service can be configured in `src/configs/twitter.config.js`:
 
 #### Content Types
+
 ```javascript
 contentTypes: {
     dailyTips: {
@@ -100,6 +115,7 @@ contentTypes: {
 ```
 
 #### Rate Limiting
+
 ```javascript
 rateLimiting: {
     postsPerHour: 5,
@@ -116,6 +132,7 @@ rateLimiting: {
 Use the `/twitter` command to manage Twitter integration:
 
 #### Post Content
+
 ```
 /twitter post type:dailyTip
 /twitter post type:custom content:"Your custom message here"
@@ -123,11 +140,13 @@ Use the `/twitter` command to manage Twitter integration:
 ```
 
 #### Check Status
+
 ```
 /twitter status
 ```
 
 #### Manage Scheduling
+
 ```
 /twitter schedule action:view
 /twitter schedule action:start
@@ -137,6 +156,7 @@ Use the `/twitter` command to manage Twitter integration:
 ### Programmatic Usage
 
 #### Manual Posting
+
 ```javascript
 // Post AI-generated content
 const result = await client.twitterService.postAIContent('dailyTip', {
@@ -157,6 +177,7 @@ await client.twitterService.postBotUpdate('Bot is now online!')
 ```
 
 #### Check Service Status
+
 ```javascript
 // Test connection
 const connectionTest = await client.twitterService.testConnection()
@@ -167,6 +188,7 @@ const isReady = client.twitterService.initialized
 ```
 
 #### Control Scheduling
+
 ```javascript
 // Start automatic posting
 client.twitterService.startScheduledPosting()
@@ -194,42 +216,40 @@ const content = await client.ai.generateTwitterContent({
 ### Content Types
 
 1. **Daily Tips (`dailyTip`)**
-   - Practical mental health advice
-   - Coping strategies
-   - Wellness reminders
+
+    - Practical mental health advice
+    - Coping strategies
+    - Wellness reminders
 
 2. **Weekly Updates (`weeklyUpdate`)**
-   - Community highlights
-   - Progress sharing
-   - Encouraging statistics
+
+    - Community highlights
+    - Progress sharing
+    - Encouraging statistics
 
 3. **Awareness Posts (`awarenessPost`)**
-   - Educational content
-   - Mental health facts
-   - Support resources
+
+    - Educational content
+    - Mental health facts
+    - Support resources
 
 4. **Crisis Support (`crisisSupport`)**
-   - Crisis resources
-   - Emergency contacts
-   - Immediate help options
+
+    - Crisis resources
+    - Emergency contacts
+    - Immediate help options
 
 5. **Custom Content (`custom`)**
-   - Manual content input
-   - Bot announcements
-   - Special messages
+    - Manual content input
+    - Bot announcements
+    - Special messages
 
 ### Hashtag Management
 
 The service automatically adds relevant hashtags:
 
 ```javascript
-defaultHashtags: [
-    '#MentalHealth',
-    '#Wellness',
-    '#SelfCare',
-    '#Support',
-    '#MentalHealthMatters'
-]
+defaultHashtags: ['#MentalHealth', '#Wellness', '#SelfCare', '#Support', '#MentalHealthMatters']
 ```
 
 Hashtags are intelligently added if there's space, or omitted if the content would exceed Twitter's character limit.
@@ -240,10 +260,10 @@ Hashtags are intelligently added if there's space, or omitted if the content wou
 
 All Twitter activity is logged through the system logger:
 
-- Post attempts and results
-- Rate limiting events
-- Connection issues
-- Scheduled posting events
+-   Post attempts and results
+-   Rate limiting events
+-   Connection issues
+-   Scheduled posting events
 
 ### System Logger Integration
 
@@ -265,10 +285,11 @@ TWITTER_ANALYTICS_WEBHOOK=https://your-analytics-service.com/webhook
 ```
 
 The webhook receives data about:
-- Post engagement
-- Successful/failed posts
-- Rate limiting events
-- Service health
+
+-   Post engagement
+-   Successful/failed posts
+-   Rate limiting events
+-   Service health
 
 ## Rate Limiting & Safety
 
@@ -283,34 +304,37 @@ The service includes comprehensive rate limiting:
 
 ### Error Handling
 
-- **Automatic Retries** - Failed posts are retried with exponential backoff
-- **Graceful Degradation** - Service continues working even if some features fail
-- **Detailed Logging** - All errors are logged for debugging
+-   **Automatic Retries** - Failed posts are retried with exponential backoff
+-   **Graceful Degradation** - Service continues working even if some features fail
+-   **Detailed Logging** - All errors are logged for debugging
 
 ### Content Safety
 
-- **Topic Filtering** - Blocks sensitive or inappropriate topics
-- **Manual Approval** - Optional manual review before posting
-- **Content Length** - Automatic truncation and formatting
+-   **Topic Filtering** - Blocks sensitive or inappropriate topics
+-   **Manual Approval** - Optional manual review before posting
+-   **Content Length** - Automatic truncation and formatting
 
 ## Troubleshooting
 
 ### Common Issues
 
 **"Twitter service not initialized"**
-- Check API credentials in environment variables
-- Verify Twitter app permissions (Read and Write)
-- Check network connectivity
+
+-   Check API credentials in environment variables
+-   Verify Twitter app permissions (Read and Write)
+-   Check network connectivity
 
 **"Rate limit exceeded"**
-- Wait for cooldown period to expire
-- Check daily/hourly posting limits
-- Review posting frequency settings
+
+-   Wait for cooldown period to expire
+-   Check daily/hourly posting limits
+-   Review posting frequency settings
 
 **"Content moderation failed"**
-- Review content filtering settings
-- Check for blocked topics in content
-- Verify AI service is working properly
+
+-   Review content filtering settings
+-   Check for blocked topics in content
+-   Verify AI service is working properly
 
 ### Debug Commands
 

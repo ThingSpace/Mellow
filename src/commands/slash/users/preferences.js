@@ -159,6 +159,14 @@ export default {
                                     inline: true
                                 },
                                 {
+                                    name: 'Crisis & Safety Settings',
+                                    value: [
+                                        `**Crisis Detection:** ${!settings.disableCrisisDetection ? '✅ Enabled' : '❌ Disabled'}`,
+                                        `**Crisis Support DMs:** ${!settings.disableCrisisSupportDMs ? '✅ Enabled' : '❌ Disabled'}`
+                                    ].join('\n'),
+                                    inline: true
+                                },
+                                {
                                     name: 'Account Info',
                                     value: [
                                         `**Created:** <t:${Math.floor(settings.createdAt.getTime() / 1000)}:R>`,

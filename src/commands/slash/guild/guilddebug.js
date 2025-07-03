@@ -168,17 +168,30 @@ export default {
                     await interaction.deferReply()
 
                     // Get target guild
-                    const targetGuild = await client.guilds.fetch(targetGuildId)
+                    let targetGuild = interaction.guild
+                    let finalGuildId = guildId
+
+                    if (targetGuildId !== guildId) {
+                        try {
+                            const discordGuildId = targetGuildId.toString()
+                            targetGuild = await client.guilds.fetch(discordGuildId)
+                            finalGuildId = discordGuildId
+                        } catch (error) {
+                            return interaction.editReply({
+                                content: `❌ **Guild Not Found**\n\nCould not find guild with ID: \`${targetGuildId}\`\n\nMake sure the bot is in that guild and the ID is correct.`,
+                                ephemeral: true
+                            })
+                        }
+                    }
 
                     // Get guild information
-                    const guild = await client.db.guilds.getSettings(targetGuildId)
+                    const guild = await client.db.guilds.getSettings(finalGuildId)
 
                     // Get various statistics
-                    const userCount = await client.db.users.countGuildUsers(targetGuildId)
-                    const recentCheckIns = (await client.db.moodCheckIns.getRecentByGuild(targetGuildId, 24)) || [] // Last 24 hours (global)
-                    const recentCrisisEvents =
-                        (await client.db.crisisEvents?.getRecentByGuild?.(targetGuildId, 7)) || [] // Last 7 days (global)
-                    const modActions = (await client.db.modActions?.getRecentByGuild?.(targetGuildId, 7)) || [] // Last 7 days (guild-specific)
+                    const userCount = await client.db.users.countGuildUsers(finalGuildId)
+                    const recentCheckIns = (await client.db.moodCheckIns.getRecentByGuild(finalGuildId, 24)) || [] // Last 24 hours (global)
+                    const recentCrisisEvents = (await client.db.crisisEvents?.getRecentByGuild?.(finalGuildId, 7)) || [] // Last 7 days (global)
+                    const modActions = (await client.db.modActions?.getRecentByGuild?.(finalGuildId, 7)) || [] // Last 7 days (guild-specific)
 
                     // Check system health
                     const systemHealth = {
@@ -214,7 +227,7 @@ export default {
                             {
                                 name: '📊 Guild Overview',
                                 value: [
-                                    `**Guild ID:** \`${targetGuildId}\``,
+                                    `**Guild ID:** \`${finalGuildId}\``,
                                     `**Members:** ${targetGuild.memberCount.toLocaleString()}`,
                                     `**Registered Users:** ${userCount || 0}`,
                                     `**Owner:** <@${targetGuild.ownerId}>`,
@@ -283,16 +296,14 @@ export default {
                         })
                     }
 
+                    //const targetGuildId = interaction.options.getString('guild-id') || guildId
                     const targetGuildId = interaction.options.getString('guild-id') || guildId
-
-                    // Get target guild
-                    const targetGuild = await client.guilds.fetch(targetGuildId)
 
                     const guild = await client.db.guilds.getSettings(targetGuildId)
 
                     if (!guild) {
                         return interaction.reply({
-                            content: `❌ Guild not found in database. This may indicate a setup issue.\n\nGuild ID: \`${targetGuildId}\``,
+                            content: `❌ Guild not found in database. This may indicate a setup issue.\n\nGuild ID: \`${finalGuildId}\``,
                             ephemeral: true
                         })
                     }
@@ -388,23 +399,20 @@ export default {
 
                     await interaction.deferReply()
 
-                    // Get target guild
-                    const targetGuild = await client.guilds.fetch(targetGuildId)
-
                     const logType = interaction.options.getString('type') || 'all'
                     const limit = interaction.options.getInteger('limit') || 10
 
                     // Get logs from system logger if available
                     let logs = []
                     if (client.systemLogger && client.systemLogger.getGuildLogs) {
-                        logs = await client.systemLogger.getGuildLogs(targetGuildId, logType, limit)
+                        logs = await client.systemLogger.getGuildLogs(finalGuildId, logType, limit)
                     }
 
                     const embed = new client.Gateway.EmbedBuilder()
                         .setTitle(`📋 Guild Logs: ${logType.toUpperCase()} - ${targetGuild.name}`)
                         .setColor(client.colors.warning)
                         .setDescription(
-                            `Showing last ${limit} ${logType === 'all' ? '' : logType + ' '}logs for guild \`${targetGuildId}\``
+                            `Showing last ${limit} ${logType === 'all' ? '' : logType + ' '}logs for guild \`${finalGuildId}\``
                         )
 
                     if (logs.length === 0) {
@@ -478,16 +486,31 @@ export default {
                     await interaction.deferReply()
 
                     // Get target guild
-                    const targetGuild = await client.guilds.fetch(targetGuildId)
+                    let targetGuild = interaction.guild
+                    let finalGuildId = guildId
+
+                    if (targetGuildId !== guildId) {
+                        try {
+                            // Ensure we're using the string representation for Discord.js
+                            const discordGuildId = targetGuildId.toString()
+                            targetGuild = await client.guilds.fetch(discordGuildId)
+                            finalGuildId = discordGuildId
+                        } catch (error) {
+                            return interaction.editReply({
+                                content: `❌ **Guild Not Found**\n\nCould not find guild with ID: \`${targetGuildId}\`\n\nMake sure the bot is in that guild and the ID is correct.`,
+                                ephemeral: true
+                            })
+                        }
+                    }
 
                     // Get database statistics for this guild
                     const stats = {
-                        users: await client.db.users.countGuildUsers(targetGuildId),
-                        moodCheckIns: await client.db.moodCheckIns.countByGuild(targetGuildId),
-                        ghostLetters: (await client.db.ghostLetters?.countByGuild?.(targetGuildId)) || 0,
-                        crisisEvents: (await client.db.crisisEvents?.countByGuild?.(targetGuildId)) || 0,
-                        modActions: (await client.db.modActions?.countByGuild?.(targetGuildId)) || 0,
-                        conversationHistory: (await client.db.conversationHistory?.countByGuild?.(targetGuildId)) || 0
+                        users: await client.db.users.countGuildUsers(finalGuildId),
+                        moodCheckIns: await client.db.moodCheckIns.countByGuild(finalGuildId),
+                        ghostLetters: (await client.db.ghostLetters?.countByGuild?.(finalGuildId)) || 0,
+                        crisisEvents: (await client.db.crisisEvents?.countByGuild?.(finalGuildId)) || 0,
+                        modActions: (await client.db.modActions?.countByGuild?.(finalGuildId)) || 0,
+                        conversationHistory: (await client.db.conversationHistory?.countByGuild?.(finalGuildId)) || 0
                     }
 
                     // Test database connectivity
@@ -495,7 +518,7 @@ export default {
                     let dbLatency = 0
                     try {
                         const start = Date.now()
-                        await client.db.guilds.exists(targetGuildId)
+                        await client.db.guilds.exists(finalGuildId)
                         dbLatency = Date.now() - start
                         dbHealth = true
                     } catch (error) {
