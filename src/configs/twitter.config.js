@@ -11,8 +11,7 @@ export const twitterConfig = {
         apiKey: process.env.TWITTER_API_KEY || null,
         apiSecret: process.env.TWITTER_API_SECRET || null,
         accessToken: process.env.TWITTER_ACCESS_TOKEN || null,
-        accessTokenSecret: process.env.TWITTER_ACCESS_TOKEN_SECRET || null,
-        bearerToken: process.env.TWITTER_BEARER_TOKEN || null
+        accessTokenSecret: process.env.TWITTER_ACCESS_TOKEN_SECRET || null
     },
 
     // Bot account username (for mentions and replies)
@@ -197,11 +196,6 @@ export function validateTwitterConfig() {
         issues.push('TWITTER_ACCESS_TOKEN_SECRET environment variable is required')
     }
 
-    // Check optional but recommended settings
-    if (!twitterConfig.credentials.bearerToken) {
-        warnings.push('TWITTER_BEARER_TOKEN not set - some features may be limited')
-    }
-
     if (!twitterConfig.botUsername) {
         warnings.push('TWITTER_BOT_USERNAME not set - using default')
     }
@@ -244,7 +238,6 @@ export function getTwitterClientConfig() {
         appKey: twitterConfig.credentials.apiKey,
         appSecret: twitterConfig.credentials.apiSecret,
         accessToken: twitterConfig.credentials.accessToken,
-        accessSecret: twitterConfig.credentials.accessTokenSecret,
-        bearerToken: twitterConfig.credentials.bearerToken
+        accessSecret: twitterConfig.credentials.accessTokenSecret
     }
 }
