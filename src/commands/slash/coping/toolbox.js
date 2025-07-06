@@ -131,18 +131,18 @@ export default {
                         where: { userId: BigInt(userId) }
                     })
 
+                    if (favorites.length === 0) {
+                        return interaction.reply({
+                            content: "You don't have any favorite coping tools yet. Use `/toolbox add` to add some!"
+                        })
+                    }
+
                     const embed = new client.Gateway.EmbedBuilder()
                         .setTitle('🧰 Your Favorite Coping Tools')
                         .setColor(client.colors.primary)
                         .setDescription(favorites.map(f => `• **${f.tool}**`).join('\n'))
                         .setFooter({ text: client.footer, iconURL: client.logo })
                         .setTimestamp()
-
-                    if (favorites.length === 0) {
-                        return interaction.reply({
-                            content: "You don't have any favorite coping tools yet. Use `/toolbox add` to add some!"
-                        })
-                    }
 
                     return interaction.reply({ embeds: [embed] })
                 }
