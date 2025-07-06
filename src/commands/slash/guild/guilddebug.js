@@ -398,6 +398,8 @@ export default {
 
                     const targetGuildId = interaction.options.getString('guild-id') || guildId
 
+                    let finalGuildId = targetGuildId
+
                     await interaction.deferReply()
 
                     const logType = interaction.options.getString('type') || 'all'
