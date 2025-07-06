@@ -298,8 +298,9 @@ export default {
 
                     //const targetGuildId = interaction.options.getString('guild-id') || guildId
                     const targetGuildId = interaction.options.getString('guild-id') || guildId
+                    const finalGuildId = targetGuildId
 
-                    const guild = await client.db.guilds.getSettings(targetGuildId)
+                    const guild = await client.db.guilds.getSettings(finalGuildId)
 
                     if (!guild) {
                         return interaction.reply({
