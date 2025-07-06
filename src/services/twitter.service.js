@@ -660,7 +660,7 @@ export class TwitterService {
                 apiKey: !!this.config.credentials.apiKey,
                 apiSecret: !!this.config.credentials.apiSecret,
                 accessToken: !!this.config.credentials.accessToken,
-                accessTokenSecret: !!this.config.credentials.accessTokenSecret
+                accessTokenSecret: !!this.config.credentials.accessTokenSecret,
                 botUsername: this.config.botUsername
             },
             recommendations: []
