@@ -6,10 +6,12 @@ description: 'Development roadmap and future feature plans'
 ---
 
 ---
+
 layout: default
 title: Roadmap
 nav_order: 14
 description: 'Development roadmap and future feature plans'
+
 ---
 
 # 🎯 Mellow v1.2.0 - Implementation Complete & Future Roadmap
@@ -97,6 +99,7 @@ Based on analysis of the current implementation and .todo files, here are the re
 
 -   [ ] **AI-powered mood trend predictions** using historical data
 -   [ ] **Seasonal pattern recognition** for mood tracking
+
 #### Advanced AI & Performance
 
 -   [ ] **AI-powered mood trend predictions** using historical data
