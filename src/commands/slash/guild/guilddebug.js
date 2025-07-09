@@ -9,7 +9,8 @@ export default {
         handlers: {
             requiredRoles: [],
             requiredPerms: [],
-            cooldown: 30000
+            cooldown: 30000,
+            guildOnly: true
         },
         options: [
             {

@@ -8,7 +8,8 @@ export default {
         handlers: {
             requiredRoles: [],
             requiredPerms: [PermissionFlagsBits.Administrator, PermissionFlagsBits.ManageGuild],
-            cooldown: 15000
+            cooldown: 15000,
+            guildOnly: true
         },
         options: [
             {

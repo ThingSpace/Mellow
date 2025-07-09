@@ -14,7 +14,8 @@ export default {
                 PermissionFlagsBits.ModerateMembers,
                 PermissionFlagsBits.BanMembers,
                 PermissionFlagsBits.KickMembers
-            ]
+            ],
+            guildOnly: true
         },
         options: [
             {

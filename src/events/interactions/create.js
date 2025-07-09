@@ -19,6 +19,15 @@ export default {
         // Dual permission system
         const requiredDiscordPermissions = command.structure.handlers.requiredPerms || []
         const requiredRoles = command.structure.handlers.requiredRoles || []
+        const isGuildOnly = command.structure.handlers.guildOnly || false
+
+        // Check if the command is guild-only
+        if (isGuildOnly && !interaction.guild) {
+            return interaction.reply({
+                ephemeral: true,
+                content: '❌ This command can only be used in a server.'
+            })
+        }
 
         // Discord permissions check
         if (requiredDiscordPermissions.length > 0 && interaction.guild) {
