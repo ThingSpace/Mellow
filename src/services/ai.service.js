@@ -940,6 +940,296 @@ Generate only the tweet text, no quotes or additional formatting.`
             throw new Error(`Twitter content generation failed: ${error.message}`)
         }
     }
+
+    /**
+     * Generate meme content based on a template or topic
+     * @param {Object} options - Meme generation options
+     * @param {string} [options.template] - Specific meme template to use (e.g., "distracted boyfriend", "drake")
+     * @param {string} [options.topic] - Topic to create a meme about
+     * @param {string} [options.mood] - Mood of the meme (funny, wholesome, relatable)
+     * @param {string} [options.context] - Additional context for the meme
+     * @param {boolean} [options.mentalHealthFocused=false] - Whether to focus on mental health themes
+     * @returns {Promise<Object>} Object containing meme text content and image URL
+     */
+    async generateMemeContent({ template, topic, mood = 'funny', context = '', mentalHealthFocused = false }) {
+        if (!this.isConnected()) {
+            throw new Error('AI service not connected')
+        }
+
+        try {
+            // Set up appropriate temperature based on creativity needs
+            const temperature = 0.8 // Higher temperature for more creative outputs
+
+            // Build the system prompt based on the meme type
+            let systemPrompt = `You are Mellow, a mental health support bot with a good sense of humor. Generate content for a meme based on the following parameters:
+
+${template ? `Meme template: ${template}` : ''}
+${topic ? `Topic: ${topic}` : ''}
+Mood: ${mood}
+${context ? `Additional context: ${context}` : ''}
+${mentalHealthFocused ? 'This should be mental health focused and supportive.' : ''}
+
+Your response should include:
+- A title for the meme
+- Top text (what would go on the top of the meme)
+- Bottom text (what would go on the bottom of the meme)
+- A brief description of the image that would work for this meme
+
+Rules:
+- Keep text short and punchy - meme text should be brief
+- Be appropriate for all audiences
+- If using a mental health topic, be supportive and never mock mental health issues
+- Avoid politically divisive content
+- Make it relatable and humorous without being offensive
+- If using a specific template, match the format to that template's typical use
+`
+
+            // Add template-specific instructions
+            if (template) {
+                const templateGuides = {
+                    'distracted boyfriend': `This meme shows a man looking at another woman while his girlfriend looks shocked/angry.
+- Label the boyfriend as someone being distracted from something important
+- Label the "other woman" as something tempting but less important
+- Label the girlfriend as the important thing being ignored`,
+
+                    'drake': `This meme shows Drake refusing something (top panel) and approving something else (bottom panel).
+- Top text should be something rejected or disliked
+- Bottom text should be something preferred or better`,
+
+                    'expanding brain': `This meme shows increasingly glowing brains representing progressively more "enlightened" ideas.
+- Provide 3-4 escalating concepts from basic to absurd/transcendent`,
+
+                    'two buttons': `This meme shows someone sweating while deciding between two buttons.
+- The two options should represent a difficult or contradictory choice`,
+
+                    'change my mind': `This meme shows someone at a table with a "change my mind" sign.
+- Provide a statement that would go on the sign - something controversial but not offensive`,
+
+                    'this is fine': `This meme shows a dog sitting in a burning room saying "this is fine".
+- Context should involve ignoring obvious problems`,
+
+                    'pointing spider-man': `This meme shows two Spider-Men pointing at each other.
+- The two things should be similar or identical in an ironic way`
+                }
+
+                if (templateGuides[template.toLowerCase()]) {
+                    systemPrompt += `\n\nTemplate-specific instructions:\n${templateGuides[template.toLowerCase()]}`
+                }
+            }
+
+            // For mental health focus, add additional guidelines
+            if (mentalHealthFocused) {
+                systemPrompt += `\n\nMental Health Guidelines:
+- Focus on supportive, positive humor
+- Avoid content that could be triggering
+- Emphasize coping, growth, or shared experiences
+- When possible, include an element of hope or encouragement
+- Validate feelings while remaining lighthearted
+- Never mock symptoms, treatments, or struggles`
+            }
+
+            // Generate the meme content
+            const { text: fullResponse } = await generateText({
+                model: this.model,
+                messages: [{ role: 'system', content: systemPrompt }],
+                temperature,
+                maxTokens: this.config.maxTokens,
+                presencePenalty: 0.4,
+                frequencyPenalty: 0.4
+            })
+
+            // Parse the response into structured sections
+            const memeContent = this.parseMemeContent(fullResponse)
+
+            // Generate or retrieve the actual meme image
+            const imageUrl = await this.generateMemeImage({
+                template: template?.toLowerCase(),
+                topText: memeContent.topText,
+                bottomText: memeContent.bottomText,
+                title: memeContent.title
+            })
+
+            // Add the image URL to the meme content
+            memeContent.imageUrl = imageUrl
+
+            return memeContent
+        } catch (error) {
+            console.error('Failed to generate meme content:', error)
+            throw new Error(`Meme generation failed: ${error.message}`)
+        }
+    }
+
+    /**
+     * Generate an actual meme image based on template and text
+     * @param {Object} options - Image generation options
+     * @param {string} options.template - Meme template name
+     * @param {string} options.topText - Text for top of the meme
+     * @param {string} options.bottomText - Text for bottom of the meme
+     * @param {string} options.title - Title of the meme (used for some APIs)
+     * @returns {Promise<string>} URL to the generated meme image
+     */
+    async generateMemeImage({ template, topText, bottomText, title }) {
+        try {
+            // Map of template names to template IDs for the ImgFlip API
+            const templateMap = {
+                'distracted boyfriend': '112126428',
+                'drake': '181913649',
+                'expanding brain': '93895088',
+                'two buttons': '87743020',
+                'change my mind': '129242436',
+                'this is fine': '55311130',
+                'pointing spider-man': '133052762'
+            }
+
+            // Use a fallback template if the specified one doesn't exist
+            const templateId = templateMap[template] || '181913649' // Drake as default
+
+            // Get API credentials - ImgFlip requires these for meme generation
+            const username = process.env.IMGFLIP_USERNAME
+            const password = process.env.IMGFLIP_PASSWORD
+
+            // If we have credentials, use ImgFlip API
+            if (username && password) {
+                try {
+                    // ImgFlip API endpoint
+                    const imgflipApiUrl = 'https://api.imgflip.com/caption_image'
+
+                    // Prepare request parameters
+                    const params = new URLSearchParams()
+                    params.append('template_id', templateId)
+                    params.append('username', username)
+                    params.append('password', password)
+
+                    // Add text parameters - ensure they're not empty
+                    params.append('text0', topText?.trim() || ' ')
+                    params.append('text1', bottomText?.trim() || ' ')
+                    params.append('font', 'impact')
+
+                    // Make the API request to generate the meme
+                    const response = await fetch(imgflipApiUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        },
+                        body: params
+                    })
+
+                    const data = await response.json()
+
+                    if (data.success) {
+                        // Return the URL of the generated meme
+                        console.log('Meme successfully generated with ImgFlip API')
+                        return data.data.url
+                    } else {
+                        throw new Error(`ImgFlip API error: ${data.error_message}`)
+                    }
+                } catch (apiError) {
+                    console.error('Error using ImgFlip API:', apiError)
+                    throw apiError // Let the outer catch handle the fallback
+                }
+            } else {
+                // No credentials, throw error to trigger fallback
+                throw new Error('ImgFlip credentials not configured')
+            }
+        } catch (error) {
+            console.error('Failed to generate meme image:', error)
+            log(
+                'ImgFlip API requires authentication. Set IMGFLIP_USERNAME and IMGFLIP_PASSWORD in your environment variables.',
+                'warn'
+            )
+
+            // Generate a URL that encodes the meme text directly - using meme-generator.org instead
+            // This service doesn't require authentication and will render text on the image
+            try {
+                // Base URL for a text-on-image service
+                let memeGeneratorUrl = 'https://memegen.link'
+
+                // Map template names to memegen.link templates
+                const memegenTemplates = {
+                    'drake': 'drake',
+                    'distracted boyfriend': 'distracted',
+                    'expanding brain': 'expandingbrain',
+                    'two buttons': 'choicememe',
+                    'change my mind': 'changemymind',
+                    'this is fine': 'fine',
+                    'pointing spider-man': 'spiderman'
+                }
+
+                // Get the template name for memegen
+                const memegenTemplate = memegenTemplates[template] || 'drake'
+
+                // Prepare text for URL encoding
+                const topTextEncoded = topText ? encodeURIComponent(topText.trim()) : '_'
+                const bottomTextEncoded = bottomText ? encodeURIComponent(bottomText.trim()) : '_'
+
+                // Build the URL
+                const memeUrl = `${memeGeneratorUrl}/${memegenTemplate}/${topTextEncoded}/${bottomTextEncoded}.jpg`
+
+                console.log(`Using fallback meme generator: ${memeUrl}`)
+                return memeUrl
+            } catch (fallbackError) {
+                console.error('Fallback meme generation also failed:', fallbackError)
+
+                // Ultimate fallback - return template images with no text
+                const fallbackImageUrls = {
+                    'distracted boyfriend': 'https://i.imgflip.com/1ur9b0.jpg',
+                    'drake': 'https://i.imgflip.com/30b1gx.jpg',
+                    'expanding brain': 'https://i.imgflip.com/1jwhww.jpg',
+                    'two buttons': 'https://i.imgflip.com/1g8my4.jpg',
+                    'change my mind': 'https://i.imgflip.com/24y43o.jpg',
+                    'this is fine': 'https://i.imgflip.com/2cp1.jpg',
+                    'pointing spider-man': 'https://i.imgflip.com/1tkjq9.jpg'
+                }
+
+                log(`Using plain template image for meme template: ${template}`, 'warn')
+                return fallbackImageUrls[template] || 'https://i.imgflip.com/30b1gx.jpg' // Drake as default
+            }
+        }
+    }
+
+    /**
+     * Parse AI-generated meme content into structured format
+     * @param {string} response - AI response text
+     * @returns {Object} Parsed meme content
+     */
+    parseMemeContent(response) {
+        const content = {
+            title: '',
+            topText: '',
+            bottomText: '',
+            imageDescription: '',
+            imageUrl: '' // This will be populated by generateMemeImage
+        }
+
+        // Extract sections using regex
+        const titleMatch = response.match(/Title:?\s*([^\n]+)/i)
+        const topTextMatch = response.match(/Top Text:?\s*([^\n]+)/i)
+        const bottomTextMatch = response.match(/Bottom Text:?\s*([^\n]+)/i)
+        const descriptionMatch = response.match(/(?:Image )?Description:?\s*([^\n]+(?:\n[^\n]+)*)/i)
+
+        if (titleMatch && titleMatch[1]) content.title = titleMatch[1].trim()
+        if (topTextMatch && topTextMatch[1]) content.topText = topTextMatch[1].trim()
+        if (bottomTextMatch && bottomTextMatch[1]) content.bottomText = bottomTextMatch[1].trim()
+
+        // For the image description, we might have multiple lines
+        if (descriptionMatch && descriptionMatch[1]) {
+            content.imageDescription = descriptionMatch[1].trim()
+        }
+
+        // If we couldn't parse the format properly, use fallback approach
+        if (!content.topText && !content.bottomText) {
+            const lines = response.split('\n').filter(line => line.trim())
+
+            // If we have at least 2 lines and no parsed content, use the lines directly
+            if (lines.length >= 2) {
+                if (!content.title) content.title = lines[0].trim()
+                if (!content.topText) content.topText = lines[1].trim()
+                if (lines.length >= 3 && !content.bottomText) content.bottomText = lines[2].trim()
+            }
+        }
+
+        return content
+    }
 }
 
 export const aiService = new AIService()
