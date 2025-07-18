@@ -576,6 +576,19 @@ export class SystemLogger {
         }
 
         try {
+            // If this log references a guild, make sure it exists first
+            if (options.guildId) {
+                const guildExists = await this.client.db.guilds.exists(options.guildId)
+
+                if (!guildExists) {
+                    console.warn(`Cannot log to database: Guild ${options.guildId} does not exist in database`)
+
+                    // Store in memory if database operation fails
+                    this.storeLogInMemory(logType, title, description, options)
+                    return null
+                }
+            }
+
             const logData = {
                 guildId: options.guildId || null,
                 userId: options.userId || null,
@@ -589,7 +602,50 @@ export class SystemLogger {
             return await this.client.db.systemLogs.create(logData)
         } catch (error) {
             console.error('Failed to log to database:', error)
+
+            // Store in memory if database operation fails
+            this.storeLogInMemory(logType, title, description, options)
             return null
+        }
+    }
+
+    /**
+     * Store a log in memory when database logging fails
+     * This ensures we don't lose log data even if the DB operation fails
+     */
+    storeLogInMemory(logType, title, description, options = {}) {
+        const logEntry = {
+            logType,
+            title,
+            description,
+            guildId: options.guildId || null,
+            userId: options.userId || null,
+            metadata: options.metadata || null,
+            severity: options.severity || 'info',
+            timestamp: new Date()
+        }
+
+        if (options.guildId) {
+            // Guild-specific log
+            if (!this.logs.has(options.guildId)) {
+                this.logs.set(options.guildId, [])
+            }
+
+            const guildLogs = this.logs.get(options.guildId)
+            guildLogs.push(logEntry)
+
+            // Trim if needed
+            if (guildLogs.length > this.maxLogsPerGuild) {
+                guildLogs.shift() // Remove oldest log
+            }
+        } else {
+            // Global log
+            this.globalLogs.push(logEntry)
+
+            // Trim if needed
+            if (this.globalLogs.length > this.maxGlobalLogs) {
+                this.globalLogs.shift() // Remove oldest log
+            }
         }
     }
 

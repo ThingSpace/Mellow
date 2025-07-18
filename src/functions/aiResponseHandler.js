@@ -151,6 +151,10 @@ export async function isReplyToBot(message, client) {
         const repliedTo = await message.channel.messages.fetch(message.reference.messageId)
         return repliedTo.author.id === client.user.id
     } catch (error) {
+        // Gracefully handle "Unknown Message" (DiscordAPIError[10008]) by returning false
+        if (error.code === 10008 || error.status === 404 || error.message?.includes('Unknown Message')) {
+            return false
+        }
         console.error('Error checking reply target:', error)
         return false
     }

@@ -5,6 +5,36 @@ All notable changes to Mellow will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.1] - 2025-07-10
+
+### ✨ Improved User Experience
+
+#### Interactive Commands Enhancement
+
+-   **Improved**: `/trivia` command now uses Discord buttons instead of reactions for better interaction.
+-   **Added**: Message collector fallback for environments where buttons don't work correctly.
+-   **Enhanced**: Better error handling and user feedback for interactive commands.
+
+#### Timezone Handling Robustness
+
+-   **Improved**: Even more robust timezone validation with explicit numeric detection and warning.
+-   **Enhanced**: Comprehensive timezone error logging for easier troubleshooting.
+-   **Fixed**: Edge cases where timezone values were improperly handled.
+
+#### Command Reliability
+
+-   **Fixed**: Reaction-based collectors that weren't working reliably on some Discord clients.
+-   **Enhanced**: Interaction pattern updated to modern Discord.js standards.
+-   **Improved**: Fallback mechanisms when primary interaction methods fail.
+
+### 🛠️ Technical Improvements
+
+-   **Refactored**: Fun commands to use more reliable interaction patterns.
+-   **Enhanced**: Command debugging information for easier troubleshooting.
+-   **Added**: Comprehensive timezone validation and error logging.
+-   **Updated**: Command documentation and examples to reflect new interaction patterns.
+-   **Improved**: Error messages for better user guidance when issues occur.
+
 ## [1.3.0] - 2025-07-04
 
 ### ✨ Major Features & Improvements
