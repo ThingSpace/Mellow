@@ -1,4 +1,5 @@
 import { cmdTypes } from '../../../configs/cmdTypes.config.js'
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js'
 
 export default {
     structure: {
@@ -81,6 +82,27 @@ Make it educational and engaging. If it's mental health related, keep it positiv
                 throw new Error('Failed to parse trivia question')
             }
 
+            // Create buttons for A, B, C, D options
+            const buttons = new ActionRowBuilder().addComponents(
+                new ButtonBuilder()
+                    .setCustomId(`trivia_A_${interaction.user.id}`)
+                    .setLabel('A')
+                    .setStyle(ButtonStyle.Primary),
+                new ButtonBuilder()
+                    .setCustomId(`trivia_B_${interaction.user.id}`)
+                    .setLabel('B')
+                    .setStyle(ButtonStyle.Primary),
+                new ButtonBuilder()
+                    .setCustomId(`trivia_C_${interaction.user.id}`)
+                    .setLabel('C')
+                    .setStyle(ButtonStyle.Primary),
+                new ButtonBuilder()
+                    .setCustomId(`trivia_D_${interaction.user.id}`)
+                    .setLabel('D')
+                    .setStyle(ButtonStyle.Primary)
+            )
+
+            // Update the footer text to mention buttons instead of reactions
             const embed = new client.Gateway.EmbedBuilder()
                 .setTitle('🧠 Trivia Time!')
                 .setDescription(
@@ -99,33 +121,45 @@ Make it educational and engaging. If it's mental health related, keep it positiv
                         inline: false
                     }
                 )
-                .setFooter({ text: `${client.footer} • React with 🇦 🇧 🇨 🇩 to answer!`, iconURL: client.logo })
+                .setFooter({ text: `${client.footer} • Click a button to answer!`, iconURL: client.logo })
                 .setTimestamp()
 
-            const message = await interaction.editReply({ embeds: [embed] })
+            // Send the message with buttons
+            await interaction.editReply({ embeds: [embed], components: [buttons] })
 
-            // Add reaction options
-            const reactions = ['🇦', '🇧', '🇨', '🇩']
-            for (const reaction of reactions) {
-                await message.react(reaction)
-            }
+            // Create button interaction collector
+            const filter = i =>
+                i.customId.startsWith('trivia_') &&
+                i.customId.endsWith(interaction.user.id) &&
+                i.user.id === interaction.user.id
 
-            // Set up collector for reactions
-            const filter = (reaction, user) => {
-                return reactions.includes(reaction.emoji.name) && user.id === interaction.user.id
-            }
+            const collector = interaction.channel.createMessageComponentCollector({
+                filter,
+                time: 30000,
+                max: 1
+            })
 
-            const collector = message.createReactionCollector({ filter, time: 30000, max: 1 })
+            collector.on('collect', async i => {
+                // Get the selected answer from the button custom ID
+                const userAnswer = i.customId.split('_')[1]
+                const isCorrect = userAnswer === correctAnswer
 
-            collector.on('collect', async reaction => {
-                const userAnswer = reaction.emoji.name
-                const answerMap = { '🇦': 'A', '🇧': 'B', '🇨': 'C', '🇩': 'D' }
-                const userLetter = answerMap[userAnswer]
-                const isCorrect = userLetter === correctAnswer
+                // Disable all buttons
+                buttons.components.forEach(button => button.setDisabled(true))
 
+                // Change the color of the selected button
+                const selectedButton = buttons.components.find(
+                    button => button.data.custom_id === `trivia_${userAnswer}_${interaction.user.id}`
+                )
+
+                if (selectedButton) {
+                    selectedButton.setStyle(isCorrect ? ButtonStyle.Success : ButtonStyle.Danger)
+                }
+
+                // Show the result
                 const resultEmbed = new client.Gateway.EmbedBuilder()
                     .setTitle(isCorrect ? '✅ Correct!' : '❌ Incorrect')
-                    .setDescription(`Your answer: **${userLetter}**\nCorrect answer: **${correctAnswer}**`)
+                    .setDescription(`Your answer: **${userAnswer}**\nCorrect answer: **${correctAnswer}**`)
                     .setColor(isCorrect ? client.colors.success : client.colors.error)
                     .addFields(
                         {
@@ -142,9 +176,9 @@ Make it educational and engaging. If it's mental health related, keep it positiv
                     .setFooter({ text: client.footer, iconURL: client.logo })
                     .setTimestamp()
 
-                await interaction.editReply({ embeds: [resultEmbed] })
+                // Update the original message to show the result and disabled buttons
+                await i.update({ embeds: [resultEmbed], components: [buttons] })
 
-                // Log trivia participation
                 if (client.systemLogger) {
                     await client.systemLogger.logUserEvent(
                         interaction.user.id,
@@ -157,6 +191,9 @@ Make it educational and engaging. If it's mental health related, keep it positiv
 
             collector.on('end', async collected => {
                 if (collected.size === 0) {
+                    // Disable all buttons
+                    buttons.components.forEach(button => button.setDisabled(true))
+
                     const timeoutEmbed = new client.Gateway.EmbedBuilder()
                         .setTitle("⏰ Time's Up!")
                         .setDescription(`The correct answer was: **${correctAnswer}**`)
@@ -176,7 +213,7 @@ Make it educational and engaging. If it's mental health related, keep it positiv
                         .setFooter({ text: client.footer, iconURL: client.logo })
                         .setTimestamp()
 
-                    await interaction.editReply({ embeds: [timeoutEmbed] })
+                    await interaction.editReply({ embeds: [timeoutEmbed], components: [buttons] })
                 }
             })
         } catch (error) {
