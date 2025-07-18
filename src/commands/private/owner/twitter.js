@@ -3,7 +3,7 @@ import { cmdTypes } from '../../../configs/cmdTypes.config.js'
 
 export default {
     structure: {
-        name: 'twitter',
+        name: 'twittersettings',
         description: 'Manage Twitter/X posting and content (Owner/Admin only)',
         category: 'Admin',
         handlers: {
