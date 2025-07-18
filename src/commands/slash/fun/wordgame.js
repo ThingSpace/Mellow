@@ -45,6 +45,7 @@ export default {
         try {
             let gamePrompt = ''
             let gameTitle = ''
+            let gameId = `game_${Date.now()}_${interaction.user.id}`
 
             switch (gameType) {
                 case 'association':
@@ -65,11 +66,42 @@ export default {
                     break
             }
 
-            const gameContent = await client.ai.generateResponse(
+            // Add a specific request for the AI to include a "correct answer" for validation
+            gamePrompt +=
+                '\n\nInclude a CORRECT_ANSWER field at the end of your response that contains the answer or possible answers separated by commas. This field will be hidden from the user but will be used to validate their response.'
+
+            const fullResponse = await client.ai.generateResponse(
                 gamePrompt + '\n\nFormat your response with clear instructions and make it engaging and supportive.',
                 interaction.user.id,
                 { guildId: interaction.guildId, channelId: interaction.channelId }
             )
+
+            // Extract the correct answer and remove it from the displayed content
+            let gameContent = fullResponse
+            let correctAnswer = ''
+
+            if (fullResponse.includes('CORRECT_ANSWER:')) {
+                const parts = fullResponse.split('CORRECT_ANSWER:')
+                gameContent = parts[0].trim()
+                correctAnswer = parts[1].trim()
+            }
+
+            // Store the game data for validation when the user submits their answer
+            if (!client.wordGames) client.wordGames = new Map()
+            client.wordGames.set(gameId, {
+                type: gameType,
+                difficulty,
+                correctAnswer,
+                userId: interaction.user.id,
+                createdAt: Date.now()
+            })
+
+            // Clean up old games after 1 hour to prevent memory leaks
+            setTimeout(() => {
+                if (client.wordGames.has(gameId)) {
+                    client.wordGames.delete(gameId)
+                }
+            }, 3600000) // 1 hour
 
             const embed = new client.Gateway.EmbedBuilder()
                 .setTitle(gameTitle)
@@ -85,17 +117,24 @@ export default {
                         name: 'Difficulty',
                         value: difficulty.toUpperCase(),
                         inline: true
-                    },
-                    {
-                        name: 'How to Play',
-                        value: 'Reply to this message with your answer!',
-                        inline: false
                     }
                 )
                 .setFooter({ text: `${client.footer} • Mental stimulation for wellness!`, iconURL: client.logo })
                 .setTimestamp()
 
-            await interaction.editReply({ embeds: [embed] })
+            // Create a button for submitting answers
+            const answerButton = new client.Gateway.ButtonBuilder()
+                .setCustomId(`wordgame_answer_${gameId}`)
+                .setLabel('Submit Your Answer')
+                .setStyle(client.Gateway.ButtonStyle.Primary)
+                .setEmoji('✏️')
+
+            const row = new client.Gateway.ActionRowBuilder().addComponents(answerButton)
+
+            await interaction.editReply({
+                embeds: [embed],
+                components: [row]
+            })
 
             // Log word game usage
             if (client.systemLogger) {
@@ -106,6 +145,36 @@ export default {
                     `Started ${gameType} word game at ${difficulty} difficulty`
                 )
             }
+
+            // Create a collector for the button interaction
+            const filter = i => i.customId === `wordgame_answer_${gameId}` && i.user.id === interaction.user.id
+            const collector = interaction.channel.createMessageComponentCollector({
+                filter,
+                time: 900000 // 15 minutes
+            })
+
+            collector.on('collect', async i => {
+                // Create and show the modal for answer submission
+                const modal = new client.Gateway.ModalBuilder()
+                    .setCustomId(`wordgame_modal_${gameId}`)
+                    .setTitle(`Your Answer - ${gameTitle.replace(/[^\w\s]/gi, '')}`)
+
+                // Create the text input component
+                const answerInput = new client.Gateway.TextInputBuilder()
+                    .setCustomId('answer_input')
+                    .setLabel('Type your answer here')
+                    .setStyle(client.Gateway.TextInputStyle.Paragraph)
+                    .setPlaceholder('Enter your answer...')
+                    .setRequired(true)
+                    .setMaxLength(1000)
+
+                // Add the text input to the modal
+                const actionRow = new client.Gateway.ActionRowBuilder().addComponents(answerInput)
+                modal.addComponents(actionRow)
+
+                // Show the modal to the user
+                await i.showModal(modal)
+            })
         } catch (error) {
             console.error('Error generating word game:', error)
 
