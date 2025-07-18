@@ -5,6 +5,47 @@ All notable changes to Mellow will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.2] - 2025-07-15
+
+### ✨ Interactive Features & Game Improvements
+
+#### Word Games Enhancement
+
+- **Added**: New `/wordgame` command with multiple game types (association, rhyme, puzzle, positive)
+- **Added**: Difficulty levels for word games (easy, medium, hard)
+- **Added**: Interactive "Play Again" button for continuous engagement
+- **Enhanced**: AI-powered answer evaluation with encouraging feedback
+- **Fixed**: Game state tracking with proper cleanup to prevent memory leaks
+
+#### Would You Rather Command
+
+- **Added**: New `/wouldyourather` command with various topic categories
+- **Added**: Interactive voting buttons with real-time vote tracking
+- **Added**: "New Question" button for continuous engagement
+- **Enhanced**: AI-generated questions tailored to selected categories
+- **Fixed**: Question ID tracking for proper vote attribution
+
+### 🛠️ Technical Improvements
+
+- **Enhanced**: Game state management with Map objects for tracking games and votes
+- **Improved**: Initialization process with proper error handling
+- **Added**: Support for Discord's updated interaction patterns
+- **Fixed**: Button and modal handling for interactive games
+- **Enhanced**: Error handling and fallbacks for all interactive features
+- **Added**: Game tracking state initialization in client ready event
+- **Added**: Comprehensive logging for game state events
+- **Fixed**: Reaction collector issues with modern Discord.js API
+
+### 🐛 Bug Fixes
+
+- **Fixed**: Response handling for interactive components
+- **Fixed**: Game state tracking and cleanup
+- **Fixed**: Interaction reply ephemeral settings for better user experience
+- **Fixed**: Vote tracking for would-you-rather questions
+- **Fixed**: Timeout handling for game sessions
+
+---
+
 ## [1.3.1] - 2025-07-10
 
 ### ✨ Improved User Experience
@@ -654,6 +695,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 -   Fixed interaction acknowledgment conflicts
 -   Fixed guild settings not saving correctly
 -   Fixed duplicate startup notifications
+-   Fixed malformed code in guild settings command
+-   Fixed incorrect channel field mappings
+
+---
+
+## [1.0.0] - 2025-06-20 - Initial Release
+
+### 🎉 Initial Features
+
+-   AI-powered mental health companion
+-   Mood check-ins and tracking
+-   Crisis detection and intervention
+-   Ghost letter private venting
+-   Coping tools and resources
+-   Community moderation features
+-   User preference management
+-   Comprehensive database schema
+
+---
+
+**Note**: This changelog follows semantic versioning. Version numbers indicate:
+
+-   **Major**: Breaking changes
+-   **Minor**: New features (backward compatible)
+-   **Patch**: Bug fixes (backward compatible)
 -   Fixed malformed code in guild settings command
 -   Fixed incorrect channel field mappings
 
