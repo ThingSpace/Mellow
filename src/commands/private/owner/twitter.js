@@ -3,8 +3,8 @@ import { cmdTypes } from '../../../configs/cmdTypes.config.js'
 
 export default {
     structure: {
-        name: 'twitter',
-        description: 'Manage Twitter/X posting and content (Owner/Admin only)',
+        name: 'xapi',
+        description: 'Manage X posting and content (Owner/Admin only)',
         category: 'Admin',
         handlers: {
             requiredRoles: ['OWNER', 'ADMIN'],

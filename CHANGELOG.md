@@ -11,38 +11,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Word Games Enhancement
 
-- **Added**: New `/wordgame` command with multiple game types (association, rhyme, puzzle, positive)
-- **Added**: Difficulty levels for word games (easy, medium, hard)
-- **Added**: Interactive "Play Again" button for continuous engagement
-- **Enhanced**: AI-powered answer evaluation with encouraging feedback
-- **Fixed**: Game state tracking with proper cleanup to prevent memory leaks
+-   **Added**: New `/wordgame` command with multiple game types (association, rhyme, puzzle, positive)
+-   **Added**: Difficulty levels for word games (easy, medium, hard)
+-   **Added**: Interactive "Play Again" button for continuous engagement
+-   **Enhanced**: AI-powered answer evaluation with encouraging feedback
+-   **Fixed**: Game state tracking with proper cleanup to prevent memory leaks
 
 #### Would You Rather Command
 
-- **Added**: New `/wouldyourather` command with various topic categories
-- **Added**: Interactive voting buttons with real-time vote tracking
-- **Added**: "New Question" button for continuous engagement
-- **Enhanced**: AI-generated questions tailored to selected categories
-- **Fixed**: Question ID tracking for proper vote attribution
+-   **Added**: New `/wouldyourather` command with various topic categories
+-   **Added**: Interactive voting buttons with real-time vote tracking
+-   **Added**: "New Question" button for continuous engagement
+-   **Enhanced**: AI-generated questions tailored to selected categories
+-   **Fixed**: Question ID tracking for proper vote attribution
 
 ### 🛠️ Technical Improvements
 
-- **Enhanced**: Game state management with Map objects for tracking games and votes
-- **Improved**: Initialization process with proper error handling
-- **Added**: Support for Discord's updated interaction patterns
-- **Fixed**: Button and modal handling for interactive games
-- **Enhanced**: Error handling and fallbacks for all interactive features
-- **Added**: Game tracking state initialization in client ready event
-- **Added**: Comprehensive logging for game state events
-- **Fixed**: Reaction collector issues with modern Discord.js API
+-   **Enhanced**: Game state management with Map objects for tracking games and votes
+-   **Improved**: Initialization process with proper error handling
+-   **Added**: Support for Discord's updated interaction patterns
+-   **Fixed**: Button and modal handling for interactive games
+-   **Enhanced**: Error handling and fallbacks for all interactive features
+-   **Added**: Game tracking state initialization in client ready event
+-   **Added**: Comprehensive logging for game state events
+-   **Fixed**: Reaction collector issues with modern Discord.js API
 
 ### 🐛 Bug Fixes
 
-- **Fixed**: Response handling for interactive components
-- **Fixed**: Game state tracking and cleanup
-- **Fixed**: Interaction reply ephemeral settings for better user experience
-- **Fixed**: Vote tracking for would-you-rather questions
-- **Fixed**: Timeout handling for game sessions
+-   **Fixed**: Response handling for interactive components
+-   **Fixed**: Game state tracking and cleanup
+-   **Fixed**: Interaction reply ephemeral settings for better user experience
+-   **Fixed**: Vote tracking for would-you-rather questions
+-   **Fixed**: Timeout handling for game sessions
 
 ---
 
