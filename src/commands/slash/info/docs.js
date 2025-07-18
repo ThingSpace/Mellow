@@ -15,17 +15,17 @@ export default {
                     .setTitle('Mellow Documentation')
                     .setDescription(
                         '📚 Access the complete documentation for Mellow, organized by topic for easy navigation.\n\n' +
-                            '**[📖 Open Full Documentation](https://mellow.athing.space)**\n\n' +
+                            '**[📖 Open Full Documentation](https://mymellow.space/docs)**\n\n' +
                             '**Quick Access by Section:**\n' +
-                            '📖 **[User Guides](https://mellow.athing.space/guides)** - Setup, privacy, troubleshooting\n' +
-                            '📚 **[Reference](https://mellow.athing.space/reference)** - Commands, features, API docs\n' +
-                            '🛠️ **[Technical](https://mellow.athing.space/technical)** - Developer resources\n\n' +
+                            '📖 **[Commands](https://mymellow.space/docs/commands)** - In-depth command references\n' +
+                            '📚 **[Reference](https://mymellow.space/docs/references)** - Commands, features, API docs\n' +
+                            '🛠️ **[Technical](https://mymellow.space/docs/technical)** - Developer resources\n\n' +
                             '**Essential Pages:**\n' +
-                            '• [Getting Started](https://mellow.athing.space/getting-started)\n' +
-                            '• [Commands Reference](https://mellow.athing.space/commands)\n' +
-                            '• [Privacy Controls](https://mellow.athing.space/privacy-controls)\n' +
-                            '• [Privacy Policy](https://mellow.athing.space/privacy-policy)\n' +
-                            '• [Contributing Guide](https://mellow.athing.space/contributing)'
+                            '• [Getting Started](https://mymellow.space/docs/getting-started)\n' +
+                            '• [Commands Reference](https://mymellow.space/docs/commands)\n' +
+                            '• [Privacy Controls](https://mymellow.space/docs/security/privacy-controls)\n' +
+                            '• [Privacy Policy](https://mymellow.space/privacy)\n' +
+                            '• [Contributing Guide](https://mymellow.space/docs/technical/contributing)'
                     )
                     .setColor(client.colors.primary)
                     .setFooter({ text: client.footer, iconURL: client.logo })

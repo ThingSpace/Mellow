@@ -24,7 +24,7 @@ export default {
                         },
                         {
                             name: 'Documentation',
-                            value: '[Mellow Docs](https://mellow.athing.space)',
+                            value: `[Mellow Docs](${client.documentation})`,
                             inline: false
                         },
                         {

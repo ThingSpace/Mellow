@@ -9,8 +9,23 @@
  * @returns {Date} Current time in user's timezone
  */
 export function getUserTime(timezone) {
-    if (!timezone) {
-        return new Date() // Fallback to system time
+    if (!timezone || typeof timezone !== 'string') {
+        // Fallback to system time if not a string
+        return new Date()
+    }
+
+    // If timezone is a number or numeric string, treat as invalid
+    if (/^\d+$/.test(timezone)) {
+        console.warn(`[getUserTime] Invalid timezone value (numeric):`, timezone)
+        return new Date()
+    }
+
+    try {
+        // Validate timezone before using
+        Intl.DateTimeFormat(undefined, { timeZone: timezone })
+    } catch (error) {
+        console.warn(`[getUserTime] Invalid timezone identifier:`, timezone)
+        return new Date()
     }
 
     try {
@@ -46,6 +61,28 @@ export function getUserTime(timezone) {
     } catch (error) {
         console.error('Error getting user time:', error)
         return new Date() // Fallback to system time
+    }
+}
+
+/**
+ * Validate if a timezone string is a valid IANA timezone identifier
+ * @param {string} timezone - Timezone string to validate
+ * @returns {boolean} True if valid timezone
+ */
+export function isValidTimezone(timezone) {
+    if (!timezone || typeof timezone !== 'string') {
+        return false
+    }
+
+    // Convert to string to handle any numeric inputs
+    const timezoneStr = String(timezone)
+
+    try {
+        // Try to create a DateTimeFormat with the timezone
+        Intl.DateTimeFormat(undefined, { timeZone: timezoneStr })
+        return true
+    } catch (error) {
+        return false
     }
 }
 
@@ -169,8 +206,9 @@ export function formatUserTime(timezone, date = new Date()) {
     }
 
     try {
+        const timezoneStr = String(timezone)
         return date.toLocaleTimeString('en-US', {
-            timeZone: timezone,
+            timeZone: timezoneStr,
             hour: 'numeric',
             minute: '2-digit',
             hour12: true

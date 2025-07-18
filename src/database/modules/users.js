@@ -144,14 +144,10 @@ export class UserModule {
      * const banUntil = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
      * await userModule.ban('123456789', 'Temporary suspension', banUntil)
      */
-    async ban(id, reason, until = null) {
+    async ban(id, reason) {
         return this.prisma.user.update({
             where: { id: BigInt(String(id)) },
-            data: {
-                isBanned: true,
-                banReason: reason,
-                bannedUntil: until
-            }
+            data: { isBanned: true, banReason: reason }
         })
     }
 
@@ -167,11 +163,7 @@ export class UserModule {
     async unban(id) {
         return this.prisma.user.update({
             where: { id: BigInt(String(id)) },
-            data: {
-                isBanned: false,
-                banReason: null,
-                bannedUntil: null
-            }
+            data: { isBanned: false, banReason: null }
         })
     }
 

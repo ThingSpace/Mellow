@@ -79,8 +79,7 @@ export class ReminderTool {
 
                                 // Disable reminders for this user
                                 await this.client.db.userPreferences.upsert(pref.id.toString(), {
-                                    remindersEnabled: false,
-                                    reminderFailureReason: 'DMs disabled'
+                                    remindersEnabled: false
                                 })
 
                                 // Log this event
@@ -89,7 +88,7 @@ export class ReminderTool {
                                         pref.id.toString(),
                                         pref.user?.username || 'Unknown',
                                         'reminder_disabled_dm_blocked',
-                                        { reason: 'User has DMs disabled', errorCode: 50007 }
+                                        'User has DMs disabled - reminders automatically disabled'
                                     )
                                 }
 
@@ -152,8 +151,7 @@ export class ReminderTool {
 
                                     // Disable reminders for this user
                                     await this.client.db.userPreferences.upsert(pref.id.toString(), {
-                                        remindersEnabled: false,
-                                        reminderFailureReason: 'DMs disabled'
+                                        remindersEnabled: false
                                     })
 
                                     // Log this event
@@ -162,7 +160,7 @@ export class ReminderTool {
                                             pref.id.toString(),
                                             pref.user?.username || 'Unknown',
                                             'reminder_disabled_dm_blocked',
-                                            { reason: 'User has DMs disabled (fallback)', errorCode: 50007 }
+                                            'User has DMs disabled (fallback) - reminders automatically disabled'
                                         )
                                     }
                                 } else {
@@ -188,8 +186,7 @@ export class ReminderTool {
 
                         // Disable reminders for this user
                         await this.client.db.userPreferences.upsert(pref.id.toString(), {
-                            remindersEnabled: false,
-                            reminderFailureReason: 'DMs disabled'
+                            remindersEnabled: false
                         })
 
                         // Log this event
@@ -198,7 +195,7 @@ export class ReminderTool {
                                 pref.id.toString(),
                                 pref.user?.username || 'Unknown',
                                 'reminder_disabled_dm_blocked',
-                                { reason: 'User has DMs disabled (catch-all)', errorCode: 50007 }
+                                'User has DMs disabled (catch-all) - reminders automatically disabled'
                             )
                         }
                     } else {

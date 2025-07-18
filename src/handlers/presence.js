@@ -1,5 +1,5 @@
 import { ActivityType } from 'discord.js'
-import { isLateNight, isEarlyMorning, getTimePeriod } from '../functions/timeHelper.js'
+import { isLateNight, isEarlyMorning, getTimePeriod, isValidTimezone } from '../functions/timeHelper.js'
 
 export const setClientPresence = async client => {
     // Get a sample of timezones from recent users to determine appropriate presence
@@ -30,8 +30,11 @@ export const setClientPresence = async client => {
             } else {
                 // Check each user's timezone
                 recentUsers.forEach(user => {
-                    if (isLateNight(user.timezone)) lateNightCount++
-                    if (isEarlyMorning(user.timezone)) earlyMorningCount++
+                    // Only process valid timezones
+                    if (user.timezone && isValidTimezone(user.timezone)) {
+                        if (isLateNight(user.timezone)) lateNightCount++
+                        if (isEarlyMorning(user.timezone)) earlyMorningCount++
+                    }
                 })
             }
 

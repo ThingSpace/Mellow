@@ -58,11 +58,11 @@ export const supportConfig = {
 
     // Support links and resources
     resources: {
-        documentationUrl: 'https://mellow.athing.space',
+        documentationUrl: 'https://mymellow.space/docs',
         supportServerInvite: 'https://discord.gg/C3ZuXPP7Hc',
         emailAddress: 'support@athing.space',
-        statusPage: 'https://status.mellow.athing.space',
-        troubleshootingGuide: 'https://mellow.athing.space/docs/troubleshooting',
+        statusPage: 'https://status.athing.space',
+        troubleshootingGuide: 'https://mymellow.space/docs/troubleshooting',
         twitter: 'https://twitter.com/HeyItsMellow'
     }
 }

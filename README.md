@@ -4,30 +4,29 @@
 [![License](https://img.shields.io/badge/License-AGPL--3.0-blue?style=for-the-badge)](LICENSE)
 [![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
 [![OpenAI](https://img.shields.io/badge/OpenAI-412991?style=for-the-badge&logo=openai&logoColor=white)](https://openai.com/)
-[![Documentation](https://img.shields.io/badge/Documentation-GitHub%20Pages-blue?style=for-the-badge)](https://mellow.athing.space)
+[![Documentation](https://img.shields.io/badge/Documentation-GitHub%20Pages-blue?style=for-the-badge)](https://mymellow.space/docs)
 
 **Mellow** is an AI-powered mental health companion that lives right inside Discord. It's not a therapist — but it _is_ a safe, supportive presence you can talk to when things feel heavy, confusing, or just too much.
 
 ## 📚 Documentation
 
-**Complete documentation is available at: [mellow.athing.space](https://mellow.athing.space)**
+**Complete documentation is available at: [mellow.athing.space](https://mymellow.space)**
 
 ### 📖 User Guides
 
--   [Getting Started Guide](https://mellow.athing.space/getting-started) - Complete setup and configuration
--   [Privacy Controls Guide](https://mellow.athing.space/privacy-controls) - Data management and privacy settings
--   [Troubleshooting Guide](https://mellow.athing.space/troubleshooting) - Solutions to common issues
+-   [Getting Started Guide](https://mymellow.space/docs/getting-started) - Complete setup and configuration
+-   [Privacy Controls Guide](https://mymellow.space/docs/security/privacy-controls) - Data management and privacy settings
+-   [Troubleshooting Guide](https://mymellow.space/docs/troubleshooting) - Solutions to common issues
 
 ### 📚 Reference Documentation
 
--   [Command Reference](https://mellow.athing.space/commands) - Complete command documentation
--   [Features Overview](https://mellow.athing.space/features) - All capabilities and tools
--   [API Documentation](https://mellow.athing.space/api) - Technical API reference
+-   [Command Reference](https://mymellow.space/docs/commands) - Complete command documentation
+-   [Features Overview](https://mymellow.space/docs/features) - All capabilities and tools
 
 ### 🛠️ Technical Resources
 
--   [Technical Documentation](https://mellow.athing.space/technical) - Developer and advanced resources
--   [Contributing Guide](https://mellow.athing.space/contributing) - Development contribution guide
+-   [Technical Documentation](https://mymellow.space/docs/technical) - Developer and advanced resources
+-   [Contributing Guide](https://mymellow.space/docs/technical/contributing) - Development contribution guide
 
 ---
 
@@ -339,10 +338,10 @@ We chose AGPL-3.0 to ensure that:
 
 ## 📞 Support & Contact
 
--   **Documentation:** [mellow.athing.space](https://mellow.athing.space)
--   **User Guides:** [Setup & Configuration](https://mellow.athing.space/guides/)
--   **Reference:** [Commands & Features](https://mellow.athing.space/reference/)
--   **Technical:** [API & Development](https://mellow.athing.space/technical/)
+-   **Documentation:** [mymellow.space](https://mymellow.space)
+-   **Commands:** [Command References](https://mymellow.space/commands/)
+-   **Reference:** [Commands & Features](https://mymellow.space/references/)
+-   **Technical:** [API & Development](https://mymellow.space/technical/)
 -   **Issues:** [GitHub Issues](https://github.com/ThingSpace/Mellow/issues)
 -   **Discussions:** [GitHub Discussions](https://github.com/ThingSpace/Mellow/discussions)
 -   **Discord:** [Join our support server](https://discord.gg/C3ZuXPP7Hc)

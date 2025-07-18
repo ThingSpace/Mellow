@@ -49,7 +49,7 @@ export class ConversationHistoryModule {
     async create(userId, data) {
         return this.prisma.conversationHistory.create({
             data: {
-                userId: BigInt(userId),
+                userId: BigInt(String(userId)),
                 timestamp: new Date(),
                 ...data
             }
@@ -188,7 +188,7 @@ export class ConversationHistoryModule {
      */
     async getAllForUser(userId, limit = 50, options = {}) {
         return this.prisma.conversationHistory.findMany({
-            where: { userId: BigInt(userId) },
+            where: { userId: BigInt(String(userId)) },
             orderBy: { timestamp: 'desc' },
             take: limit,
             ...options
@@ -207,7 +207,7 @@ export class ConversationHistoryModule {
      */
     async clearForUser(userId) {
         return this.prisma.conversationHistory.deleteMany({
-            where: { userId: BigInt(userId) }
+            where: { userId: BigInt(String(userId)) }
         })
     }
 
@@ -221,12 +221,12 @@ export class ConversationHistoryModule {
      * @returns {Promise<Array>} Array of conversation history records
      */
     async getConversationWithContext(userId, channelId = null, limit = 100, options = {}) {
-        const whereClause = { userId: BigInt(userId) }
+        const whereClause = { userId: BigInt(String(userId)) }
 
         // If channelId is provided, include channel context
         if (channelId) {
             whereClause.OR = [
-                { channelId: channelId },
+                { channelId: String(channelId) },
                 { channelId: null } // Include DM conversations
             ]
         }
@@ -257,7 +257,7 @@ export class ConversationHistoryModule {
     async getChannelContext(channelId, limit = 20) {
         return this.prisma.conversationHistory.findMany({
             where: {
-                channelId: channelId,
+                channelId: String(channelId),
                 contextType: { in: ['conversation', 'channel_context'] }
             },
             orderBy: { timestamp: 'desc' },
@@ -288,13 +288,13 @@ export class ConversationHistoryModule {
             isAiResponse,
             contextType,
             timestamp: new Date(message.createdTimestamp),
-            messageId: message.id
+            messageId: String(message.id)
         }
 
         // Add channel/guild context for guild messages
         if (message.guild) {
-            data.channelId = message.channel.id
-            data.guildId = message.guild.id
+            data.channelId = String(message.channel.id)
+            data.guildId = String(message.guild.id)
         }
 
         // Add threading context
@@ -302,7 +302,7 @@ export class ConversationHistoryModule {
             data.parentId = parentId
         }
 
-        return this.create(message.author.id, data)
+        return this.create(String(message.author.id), data)
     }
 
     /**
@@ -357,7 +357,7 @@ export class ConversationHistoryModule {
     async countByGuild(guildId) {
         return this.prisma.conversationHistory.count({
             where: {
-                guildId: BigInt(guildId)
+                guildId: String(guildId)
             }
         })
     }

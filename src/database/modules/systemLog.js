@@ -54,8 +54,8 @@ export class SystemLogModule {
     async create(data) {
         return this.prisma.systemLog.create({
             data: {
-                guildId: data.guildId ? BigInt(data.guildId) : null,
-                userId: data.userId ? BigInt(data.userId) : null,
+                guildId: data.guildId ? BigInt(String(data.guildId)) : null,
+                userId: data.userId ? BigInt(String(data.userId)) : null,
                 logType: data.logType,
                 title: data.title,
                 description: data.description || null,

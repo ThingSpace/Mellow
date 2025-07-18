@@ -15,9 +15,7 @@ export default {
                 embeds: [
                     new client.Gateway.EmbedBuilder()
                         .setTitle('Mellow Invite Link')
-                        .setDescription(
-                            'Hey there, you can add me using [this](https://discord.com/oauth2/authorize?client_id=1386810331367608371) link!'
-                        )
+                        .setDescription('Hey there, you can add me using [this](https://mymellow.space/invite) link!')
                         .setColor(client.colors.success)
                         .setThumbnail(client.logo)
                         .setTimestamp()
