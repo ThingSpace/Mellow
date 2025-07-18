@@ -7,8 +7,7 @@
     "scripts": {
         "dev": "nodemon src/index.js",
         "start": "node src/index.js",
-        "postinstall": "cross-env PRISMA_ENGINES_CHECKSUM_IGNORE_MISSING=1 prisma generate",
-        "migrate-encryption": "node src/scripts/migrate-encryption.js",
+        "postinstall": "prisma generate",
         "prepare": "husky"
     },
     "dependencies": {
@@ -19,10 +18,9 @@
         "ai": "^4.2.6",
         "axios": "^1.7.7",
         "chalk": "^5.3.0",
-        "cross-env": "^7.0.3",
         "debug": "^4.3.7",
         "dedent": "^1.5.3",
-        "discord.js": "^14.16.3",
+        "discord.js": "14.16.3",
         "dotenv": "^16.4.5",
         "lru-cache": "^11.0.2",
         "openai": "^4.89.1",

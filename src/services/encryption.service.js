@@ -1,167 +1,176 @@
 import crypto from 'crypto'
 import { log } from '../functions/logger.js'
 
-/**
- * Encryption Service
- *
- * Provides encryption and decryption for sensitive data stored in the database
- * Uses AES-256-GCM encryption with a master key derived from environment variables
- */
 export class EncryptionService {
     constructor() {
-        this._initialized = false
         this._algorithm = 'aes-256-gcm'
-        this._keyLength = 32 // 256 bits
-        this._ivLength = 16 // 128 bits
-        this._tagLength = 16 // 128 bits
-        this._salt = process.env.ENCRYPTION_SALT || 'mellow-encryption-salt'
-        this._masterKey = null
+        this._keyLength = 32
+        this._ivLength = 16
+        this._tagLength = 16
+        this._initialized = false
+
+        this._saltList = (process.env.ENCRYPTION_SALT_LIST || 'mellow-encryption-salt')
+            .split(',')
+            .map(s => s.trim())
+            .filter(Boolean)
+
+        this._keys = []
+        this._maxDecryptDepth = 5 // prevent infinite loops
     }
 
-    /**
-     * Initialize the encryption service
-     * @returns {Promise<boolean>} Whether initialization was successful
-     */
     async initialize() {
         if (this._initialized) return true
+        const baseKey = process.env.ENCRYPTION_KEY
+
+        if (!baseKey) {
+            log('Encryption key not set. Skipping encryption service initialization.', 'warn')
+            return false
+        }
 
         try {
-            const encryptionKey = process.env.ENCRYPTION_KEY
-
-            if (!encryptionKey) {
-                log('No encryption key provided. Encryption service not initialized.', 'warn')
-                return false
-            }
-
-            // Derive a 256-bit key from the encryption key
-            this._masterKey = crypto.pbkdf2Sync(encryptionKey, this._salt, 10000, this._keyLength, 'sha512')
+            this._keys = this._saltList.map(salt => {
+                const derivedKey = crypto.pbkdf2Sync(baseKey, salt, 10000, this._keyLength, 'sha512')
+                log(`Derived key for salt "${salt}"`, 'debug')
+                return { salt, key: derivedKey }
+            })
 
             this._initialized = true
-            log('Encryption service initialized successfully.', 'info')
+            log(`Encryption service initialized with ${this._keys.length} salt(s).`, 'info')
             return true
-        } catch (error) {
-            log(`Failed to initialize encryption service: ${error.message}`, 'error')
+        } catch (err) {
+            log(`Encryption init failed: ${err.message}`, 'error')
             return false
         }
     }
 
-    /**
-     * Encrypt a string
-     * @param {string} text - Text to encrypt
-     * @returns {string|null} Encrypted text as base64 string or null if encryption failed
-     */
     encrypt(text) {
         if (!this._initialized) return text
-
-        // Handle null or undefined values
-        if (text === null || text === undefined) {
-            return '[No content]' // Return a placeholder instead of null
-        }
-
-        // Convert non-string values to string
-        if (typeof text !== 'string') {
-            text = String(text)
-        }
-
-        // Don't encrypt empty strings
-        if (text.trim() === '') {
-            return '[Empty content]'
-        }
+        if (text === null || text === undefined) return '[No content]'
+        if (typeof text !== 'string') text = String(text)
+        if (text.trim() === '') return '[Empty content]'
 
         try {
-            // Generate a random initialization vector
             const iv = crypto.randomBytes(this._ivLength)
+            const key = this._keys[0]?.key
+            const cipher = crypto.createCipheriv(this._algorithm, key, iv)
 
-            // Create cipher
-            const cipher = crypto.createCipheriv(this._algorithm, this._masterKey, iv)
-
-            // Encrypt the text
             let encrypted = cipher.update(text, 'utf8', 'base64')
             encrypted += cipher.final('base64')
-
-            // Get the authentication tag
             const authTag = cipher.getAuthTag()
 
-            // Combine IV, encrypted text, and auth tag into a single string
-            // Format: base64(iv):base64(authTag):base64(encryptedText)
-            const result = `${iv.toString('base64')}:${authTag.toString('base64')}:${encrypted}`
+            const payload = [
+                iv.toString('base64'),
+                this._tagLength.toString(),
+                authTag.toString('base64'),
+                encrypted
+            ].join(':')
 
-            return result
-        } catch (error) {
-            log(`Encryption error: ${error.message}`, 'error')
-            return text // Return original text instead of null on error
+            return payload
+        } catch (err) {
+            log(`Encryption failed: ${err.message}`, 'error')
+            return text
         }
     }
 
-    /**
-     * Decrypt an encrypted string
-     * @param {string} encrypted - Encrypted text
-     * @returns {string|null} Decrypted text or null if decryption failed
-     */
-    decrypt(encrypted) {
-        if (!this._initialized) return encrypted
+    decrypt(payload) {
+        if (!this._initialized || typeof payload !== 'string') return payload
+        return this._attemptLayeredDecryption(payload, 0)
+    }
 
-        // Handle null or undefined values
-        if (encrypted === null || encrypted === undefined) {
-            return '[No content]'
+    _attemptLayeredDecryption(payload, depth) {
+        if (depth > this._maxDecryptDepth) {
+            log('Max decryption depth reached.', 'error')
+            return '[Decryption depth limit reached]'
         }
 
-        // Check if it's an encrypted string
-        if (!this.isEncrypted(encrypted)) {
-            return encrypted
-        }
+        if (!this.isEncrypted(payload)) return payload
 
-        try {
-            // Split the encrypted string into its components
-            const [ivBase64, authTagBase64, encryptedText] = encrypted.split(':')
-
-            if (!ivBase64 || !authTagBase64 || !encryptedText) {
-                throw new Error('Invalid encrypted format')
+        for (const { salt, key } of this._keys) {
+            try {
+                const decrypted = this._tryDecryptOnce(payload, key)
+                if (decrypted && this.isEncrypted(decrypted)) {
+                    return this._attemptLayeredDecryption(decrypted, depth + 1)
+                }
+                if (decrypted !== null) {
+                    log(`Decryption succeeded with salt "${salt}" at depth ${depth}`, 'debug')
+                    return decrypted
+                }
+            } catch (err) {
+                log(`Decryption failed with salt "${salt}" at depth ${depth}: ${err.message}`, 'debug')
             }
-
-            // Convert components from base64
-            const iv = Buffer.from(ivBase64, 'base64')
-            const authTag = Buffer.from(authTagBase64, 'base64')
-
-            // Create decipher
-            const decipher = crypto.createDecipheriv(this._algorithm, this._masterKey, iv)
-            decipher.setAuthTag(authTag)
-
-            // Decrypt the text
-            let decrypted = decipher.update(encryptedText, 'base64', 'utf8')
-            decrypted += decipher.final('utf8')
-
-            return decrypted
-        } catch (error) {
-            log(`Decryption error: ${error.message}`, 'error')
-            return encrypted // Return original text instead of null on error
         }
+
+        log('All salts failed to decrypt payload.', 'error')
+        return '[This content could not be decrypted. Please contact support.]'
     }
 
-    /**
-     * Check if a string is encrypted
-     * @param {string} text - Text to check
-     * @returns {boolean} Whether the text appears to be encrypted
-     */
+    _tryDecryptOnce(payload, key) {
+        const parts = payload.split(':')
+        let iv,
+            authTag,
+            encryptedText,
+            tagLength = this._tagLength
+
+        if (parts.length === 4) {
+            const [ivBase64, tagLenStr, authTagBase64, cipherText] = parts
+            tagLength = parseInt(tagLenStr)
+            if (isNaN(tagLength)) throw new Error('Invalid tag length')
+            iv = Buffer.from(ivBase64, 'base64')
+            authTag = Buffer.from(authTagBase64, 'base64')
+            encryptedText = cipherText
+        } else if (parts.length === 3) {
+            const [ivBase64, authTagBase64, cipherText] = parts
+            iv = Buffer.from(ivBase64, 'base64')
+            authTag = Buffer.from(authTagBase64, 'base64')
+            encryptedText = cipherText
+            tagLength = authTag.length
+        } else {
+            throw new Error('Unsupported format')
+        }
+
+        if (iv.length !== 16 || (tagLength !== 16 && tagLength !== 12)) {
+            throw new Error(`Unexpected IV/tag length: iv=${iv.length}, tag=${tagLength}`)
+        }
+
+        const decipher = crypto.createDecipheriv(this._algorithm, key, iv, {
+            authTagLength: tagLength
+        })
+        decipher.setAuthTag(authTag)
+
+        let decrypted = decipher.update(encryptedText, 'base64', 'utf8')
+        decrypted += decipher.final('utf8')
+        return decrypted
+    }
+
     isEncrypted(text) {
         if (!text || typeof text !== 'string') return false
 
-        // Check if the string matches our encryption format
-        // Format: base64(iv):base64(authTag):base64(encryptedText)
         const parts = text.split(':')
-        if (parts.length !== 3) return false
+        if (parts.length !== 3 && parts.length !== 4) return false
 
-        // Try to decode the base64 parts
         try {
-            Buffer.from(parts[0], 'base64')
-            Buffer.from(parts[1], 'base64')
-            Buffer.from(parts[2], 'base64')
-            return true
+            const [ivBase64, maybeTagLen, authTagBase64, encryptedText] = parts
+
+            if (parts.length === 4) {
+                if (isNaN(parseInt(maybeTagLen))) return false
+                Buffer.from(ivBase64, 'base64')
+                Buffer.from(authTagBase64, 'base64')
+                Buffer.from(encryptedText, 'base64')
+                return true
+            }
+
+            if (parts.length === 3) {
+                Buffer.from(ivBase64, 'base64')
+                Buffer.from(maybeTagLen, 'base64')
+                Buffer.from(authTagBase64, 'base64')
+                return true
+            }
+
+            return false
         } catch {
             return false
         }
     }
 }
 
-// Export singleton instance
 export const encryptionService = new EncryptionService()
