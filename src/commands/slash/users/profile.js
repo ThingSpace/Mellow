@@ -14,30 +14,72 @@ export default {
     run: async (client, interaction) => {
         const userId = BigInt(interaction.user.id)
 
-        // Fetch comprehensive user data using correct database methods
-        const [userProfile, userPrefs] = await Promise.all([
-            client.db.users.findById(userId, {
+        // Fetch basic user data first
+        const userProfile = await client.db.users.findById(userId)
+        if (!userProfile) {
+            return interaction.reply({
+                content:
+                    "You don't have a Mellow profile yet. Start by using `/checkin` to begin your mental health journey!"
+            })
+        }
+
+        // Initialize userPrefs to avoid "undefined" errors
+        let userPrefs = null
+
+        try {
+            const [checkIns, ghostLetters, copingTools, crisisEvents, fetchedPrefs] = await Promise.all([
+                client.db.moodCheckIns.findMany({
+                    where: { userId: BigInt(userId) },
+                    orderBy: { createdAt: 'desc' },
+                    take: 50
+                }),
+                client.db.ghostLetters.findMany({
+                    where: { userId: BigInt(userId) },
+                    orderBy: { createdAt: 'desc' },
+                    take: 10
+                }),
+                client.db.copingToolUsage.findMany({
+                    where: { userId: BigInt(userId) },
+                    orderBy: { usedAt: 'desc' },
+                    take: 20
+                }),
+                client.db.crisisEvents.findMany({
+                    where: { userId: BigInt(userId) },
+                    orderBy: { detectedAt: 'desc' },
+                    take: 10
+                }),
+                client.db.userPreferences.findById(userId)
+            ])
+
+            // Attach the related data to the user profile
+            userProfile.checkIns = checkIns
+            userProfile.ghostLetters = ghostLetters
+            userProfile.copingToolUsages = copingTools
+            userProfile.crisisEvents = crisisEvents
+            userPrefs = fetchedPrefs // Store the user preferences
+        } catch (error) {
+            console.error('Error fetching profile data:', error)
+            // Fallback to direct database query if modules don't exist
+            const rawUserData = await client.db.prisma.user.findUnique({
+                where: { id: BigInt(userId) },
                 include: {
-                    checkIns: {
-                        orderBy: { createdAt: 'desc' },
-                        take: 50
-                    },
-                    ghostLetters: {
-                        orderBy: { createdAt: 'desc' },
-                        take: 10
-                    },
-                    copingToolUsages: {
-                        orderBy: { usedAt: 'desc' },
-                        take: 20
-                    },
-                    crisisEvents: {
-                        orderBy: { detectedAt: 'desc' },
-                        take: 10
-                    }
+                    checkIns: { orderBy: { createdAt: 'desc' }, take: 50 },
+                    ghostLetters: { orderBy: { createdAt: 'desc' }, take: 10 },
+                    copingToolUsages: { orderBy: { usedAt: 'desc' }, take: 20 },
+                    crisisEvents: { orderBy: { detectedAt: 'desc' }, take: 10 },
+                    preferences: true
                 }
-            }),
-            client.db.userPreferences.findById(userId)
-        ])
+            })
+
+            // Use raw data if available
+            if (rawUserData) {
+                userProfile.checkIns = rawUserData.checkIns || []
+                userProfile.ghostLetters = rawUserData.ghostLetters || []
+                userProfile.copingToolUsages = rawUserData.copingToolUsages || []
+                userProfile.crisisEvents = rawUserData.crisisEvents || []
+                userPrefs = rawUserData.preferences
+            }
+        }
 
         // Log profile access
         if (client.systemLogger) {
@@ -47,13 +89,6 @@ export default {
                 'profile_accessed',
                 'User viewed their comprehensive profile'
             )
-        }
-
-        if (!userProfile) {
-            return interaction.reply({
-                content:
-                    "You don't have a Mellow profile yet. Start by using `/checkin` to begin your mental health journey!"
-            })
         }
 
         // Calculate comprehensive statistics

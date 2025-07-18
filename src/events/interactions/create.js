@@ -582,10 +582,9 @@ export default {
                 await client.systemLogger.logError(err, `Command: ${interaction.commandName}`)
             }
 
-            // Only try to respond if the interaction hasn't been replied to yet
             if (!interaction.replied) {
                 try {
-                    await interaction.editReply({
+                    await interaction.reply({
                         ephemeral: true,
                         content: 'An error occurred while executing this command!'
                     })
