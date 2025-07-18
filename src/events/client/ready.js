@@ -4,6 +4,7 @@ import { ReminderTool } from '../../services/tools/reminderTool.js'
 import { aiService } from '../../services/ai.service.js'
 import { SystemLogger } from '../../functions/systemLogger.js'
 import { GithubClient } from '../../class/github.js'
+import { createStatusPoster } from '../../functions/statusPoster.js'
 
 export default {
     event: Events.ClientReady,
@@ -13,7 +14,18 @@ export default {
         log(`${client.user.tag} is booting up...`, 'info')
 
         try {
-            await client.rpc.presence(client)
+            // Initialize game tracking maps
+            client.wordGames = new Map()
+            client.wyrVotes = new Map()
+            log('Game tracking systems initialized', 'info')
+
+            await client.rpc.presence(client, {
+                apiKey: process.env.MELLOW_STATUS_API_KEY,
+                interval: 300000,
+                enabled: true
+            })
+
+            client.statusPoster = await createStatusPoster(client)
 
             client.reminder = new ReminderTool(client)
             client.reminder.start()
