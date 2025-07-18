@@ -27,6 +27,12 @@ export class DbEncryptionHelper {
         const result = { ...data }
 
         for (const field of sensitiveFields) {
+            // Skip fields that are already encrypted
+            if (result[field] && typeof result[field] === 'string' && encryptionService.isEncrypted(result[field])) {
+                log(`Field ${field} is already encrypted, skipping encryption`, 'debug')
+                continue
+            }
+
             // Set default value for null/undefined content
             if (result[field] === null || result[field] === undefined) {
                 result[field] = '[No content]'
@@ -37,6 +43,11 @@ export class DbEncryptionHelper {
             if (Array.isArray(result[field])) {
                 result[field] = result[field].map(item => {
                     if (item === null || item === undefined) return '[No content]'
+
+                    // Skip already encrypted items
+                    if (typeof item === 'string' && encryptionService.isEncrypted(item)) {
+                        return item
+                    }
 
                     if (typeof item === 'string') {
                         return encryptionService.encrypt(item)
@@ -80,6 +91,7 @@ export class DbEncryptionHelper {
                 // Handle arrays (like conversation history)
                 if (Array.isArray(result[field])) {
                     result[field] = result[field].map(item => {
+                        // Only attempt to decrypt if it appears to be encrypted
                         if (typeof item === 'string' && encryptionService.isEncrypted(item)) {
                             const decrypted = encryptionService.decrypt(item)
                             // Try to parse JSON if it's a serialized object

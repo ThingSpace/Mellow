@@ -5,16 +5,6 @@ All notable changes to Mellow will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.3.4] - 2025-07-19
-
-### 🛠️ Build and Deployment Improvements
-
--   **Fixed**: Prisma engine checksum verification error in Docker and restricted environments
--   **Added**: Docker configuration for containerized deployment
--   **Added**: Support for offline/restricted environment builds with Prisma
--   **Enhanced**: Build process with proper error handling for CI/CD pipelines
--   **Updated**: Package scripts for better cross-platform compatibility
-
 ## [1.3.3] - 2025-07-18
 
 ### 🔒 Data Privacy & Encryption Infrastructure
@@ -50,6 +40,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 -   **Enhanced**: Migration progress tracking and detailed reporting
 -   **Added**: Model-specific migration mapping for selective encryption
 -   **Added**: Error recovery and detailed logging during migration
+
+### 🛠️ Build and Deployment Improvements
+
+-   **Fixed**: Prisma engine checksum verification error in Docker and restricted environments
+-   **Added**: Docker configuration for containerized deployment
+-   **Added**: Support for offline/restricted environment builds with Prisma
+-   **Enhanced**: Build process with proper error handling for CI/CD pipelines
+-   **Updated**: Package scripts for better cross-platform compatibility
 
 #### Security Infrastructure Improvements
 
