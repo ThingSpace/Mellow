@@ -1,6 +1,7 @@
 import { log } from '../functions/logger.js'
 import { PrismaClient } from '@prisma/client'
 import { withAccelerate } from '@prisma/extension-accelerate'
+import { DbEncryptionHelper } from '../helpers/db-encryption.helper.js'
 import { UserModule } from './modules/users.js'
 import { ConversationHistoryModule } from './modules/conversationHistory.js'
 import { MoodCheckInModule } from './modules/moodCheckIn.js'
@@ -59,6 +60,13 @@ class Database {
     async connect() {
         try {
             await this.prisma.$queryRaw`SELECT 1`
+            // Initialize encryption service
+            const encryptionInitialized = await DbEncryptionHelper.initialize()
+            if (encryptionInitialized) {
+                this.logs.info('Database encryption service initialized')
+            } else {
+                this.logs.warn('Database encryption service not initialized. Sensitive data will not be encrypted.')
+            }
             // this.logs.info('database connection is active')
         } catch (error) {
             // this.logs.error('Failed to connect to the database.')

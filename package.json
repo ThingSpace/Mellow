@@ -8,6 +8,7 @@
         "dev": "nodemon src/index.js",
         "start": "node src/index.js",
         "postinstall": "prisma generate",
+        "migrate-encryption": "node src/scripts/migrate-encryption.js",
         "prepare": "husky"
     },
     "dependencies": {

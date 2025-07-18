@@ -5,6 +5,8 @@ import { aiService } from '../../services/ai.service.js'
 import { SystemLogger } from '../../functions/systemLogger.js'
 import { GithubClient } from '../../class/github.js'
 import { createStatusPoster } from '../../functions/statusPoster.js'
+import { encryptionService } from '../../services/encryption.service.js'
+import { DbEncryptionHelper } from '../../helpers/db-encryption.helper.js'
 
 export default {
     event: Events.ClientReady,
@@ -14,6 +16,17 @@ export default {
         log(`${client.user.tag} is booting up...`, 'info')
 
         try {
+            // Initialize encryption service
+            log('Initializing encryption service...', 'info')
+            const encryptionInitialized = await encryptionService.initialize()
+            if (encryptionInitialized) {
+                log('Encryption service initialized successfully', 'done')
+                await DbEncryptionHelper.initialize()
+                log('Database encryption helper initialized', 'done')
+            } else {
+                log('Encryption service failed to initialize. Sensitive data will not be encrypted.', 'warn')
+            }
+
             // Initialize game tracking maps
             client.wordGames = new Map()
             client.wyrVotes = new Map()

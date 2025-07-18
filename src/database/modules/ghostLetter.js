@@ -1,3 +1,5 @@
+import { DbEncryptionHelper } from '../../helpers/db-encryption.helper.js'
+
 /**
  * GhostLetterModule - Database operations for ghost letters
  *
@@ -14,6 +16,7 @@ export class GhostLetterModule {
      */
     constructor(prisma) {
         this.prisma = prisma
+        this.sensitiveFields = ['content'] // Define fields to encrypt
     }
 
     /**
@@ -35,10 +38,13 @@ export class GhostLetterModule {
             return null // Ghost letters are disabled
         }
 
+        // Encrypt sensitive fields
+        const encryptedData = DbEncryptionHelper.encryptFields(data, this.sensitiveFields)
+
         return this.prisma.ghostLetter.create({
             data: {
                 userId: BigInt(data.userId),
-                content: data.content
+                content: encryptedData.content
             }
         })
     }
@@ -56,10 +62,13 @@ export class GhostLetterModule {
      * })
      */
     async upsert(id, data) {
+        // Encrypt sensitive fields
+        const encryptedData = DbEncryptionHelper.encryptFields(data, this.sensitiveFields)
+
         return this.prisma.ghostLetter.upsert({
             where: { id },
-            update: data,
-            create: { id, ...data }
+            update: encryptedData,
+            create: { id, ...encryptedData }
         })
     }
 
@@ -90,7 +99,9 @@ export class GhostLetterModule {
      * })
      */
     async findMany(args = {}) {
-        return this.prisma.ghostLetter.findMany(args)
+        const results = await this.prisma.ghostLetter.findMany(args)
+        // Decrypt sensitive fields in the results
+        return DbEncryptionHelper.processData(results, this.sensitiveFields)
     }
 
     /**
@@ -112,10 +123,12 @@ export class GhostLetterModule {
      * })
      */
     async findById(id, options = {}) {
-        return this.prisma.ghostLetter.findUnique({
+        const result = await this.prisma.ghostLetter.findUnique({
             where: { id },
             ...options
         })
+        // Decrypt sensitive fields in the result
+        return DbEncryptionHelper.decryptFields(result, this.sensitiveFields)
     }
 
     /**
@@ -151,12 +164,14 @@ export class GhostLetterModule {
      * })
      */
     async getAllForUser(userId, limit = 20, options = {}) {
-        return this.prisma.ghostLetter.findMany({
+        const results = await this.prisma.ghostLetter.findMany({
             where: { userId: BigInt(userId) },
             orderBy: { createdAt: 'desc' },
             take: limit,
             ...options
         })
+        // Decrypt sensitive fields in the results
+        return DbEncryptionHelper.processData(results, this.sensitiveFields)
     }
 
     /**

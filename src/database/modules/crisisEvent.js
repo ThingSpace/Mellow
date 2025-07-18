@@ -1,3 +1,5 @@
+import { DbEncryptionHelper } from '../../helpers/db-encryption.helper.js'
+
 /**
  * CrisisEventModule - Database operations for crisis events
  *
@@ -14,6 +16,7 @@ export class CrisisEventModule {
      */
     constructor(prisma) {
         this.prisma = prisma
+        this.sensitiveFields = ['details'] // Define fields to encrypt
     }
 
     /**
@@ -36,10 +39,13 @@ export class CrisisEventModule {
             return null // Crisis tools are disabled
         }
 
+        // Encrypt sensitive fields
+        const encryptedData = DbEncryptionHelper.encryptFields(data, this.sensitiveFields)
+
         return this.prisma.crisisEvent.create({
             data: {
                 userId: BigInt(data.userId),
-                details: data.details,
+                details: encryptedData.details,
                 escalated: data.escalated || false
             }
         })
@@ -59,10 +65,13 @@ export class CrisisEventModule {
      * })
      */
     async upsert(id, data) {
+        // Encrypt sensitive fields
+        const encryptedData = DbEncryptionHelper.encryptFields(data, this.sensitiveFields)
+
         return this.prisma.crisisEvent.upsert({
             where: { id },
-            update: data,
-            create: { id, ...data }
+            update: encryptedData,
+            create: { id, ...encryptedData }
         })
     }
 
@@ -93,7 +102,9 @@ export class CrisisEventModule {
      * })
      */
     async findMany(args = {}) {
-        return this.prisma.crisisEvent.findMany(args)
+        const results = await this.prisma.crisisEvent.findMany(args)
+        // Decrypt sensitive fields in the results
+        return DbEncryptionHelper.processData(results, this.sensitiveFields)
     }
 
     /**
@@ -115,10 +126,12 @@ export class CrisisEventModule {
      * })
      */
     async findById(id, options = {}) {
-        return this.prisma.crisisEvent.findUnique({
+        const result = await this.prisma.crisisEvent.findUnique({
             where: { id },
             ...options
         })
+        // Decrypt sensitive fields in the result
+        return DbEncryptionHelper.decryptFields(result, this.sensitiveFields)
     }
 
     /**
@@ -154,12 +167,14 @@ export class CrisisEventModule {
      * })
      */
     async getAllForUser(userId, limit = 10, options = {}) {
-        return this.prisma.crisisEvent.findMany({
+        const results = await this.prisma.crisisEvent.findMany({
             where: { userId: BigInt(userId) },
             orderBy: { detectedAt: 'desc' },
             take: limit,
             ...options
         })
+        // Decrypt sensitive fields in the results
+        return DbEncryptionHelper.processData(results, this.sensitiveFields)
     }
 
     /**
@@ -197,10 +212,9 @@ export class CrisisEventModule {
             return []
         }
 
-        return this.prisma.crisisEvent.findMany({
+        const results = await this.prisma.crisisEvent.findMany({
             where: {
                 escalated: false,
-                // Add time-based criteria for escalation
                 detectedAt: {
                     gte: new Date(Date.now() - 15 * 60 * 1000) // Last 15 minutes
                 }
@@ -211,6 +225,9 @@ export class CrisisEventModule {
                 }
             }
         })
+
+        // Decrypt sensitive fields in the results
+        return DbEncryptionHelper.processData(results, this.sensitiveFields)
     }
 
     /**
@@ -223,9 +240,7 @@ export class CrisisEventModule {
     async getRecentByGuild(guildId, days = 7) {
         const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000)
 
-        // Note: Since CrisisEvent doesn't have guildId, return all recent events
-        // The calling code should filter by guild membership if needed
-        return this.prisma.crisisEvent.findMany({
+        const results = await this.prisma.crisisEvent.findMany({
             where: {
                 detectedAt: { gte: since }
             },
@@ -237,6 +252,9 @@ export class CrisisEventModule {
                 }
             }
         })
+
+        // Decrypt sensitive fields in the results
+        return DbEncryptionHelper.processData(results, this.sensitiveFields)
     }
 
     /**

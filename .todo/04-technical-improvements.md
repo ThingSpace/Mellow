@@ -137,6 +137,8 @@ Improve system performance, reliability, and maintainability while ensuring scal
     -   [ ] Environment-specific configurations
     -   [ ] Rollback procedures
     -   [ ] Blue-green deployment strategy
+-   [ ] **Version Management**
+    -   [ ] Add a button to the `version` command that starts a child process to update the bots code if there is a update available. 
 
 ## Completed Technical Improvements
 

@@ -53,16 +53,28 @@ export class VersionHandler {
                 .setFooter({ text: client.footer, iconURL: client.logo })
 
             if (updateCheck.success) {
-                const status = updateCheck.isUpToDate ? '✅ Up to date' : '🔄 Update available'
+                let status, statusColor
                 const latestVersion = updateCheck.latestVersion
+                const isVersionMismatch = this.compareVersions(currentVersion, latestVersion) > 0
 
+                if (updateCheck.isUpToDate) {
+                    status = '✅ Up to date'
+                    statusColor = client.colors.success
+                } else if (isVersionMismatch) {
+                    status = '⚠️ Version mismatch (running unreleased version)'
+                    statusColor = client.colors.warning || '#ffa500'
+                } else {
+                    status = '🔄 Update available'
+                    statusColor = client.colors.warning || '#ffa500'
+                }
+
+                embed.setColor(statusColor)
                 embed.addFields(
-                    { name: '📊 Update Status', value: status, inline: true },
-                    { name: '🆕 Latest Version', value: `v${latestVersion}`, inline: true }
+                    { name: '📊 Status', value: status, inline: true },
+                    { name: '🆕 Latest Release', value: `v${latestVersion}`, inline: true }
                 )
 
-                if (!updateCheck.isUpToDate) {
-                    embed.setColor(client.colors.warning || '#ffa500')
+                if (!updateCheck.isUpToDate && !isVersionMismatch) {
                     embed.addFields({
                         name: '📦 Latest Release',
                         value: `[${updateCheck.releaseInfo.name}](${updateCheck.releaseInfo.htmlUrl})`,
@@ -104,10 +116,24 @@ export class VersionHandler {
             }
 
             const release = latestRelease.data
-            const isUpToDate = currentVersion === release.tagName.replace(/^v/, '')
+            const remoteVersion = release.tagName.replace(/^v/, '')
+            const isUpToDate = currentVersion === remoteVersion
+            const isVersionMismatch = this.compareVersions(currentVersion, remoteVersion) > 0
+
+            let statusColor, statusText
+            if (isUpToDate) {
+                statusColor = client.colors.success
+                statusText = '✅ You have the latest version'
+            } else if (isVersionMismatch) {
+                statusColor = client.colors.warning
+                statusText = '⚠️ Running unreleased version'
+            } else {
+                statusColor = client.colors.warning
+                statusText = '🔄 Update available'
+            }
 
             const embed = new client.Gateway.EmbedBuilder()
-                .setColor(isUpToDate ? client.colors.success : client.colors.warning)
+                .setColor(statusColor)
                 .setTitle(`🚀 Latest Release: ${release.name}`)
                 .setDescription(
                     release.body?.substring(0, 1000) + (release.body?.length > 1000 ? '...' : '') ||
@@ -118,7 +144,7 @@ export class VersionHandler {
                     { name: '📅 Published', value: new Date(release.publishedAt).toLocaleDateString(), inline: true },
                     {
                         name: '📊 Status',
-                        value: isUpToDate ? '✅ You have the latest version' : '🔄 Update available',
+                        value: statusText,
                         inline: true
                     }
                 )
@@ -432,6 +458,27 @@ export class VersionHandler {
         } else {
             await interaction.reply({ embeds: [errorEmbed], ephemeral: true })
         }
+    }
+
+    /**
+     * Compare versions (semver)
+     * @param {string} v1 First version
+     * @param {string} v2 Second version
+     * @returns {number} 1 if v1 > v2, -1 if v1 < v2, 0 if equal
+     */
+    compareVersions(v1, v2) {
+        const parts1 = v1.split('.').map(Number)
+        const parts2 = v2.split('.').map(Number)
+
+        for (let i = 0; i < Math.max(parts1.length, parts2.length); i++) {
+            const part1 = parts1[i] || 0
+            const part2 = parts2[i] || 0
+
+            if (part1 > part2) return 1
+            if (part1 < part2) return -1
+        }
+
+        return 0
     }
 }
 
