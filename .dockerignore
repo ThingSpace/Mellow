@@ -1,9 +1,0 @@
-node_modules
-npm-debug.log
-.env
-.git
-.github
-.gitignore
-.husky
-*.md
-!README.md
