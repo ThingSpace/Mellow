@@ -51,7 +51,11 @@ model User {
     copingPlans           CopingPlan[]
     favoriteCopingTools   FavoriteCopingTool[]
     systemLogs            SystemLog[]
-    discordId             String?              @unique
+    discordId             String?               @unique
+
+    @@index([role])
+    @@index([isBanned])
+    @@index([createdAt])
 }
 
 model Guild {
@@ -81,6 +85,11 @@ model Guild {
     modActions            ModAction[]
     systemLogs            SystemLog[]
     discordId             String?     @unique
+
+    @@index([ownerId])
+    @@index([isBanned])
+    @@index([joinedAt])
+    @@index([language])
 }
 
 model ConversationHistory {
@@ -97,6 +106,12 @@ model ConversationHistory {
     parentId      Int?
     parent        ConversationHistory? @relation("ConversationThread", fields: [parentId], references: [id])
     replies       ConversationHistory[] @relation("ConversationThread")
+
+    @@index([userId, timestamp])
+    @@index([channelId, timestamp])
+    @@index([guildId, timestamp])
+    @@index([contextType, timestamp])
+    @@index([messageId])
 }
 
 model MoodCheckIn {
@@ -109,6 +124,10 @@ model MoodCheckIn {
     note        String?
     nextCheckIn DateTime?
     createdAt   DateTime  @default(now())
+
+    @@index([userId, createdAt])
+    @@index([mood])
+    @@index([nextCheckIn])
 }
 
 model GhostLetter {
@@ -117,6 +136,8 @@ model GhostLetter {
     userId    BigInt
     content   String
     createdAt DateTime @default(now())
+
+    @@index([userId, createdAt])
 }
 
 model CopingToolUsage {
@@ -125,6 +146,9 @@ model CopingToolUsage {
     userId   BigInt
     toolName String
     usedAt   DateTime @default(now())
+
+    @@index([userId, usedAt])
+    @@index([toolName, usedAt])
 }
 
 model CrisisEvent {
@@ -134,6 +158,9 @@ model CrisisEvent {
     detectedAt DateTime @default(now())
     details    String?
     escalated  Boolean  @default(false)
+
+    @@index([userId, detectedAt])
+    @@index([escalated, detectedAt])
 }
 
 model ModAction {
@@ -147,6 +174,11 @@ model ModAction {
     reason       String?
     roleId       BigInt?
     createdAt    DateTime @default(now())
+
+    @@index([guildId, createdAt])
+    @@index([moderatorId, createdAt])
+    @@index([targetUserId, createdAt])
+    @@index([action, createdAt])
 }
 
 model UserPreferences {
@@ -167,6 +199,10 @@ model UserPreferences {
     disableCrisisSupportDMs Boolean   @default(false)
     createdAt               DateTime  @default(now())
     updatedAt               DateTime  @updatedAt
+
+    @@index([nextCheckIn])
+    @@index([timezone])
+    @@index([language])
 }
 
 model Feedback {
@@ -175,6 +211,8 @@ model Feedback {
     userId    BigInt?
     message   String
     createdAt DateTime @default(now())
+
+    @@index([userId, createdAt])
 }
 
 model Report {
@@ -183,6 +221,8 @@ model Report {
     userId    BigInt?
     message   String
     createdAt DateTime @default(now())
+
+    @@index([userId, createdAt])
 }
 
 model JournalEntry {
@@ -192,6 +232,9 @@ model JournalEntry {
     content   String
     private   Boolean  @default(true)
     createdAt DateTime @default(now())
+
+    @@index([userId, createdAt])
+    @@index([private, createdAt])
 }
 
 model GratitudeEntry {
@@ -200,6 +243,8 @@ model GratitudeEntry {
     userId    BigInt
     item      String
     createdAt DateTime @default(now())
+
+    @@index([userId, createdAt])
 }
 
 model CopingPlan {
@@ -209,6 +254,8 @@ model CopingPlan {
     plan      String
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
+
+    @@index([userId, updatedAt])
 }
 
 model FavoriteCopingTool {
@@ -216,6 +263,9 @@ model FavoriteCopingTool {
     user   User   @relation(fields: [userId], references: [id])
     userId BigInt
     tool   String
+
+    @@index([userId])
+    @@index([tool])
 }
 
 model SystemLog {
@@ -234,7 +284,9 @@ model SystemLog {
     user        User?    @relation(fields: [userId], references: [id])
     
     @@index([guildId, logType, createdAt])
+    @@index([userId, logType, createdAt])
     @@index([logType, createdAt])
+    @@index([severity, createdAt])
 }
 
 enum Role {
