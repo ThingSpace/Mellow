@@ -122,9 +122,16 @@ export class MoodCheckInModule {
      * })
      */
     async findMany(args = {}) {
-        const results = await this.prisma.moodCheckIn.findMany(args)
-        // Decrypt sensitive fields in the results
-        return DbEncryptionHelper.processData(results, this.sensitiveFields)
+        try {
+            // First fetch the raw records
+            const records = await this.prisma.moodCheckIn.findMany(args)
+
+            // Then decrypt all sensitive fields
+            return DbEncryptionHelper.processData(records, this.sensitiveFields)
+        } catch (error) {
+            log(`Error in moodCheckIn.findMany: ${error.message}`, 'error')
+            throw error
+        }
     }
 
     /**
