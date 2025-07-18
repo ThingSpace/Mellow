@@ -26,7 +26,7 @@ export default {
                             },
                             {
                                 name: 'Documentation',
-                                value: '[Mellow Docs](https://mellow.athing.space)',
+                                value: '[Mellow Docs](https://mymellow.space/docs)',
                                 inline: false
                             },
                             {
@@ -36,7 +36,7 @@ export default {
                             },
                             {
                                 name: 'Contributing',
-                                value: 'We welcome contributions! See the [contributing guidelines](https://github.com/ThingSpace/Mellow#contributing) in the README.',
+                                value: 'We welcome contributions! See the [contributing guidelines](https://mymellow.space/docs/technical/contributing) in the README.',
                                 inline: false
                             },
                             {

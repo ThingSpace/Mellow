@@ -287,7 +287,14 @@ export class AIService {
             let contextPrompt = this.config.systemPrompt
 
             // Add DM-specific guidance based on message analysis
-            if (messageAnalysis.needsSupport) {
+            if (messageAnalysis.isQuestion) {
+                contextPrompt += `\n\n**Question Response Mode:**
+- The user is asking a direct question
+- Provide a helpful, direct answer
+- Be informative but conversational
+- Don't automatically make it therapeutic unless the question is about mental health
+- If it's outside your scope, be honest about your limitations while staying supportive`
+            } else if (messageAnalysis.needsSupport) {
                 contextPrompt += `\n\n**Support Response Mode:**
 - The user seems to need emotional support
 - Acknowledge their feelings first before offering any tools
@@ -301,10 +308,28 @@ export class AIService {
 - Use reflective listening techniques`
             } else if (messageAnalysis.isConversational) {
                 contextPrompt += `\n\n**Conversational Mode:**
-- This seems like casual conversation
+- This seems like casual conversation or greeting
 - Be friendly and natural
-- Avoid being overly therapeutic or formal
-- Match their energy and tone appropriately`
+- Don't automatically ask "how are you feeling" unless they bring up feelings
+- Match their energy and tone appropriately
+- Feel free to ask follow-up questions to keep the conversation going
+- Avoid being overly therapeutic or formal`
+            } else if (messageAnalysis.isGratitude) {
+                contextPrompt += `\n\n**Gratitude Response Mode:**
+- The user is expressing thanks or appreciation
+- Acknowledge their gratitude warmly
+- Be humble and encouraging
+- Keep the response brief and genuine`
+            }
+
+            // Check for repetitive patterns and adjust accordingly
+            const isRepeatedGreeting = this.checkRepeatedGreeting(message, recentHistory)
+            if (isRepeatedGreeting) {
+                contextPrompt += `\n\n**Repeated Greeting Note:**
+- The user has greeted you multiple times recently
+- Don't ask "how are you feeling" again
+- Move the conversation forward naturally
+- Maybe ask what's on their mind or what they'd like to talk about`
             }
 
             // Add memory of recent conversations
@@ -312,23 +337,48 @@ export class AIService {
                 contextPrompt += `\n\n**Continuity Note:** This user has had recent difficult conversations with you. Be mindful of their ongoing journey and reference it naturally if appropriate.`
             }
 
+            // Add first-time user guidance
+            if (context.isFirstMessage) {
+                contextPrompt += `\n\n**First Time User:**
+- This appears to be the user's first interaction with you
+- Be welcoming but not overwhelming
+- Introduce yourself naturally in the conversation
+- Don't assume they know what you can do - let them lead the conversation`
+            }
+
             const personality = userPrefs?.aiPersonality || 'gentle'
             contextPrompt += this.getPersonalityInstructions(personality)
+
+            // Enhanced DM guidelines with anti-repetition measures
+            contextPrompt += `\n\n**Enhanced DM Guidelines:**
+- This is a private conversation - be more personal and relaxed
+- Remember details from previous conversations and reference them naturally
+- Use the user's name occasionally if appropriate
+- AVOID repetitive phrases like "Hey there!" or "How are you feeling today?"
+- Don't start every response with a greeting unless they just greeted you
+- Be curious about their experiences and feelings when appropriate
+- Vary your responses significantly - use different openings, phrasings, and approaches
+- If they ask what you can help with, explain your capabilities conversationally without being overly formal
+- Focus on being a supportive companion, not just a therapeutic tool
+- For technical questions outside your scope, be honest about limitations while staying supportive
+- Don't force mental health topics into every conversation - let them guide the direction
+- Match their communication style (casual, serious, playful, etc.)
+- If they're being casual, be casual back - don't always default to therapeutic mode`
 
             // Generate response with smart context
             const messages = [
                 { role: 'system', content: contextPrompt },
-                ...recentHistory.slice(-5), // Last 5 messages for context
+                ...recentHistory.slice(-8), // More context for DMs
                 { role: 'user', content: message }
             ]
 
             const { text: response } = await generateText({
                 model: this.model,
                 messages,
-                temperature: this.config.temperature + 0.1, // Slightly more creative for DMs
+                temperature: this.config.temperature + 0.15, // More creative for DMs
                 maxTokens: this.config.maxTokens,
-                presencePenalty: this.config.presencePenalty,
-                frequencyPenalty: this.config.frequencyPenalty + 0.2 // Reduce repetition
+                presencePenalty: this.config.presencePenalty + 0.2, // Reduce repetition
+                frequencyPenalty: this.config.frequencyPenalty + 0.4 // Aggressively reduce repetition
             })
 
             return this.messageFormatting.formatForDiscord(response)
@@ -340,6 +390,42 @@ export class AIService {
     }
 
     /**
+     * Check if this is a repeated greeting within recent conversation
+     * @param {string} message - Current message
+     * @param {Array} recentHistory - Recent conversation history
+     * @returns {boolean} - Whether this is a repeated greeting
+     */
+    checkRepeatedGreeting(message, recentHistory) {
+        const greetingWords = [
+            'hello',
+            'hi',
+            'hey',
+            'good morning',
+            'good evening',
+            'good afternoon',
+            'sup',
+            'whats up',
+            "what's up"
+        ]
+        const lowerMessage = message.toLowerCase()
+
+        // Check if current message is a greeting
+        const isGreeting = greetingWords.some(greeting => lowerMessage.includes(greeting))
+
+        if (!isGreeting) return false
+
+        // Check if there were recent greetings (within last 5 messages)
+        const recentMessages = recentHistory.slice(-10)
+        const recentGreetings = recentMessages.filter(msg => {
+            if (!msg.content) return false
+            const content = msg.content.toLowerCase()
+            return greetingWords.some(greeting => content.includes(greeting))
+        })
+
+        return recentGreetings.length > 1 // More than one greeting recently
+    }
+
+    /**
      * Analyze message intent and context
      * @param {string} message - User's message
      * @param {Array} recentHistory - Recent conversation history
@@ -347,6 +433,25 @@ export class AIService {
      */
     async analyzeMessageIntent(message, recentHistory) {
         const lowerMessage = message.toLowerCase()
+
+        // Check for questions
+        const questionKeywords = [
+            'what',
+            'how',
+            'why',
+            'when',
+            'where',
+            'who',
+            'can you',
+            'do you',
+            'are you',
+            'will you',
+            'should i',
+            'could you',
+            'would you'
+        ]
+        const isQuestion =
+            questionKeywords.some(keyword => lowerMessage.includes(keyword)) || lowerMessage.includes('?')
 
         // Check for support-seeking language
         const supportKeywords = [
@@ -359,7 +464,12 @@ export class AIService {
             'anxious',
             'depressed',
             'sad',
-            'frustrated'
+            'frustrated',
+            'worried',
+            'scared',
+            'alone',
+            'tired',
+            'exhausted'
         ]
         const needsSupport = supportKeywords.some(keyword => lowerMessage.includes(keyword))
 
@@ -372,7 +482,11 @@ export class AIService {
             "can't believe",
             'terrible day',
             'worst',
-            'fed up'
+            'fed up',
+            'so done',
+            'sick of',
+            'annoying',
+            'frustrated with'
         ]
         const isVenting = ventingKeywords.some(keyword => lowerMessage.includes(keyword))
 
@@ -384,11 +498,19 @@ export class AIService {
             'hi',
             'hello',
             'good morning',
+            'good afternoon',
+            'good evening',
             'good night',
-            'thanks',
-            'thank you'
+            'whats up',
+            'sup',
+            'yo',
+            'howdy'
         ]
         const isConversational = conversationalKeywords.some(keyword => lowerMessage.includes(keyword))
+
+        // Check for gratitude
+        const gratitudeKeywords = ['thank you', 'thanks', 'appreciate', 'grateful', 'helped me', 'thank u', 'thx', 'ty']
+        const isGratitude = gratitudeKeywords.some(keyword => lowerMessage.includes(keyword))
 
         // Check recent history for crisis or difficult conversations
         const hasRecentCrisis = recentHistory.some(
@@ -396,13 +518,16 @@ export class AIService {
                 msg.content &&
                 (msg.content.toLowerCase().includes('crisis') ||
                     msg.content.toLowerCase().includes('difficult') ||
-                    msg.content.toLowerCase().includes('support'))
+                    msg.content.toLowerCase().includes('support') ||
+                    msg.content.toLowerCase().includes('help'))
         )
 
         return {
+            isQuestion,
             needsSupport,
             isVenting,
             isConversational,
+            isGratitude,
             hasRecentCrisis,
             messageLength: message.length,
             recentMessageCount: recentHistory.length
@@ -484,6 +609,7 @@ export class AIService {
             return '' // No timezone set, skip late-night mode
         }
 
+        // Use timezone string directly - no validation needed for timezone identifiers
         const timePeriod = getTimePeriod(timezone)
         const sleepSuggestion = getSleepSuggestion(timezone)
 
@@ -1117,7 +1243,6 @@ Rules:
                     const data = await response.json()
 
                     if (data.success) {
-                        // Return the URL of the generated meme
                         console.log('Meme successfully generated with ImgFlip API')
                         return data.data.url
                     } else {
@@ -1138,7 +1263,7 @@ Rules:
                 'warn'
             )
 
-            // Generate a URL that encodes the meme text directly - using meme-generator.org instead
+            // Generate a URL that encodes the meme text directly - using memegen.link instead
             // This service doesn't require authentication and will render text on the image
             try {
                 // Base URL for a text-on-image service

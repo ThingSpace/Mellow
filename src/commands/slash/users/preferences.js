@@ -5,6 +5,7 @@ import {
     languageChoices,
     timezoneChoices
 } from '../../../configs/userPreferences.config.js'
+import { isValidTimezone } from '../../../functions/timeHelper.js'
 
 export default {
     structure: {
@@ -224,7 +225,15 @@ export default {
 
                 const timezone = interaction.options.getString('timezone')
                 if (timezone) {
-                    updates.timezone = timezone
+                    // Validate timezone before storing
+                    if (!isValidTimezone(timezone)) {
+                        return interaction.reply({
+                            content: `❌ Invalid timezone: "${timezone}". Please select a valid timezone from the dropdown options.`,
+                            ephemeral: true
+                        })
+                    }
+                    // Ensure timezone is stored as a string
+                    updates.timezone = String(timezone)
                 }
 
                 const contextLogging = interaction.options.getBoolean('context_logging')

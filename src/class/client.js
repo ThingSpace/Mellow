@@ -64,7 +64,10 @@ class Mellow extends Client {
 
         this.cmd_types = cmdTypes
 
-        this.logo = 'https://codemeapixel.dev/mellow/mellow.png'
+        this.website = 'https://mymellow.space'
+        this.documentation = 'https://mymellow.space/docs'
+
+        this.logo = 'https://mymellow.space/logo.png'
         this.footer = 'Mellow - Your AI Mental Health Companion'
 
         this.colors = {

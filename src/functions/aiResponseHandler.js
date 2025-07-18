@@ -30,7 +30,8 @@ export async function handleAIResponse(message, client) {
         // Prepare context for AI service
         const context = {
             messageId: message.id,
-            channelId: message.channel.id
+            channelId: message.channel.id,
+            isFirstMessage: false // We'll determine this below
         }
 
         // Add guild context for guild messages
@@ -38,13 +39,26 @@ export async function handleAIResponse(message, client) {
             context.guildId = message.guild.id
         }
 
+        // Check if this is the first message in the conversation
+        const recentHistory = await client.db.conversationHistory.findMany({
+            where: {
+                userId: BigInt(message.author.id),
+                ...(message.guild ? { guildId: message.guild.id } : { guildId: null })
+            },
+            orderBy: { timestamp: 'desc' },
+            take: 5
+        })
+
+        context.isFirstMessage = recentHistory.length === 0
+
         // Generate AI response with enhanced context
         let aiResponse
 
-        // Use smart DM response for direct messages to be less overwhelming
+        // Use smart DM response for all messages to handle conversation flow better
         if (message.channel.type === ChannelType.DM) {
             aiResponse = await client.ai.generateSmartDMResponse(message.content, message.author.id, context)
         } else {
+            // For guild messages, use regular response but with better context
             aiResponse = await client.ai.generateResponse(message.content, message.author.id, context)
         }
 
@@ -69,8 +83,7 @@ export async function handleAIResponse(message, client) {
 
         try {
             await message.reply({
-                content:
-                    "I apologize, but I'm having trouble processing your message right now. Please try again later.",
+                content: "I'm having a bit of trouble processing that right now. Could you try again?",
                 allowedMentions: { repliedUser: true }
             })
         } catch (replyError) {

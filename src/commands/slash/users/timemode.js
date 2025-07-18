@@ -1,5 +1,11 @@
 import { cmdTypes } from '../../../configs/cmdTypes.config.js'
-import { isLateNight, isEarlyMorning, isLateEvening, getTimePeriod } from '../../../functions/timeHelper.js'
+import {
+    isLateNight,
+    isEarlyMorning,
+    isLateEvening,
+    getTimePeriod,
+    isValidTimezone
+} from '../../../functions/timeHelper.js'
 
 export default {
     structure: {
@@ -38,6 +44,28 @@ export default {
         }
 
         const timezone = userPrefs.timezone
+
+        // Validate timezone before using it
+        if (!isValidTimezone(timezone)) {
+            return interaction.reply({
+                embeds: [
+                    new client.Gateway.EmbedBuilder()
+                        .setTitle('⏰ Time-Based Companion Mode')
+                        .setDescription(
+                            `❌ Your timezone setting "${timezone}" is invalid. Please update your timezone with \`/preferences update timezone:\` to use a valid timezone.\n\n` +
+                                'Late-night companion mode provides:\n' +
+                                '• Calmer, more gentle responses during late hours\n' +
+                                '• Sleep-friendly suggestions and support\n' +
+                                '• Understanding for late-night emotional intensity\n' +
+                                "• Morning encouragement when you're starting your day"
+                        )
+                        .setColor(client.colors.error)
+                        .setTimestamp()
+                        .setFooter({ text: client.footer, iconURL: client.logo })
+                ]
+            })
+        }
+
         const timePeriod = getTimePeriod(timezone)
 
         let modeActive = 'Standard Mode'

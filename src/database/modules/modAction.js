@@ -50,12 +50,12 @@ export class ModActionModule {
     async log(data) {
         return this.prisma.modAction.create({
             data: {
-                guildId: BigInt(data.guildId),
-                moderatorId: BigInt(data.moderatorId),
-                targetUserId: BigInt(data.targetUserId),
+                guildId: BigInt(String(data.guildId)),
+                moderatorId: BigInt(String(data.moderatorId)),
+                targetUserId: BigInt(String(data.targetUserId)),
                 action: data.action,
                 reason: data.reason,
-                roleId: data.roleId ? BigInt(data.roleId) : null
+                roleId: data.roleId ? BigInt(String(data.roleId)) : null
             }
         })
     }
@@ -170,7 +170,7 @@ export class ModActionModule {
      */
     async getRecentForGuild(guildId, limit = 10, options = {}) {
         return this.prisma.modAction.findMany({
-            where: { guildId: BigInt(guildId) },
+            where: { guildId: BigInt(String(guildId)) },
             orderBy: { createdAt: 'desc' },
             take: limit,
             ...options
@@ -189,7 +189,7 @@ export class ModActionModule {
 
         return this.prisma.modAction.findMany({
             where: {
-                guildId: BigInt(guildId),
+                guildId: BigInt(String(guildId)),
                 createdAt: { gte: since }
             },
             orderBy: { createdAt: 'desc' },
@@ -206,7 +206,7 @@ export class ModActionModule {
     async countByGuild(guildId) {
         return this.prisma.modAction.count({
             where: {
-                guildId: BigInt(guildId)
+                guildId: BigInt(String(guildId))
             }
         })
     }

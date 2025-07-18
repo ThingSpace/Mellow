@@ -406,9 +406,11 @@ export class SystemLogger {
             .setFooter({ text: this.client.footer, iconURL: this.client.logo })
 
         if (details) {
+            // Ensure details is a string, not an object
+            const detailsText = typeof details === 'string' ? details : JSON.stringify(details)
             embed.addFields({
                 name: 'Details',
-                value: details,
+                value: detailsText,
                 inline: false
             })
         }
@@ -417,7 +419,7 @@ export class SystemLogger {
         await this.logToDatabase(
             'user',
             `User ${event.charAt(0).toUpperCase() + event.slice(1)}`,
-            details || `User ${event} event`,
+            typeof details === 'string' ? details : JSON.stringify(details) || `User ${event} event`,
             {
                 userId: userId,
                 metadata: {

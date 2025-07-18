@@ -23,16 +23,7 @@ export class UserPreferencesModule {
      *
      * @param {string|number} id - Discord user ID
      * @param {Object} data - User preference data to create/update
-     * @param {number} [data.checkInInterval] - Check-in interval in minutes (default: 720)
-     * @param {Date} [data.lastReminder] - Last reminder sent timestamp
-     * @param {Date} [data.nextCheckIn] - Next scheduled check-in timestamp
-     * @param {boolean} [data.remindersEnabled] - Whether reminders are enabled (default: true)
-     * @param {string} [data.reminderMethod] - Reminder method: 'dm' or 'channel' (default: 'dm')
-     * @param {boolean} [data.journalPrivacy] - Whether journal entries are private (default: true)
-     * @param {string} [data.aiPersonality] - AI personality setting (default: 'gentle')
-     * @param {string} [data.profileTheme] - Profile theme color (default: 'blue')
-     * @param {string} [data.language] - Preferred language (default: 'en')
-     * @param {string} [data.timezone] - User's timezone
+     * @param {string} [data.timezone] - User's timezone (IANA timezone identifier)
      * @returns {Promise<Object>} The created or updated user preferences record
      *
      * @example
@@ -50,10 +41,14 @@ export class UserPreferencesModule {
      * })
      */
     async upsert(id, data) {
+        if (data.timezone !== undefined && data.timezone !== null && typeof data.timezone !== 'string') {
+            data.timezone = String(data.timezone)
+        }
+
         return this.prisma.userPreferences.upsert({
-            where: { id: BigInt(id) },
+            where: { id: BigInt(String(id)) },
             update: data,
-            create: { id: BigInt(id), ...data }
+            create: { id: BigInt(String(id)), ...data }
         })
     }
 
@@ -110,8 +105,35 @@ export class UserPreferencesModule {
      */
     async findById(id, options = {}) {
         return this.prisma.userPreferences.findUnique({
-            where: { id: BigInt(id) },
+            where: { id: BigInt(String(id)) },
             ...options
+        })
+    }
+
+    /**
+     * Updates a user preferences record by ID
+     *
+     * @param {string|number} id - Discord user ID
+     * @param {Object} data - User preference data to update
+     * @returns {Promise<Object>} The updated user preferences record
+     *
+     * @example
+     * // Update check-in interval and language
+     * await userPrefsModule.updateById('123456789', {
+     *   checkInInterval: 1440,
+     *   language: 'es'
+     * })
+     */
+    async updateById(id, data) {
+        // Don't force timezone conversion - let it stay as-is if it's already a string
+        // Only convert if it's actually a different type and not already a timezone identifier
+        if (data.timezone !== undefined && data.timezone !== null && typeof data.timezone !== 'string') {
+            data.timezone = String(data.timezone)
+        }
+
+        return this.prisma.userPreferences.update({
+            where: { id: BigInt(String(id)) },
+            data
         })
     }
 
@@ -124,9 +146,9 @@ export class UserPreferencesModule {
      * @example
      * await userPrefsModule.delete('123456789')
      */
-    async delete(id) {
+    async deleteById(id) {
         return this.prisma.userPreferences.delete({
-            where: { id: BigInt(id) }
+            where: { id: BigInt(String(id)) }
         })
     }
 }

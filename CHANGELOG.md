@@ -1,16 +1,51 @@
----
-layout: default
-title: Change Logs
-nav_order: 10
-description: 'Version history and release notes for Mellow updates'
----
-
 # Changelog
 
 All notable changes to Mellow will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [1.3.0] - 2025-07-04
+
+### ✨ Major Features & Improvements
+
+#### Fun & Wellness Commands
+- **Added**: `/memegen` command for AI-powered meme generation with template selection, mood, and mental health focus.
+- **Added**: `/wouldyourather`, `/wordgame`, `/trivia`, `/joke`, `/compliment` commands for engaging, supportive, and fun interactions.
+- **Enhanced**: All fun commands use AI for creative, context-aware content and provide fallback options if AI is unavailable.
+
+#### Conversation Context & AI
+- **Improved**: Context analysis for DMs and channels, including detection of support-seeking, venting, gratitude, and repeated greetings.
+- **Enhanced**: Smarter DM response logic with anti-repetition, first-time user handling, and context-aware personality adaptation.
+- **Improved**: AI prompt building for more natural, less repetitive, and more empathetic responses.
+- **Added**: Conversation summary and memory effectiveness improvements for context commands.
+
+#### Timezone & User Preferences
+- **Fixed**: Timezone handling now strictly uses IANA timezone identifiers (e.g., `America/Edmonton`), preventing numeric/timezone confusion.
+- **Improved**: Time helper functions robustly validate and handle timezones, preventing accidental fallback to system time.
+- **Fixed**: No more "timezone is 18" or numeric timezone bugs.
+- **Improved**: All time-based greetings, sleep suggestions, and companion modes now work reliably for all users.
+
+#### Meme Generation
+- **Added**: ImgFlip API integration for meme images with text overlays (requires credentials).
+- **Added**: Fallback to memegen.link and template images if ImgFlip is unavailable.
+- **Improved**: Meme command displays both generated image and AI-generated meme text.
+
+#### Error Handling & Logging
+- **Enhanced**: All commands and services now use consistent error handling and system logger integration.
+- **Improved**: Fallback responses for all fun and coping commands if AI or external services fail.
+
+#### Technical & Database
+- **Fixed**: Database modules consistently handle Discord IDs as strings, preventing BigInt/number conversion issues.
+- **Improved**: User preferences and upsert logic for timezone and other fields.
+- **Fixed**: Prisma upsert and update operations for user preferences and context.
+- **Enhanced**: Database modules with better validation and error handling.
+
+### 📝 Documentation
+- **Updated**: Command reference and technical documentation to cover all new features, fun commands, context logic, and self-hosting.
+- **Added**: Guides for contributing, debugging, and advanced configuration.
+
+---
 
 ## [1.2.0] - 2025-07-03 - System Reliability & Service Infrastructure Improvements
 

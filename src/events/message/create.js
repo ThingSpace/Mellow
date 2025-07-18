@@ -33,6 +33,7 @@ async function logMessageForContext(message, client) {
             if (guildSettings?.disableContextLogging) return
         }
 
+        // Use the correct parameters: userId as first parameter, data as second
         await client.db.conversationHistory.create(message.author.id, contextData)
     } catch (error) {
         // Don't log errors for context logging to avoid spam
