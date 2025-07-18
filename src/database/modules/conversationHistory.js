@@ -1,3 +1,6 @@
+import { DbEncryptionHelper } from '../../helpers/db-encryption.helper.js'
+import { log } from '../../functions/logger.js'
+
 /**
  * ConversationHistoryModule - Database operations for conversation history
  *
@@ -13,6 +16,7 @@ export class ConversationHistoryModule {
      */
     constructor(prisma) {
         this.prisma = prisma
+        this.sensitiveFields = ['content']
     }
 
     /**
@@ -47,11 +51,20 @@ export class ConversationHistoryModule {
      * })
      */
     async create(userId, data) {
+        // Encrypt sensitive fields
+        const encryptedData = DbEncryptionHelper.encryptFields(data, this.sensitiveFields)
+
+        // Create data object without userId since we're using the user relation
+        const { userId: _, ...createData } = encryptedData
+
         return this.prisma.conversationHistory.create({
             data: {
-                userId: BigInt(String(userId)),
-                timestamp: new Date(),
-                ...data
+                // Connect to the user record
+                user: {
+                    connect: { id: BigInt(String(userId)) }
+                },
+                timestamp: data.timestamp || new Date(),
+                ...createData
             }
         })
     }
@@ -91,10 +104,24 @@ export class ConversationHistoryModule {
      * })
      */
     async upsert(id, data) {
+        // Encrypt sensitive fields
+        const encryptedData = DbEncryptionHelper.encryptFields(data, this.sensitiveFields)
+
+        // Remove userId if present, as it's not a direct field
+        const { userId, ...updateData } = encryptedData
+
+        // If userId is provided, handle the user relationship
+        const createData = { id, ...updateData }
+        if (userId) {
+            createData.user = {
+                connect: { id: BigInt(String(userId)) }
+            }
+        }
+
         return this.prisma.conversationHistory.upsert({
             where: { id },
-            update: data,
-            create: { id, ...data }
+            update: updateData,
+            create: createData
         })
     }
 
@@ -126,7 +153,9 @@ export class ConversationHistoryModule {
      * })
      */
     async findMany(args = {}) {
-        return this.prisma.conversationHistory.findMany(args)
+        const results = await this.prisma.conversationHistory.findMany(args)
+        // Decrypt sensitive fields in the results
+        return DbEncryptionHelper.processData(results, this.sensitiveFields)
     }
 
     /**
@@ -148,10 +177,12 @@ export class ConversationHistoryModule {
      * })
      */
     async findById(id, options = {}) {
-        return this.prisma.conversationHistory.findUnique({
+        const result = await this.prisma.conversationHistory.findUnique({
             where: { id },
             ...options
         })
+        // Decrypt sensitive fields in the result
+        return DbEncryptionHelper.decryptFields(result, this.sensitiveFields)
     }
 
     /**
@@ -187,12 +218,16 @@ export class ConversationHistoryModule {
      * })
      */
     async getAllForUser(userId, limit = 50, options = {}) {
-        return this.prisma.conversationHistory.findMany({
-            where: { userId: BigInt(String(userId)) },
+        const results = await this.prisma.conversationHistory.findMany({
+            where: {
+                user: { id: BigInt(String(userId)) }
+            },
             orderBy: { timestamp: 'desc' },
             take: limit,
             ...options
         })
+        // Decrypt sensitive fields in the results
+        return DbEncryptionHelper.processData(results, this.sensitiveFields)
     }
 
     /**
@@ -207,7 +242,9 @@ export class ConversationHistoryModule {
      */
     async clearForUser(userId) {
         return this.prisma.conversationHistory.deleteMany({
-            where: { userId: BigInt(String(userId)) }
+            where: {
+                user: { id: BigInt(String(userId)) }
+            }
         })
     }
 
@@ -221,7 +258,9 @@ export class ConversationHistoryModule {
      * @returns {Promise<Array>} Array of conversation history records
      */
     async getConversationWithContext(userId, channelId = null, limit = 100, options = {}) {
-        const whereClause = { userId: BigInt(String(userId)) }
+        const whereClause = {
+            user: { id: BigInt(String(userId)) }
+        }
 
         // If channelId is provided, include channel context
         if (channelId) {
@@ -231,7 +270,7 @@ export class ConversationHistoryModule {
             ]
         }
 
-        return this.prisma.conversationHistory.findMany({
+        const results = await this.prisma.conversationHistory.findMany({
             where: whereClause,
             orderBy: { timestamp: 'desc' },
             take: limit,
@@ -244,6 +283,9 @@ export class ConversationHistoryModule {
             },
             ...options
         })
+
+        // Decrypt sensitive fields in the results, including nested relations
+        return DbEncryptionHelper.processData(results, this.sensitiveFields)
     }
 
     /**
@@ -255,7 +297,7 @@ export class ConversationHistoryModule {
      * @returns {Promise<Array>} Array of recent channel messages
      */
     async getChannelContext(channelId, limit = 20) {
-        return this.prisma.conversationHistory.findMany({
+        const results = await this.prisma.conversationHistory.findMany({
             where: {
                 channelId: String(channelId),
                 contextType: { in: ['conversation', 'channel_context'] }
@@ -271,6 +313,9 @@ export class ConversationHistoryModule {
                 }
             }
         })
+
+        // Decrypt sensitive fields in the results
+        return DbEncryptionHelper.processData(results, this.sensitiveFields)
     }
 
     /**
@@ -280,29 +325,65 @@ export class ConversationHistoryModule {
      * @param {boolean} [isAiResponse=false] - Whether this is an AI response
      * @param {string} [contextType='conversation'] - Type of context
      * @param {number} [parentId] - Parent message ID for threading
-     * @returns {Promise<Object>} The created conversation history record
+     * @returns {Promise<Object|null>} The created conversation history record or null if skipped
      */
     async logMessageWithContext(message, isAiResponse = false, contextType = 'conversation', parentId = null) {
-        const data = {
-            content: message.content,
-            isAiResponse,
-            contextType,
-            timestamp: new Date(message.createdTimestamp),
-            messageId: String(message.id)
-        }
+        try {
+            // Ensure we have a valid content string that's never null
+            const messageContent = message.content || '[No text content]'
 
-        // Add channel/guild context for guild messages
-        if (message.guild) {
-            data.channelId = String(message.channel.id)
-            data.guildId = String(message.guild.id)
-        }
+            // If there's no meaningful content and no attachments/embeds, add a note
+            let finalContent = messageContent
+            if (!message.content || message.content.trim().length === 0) {
+                finalContent = '[No text content]'
 
-        // Add threading context
-        if (parentId) {
-            data.parentId = parentId
-        }
+                // If we have attachments or embeds, note them
+                if (message.attachments?.size || message.embeds?.length) {
+                    const parts = []
+                    if (message.attachments?.size) {
+                        parts.push(`${message.attachments.size} attachment(s)`)
+                    }
+                    if (message.embeds?.length) {
+                        parts.push(`${message.embeds.length} embed(s)`)
+                    }
+                    finalContent = `[Message contains ${parts.join(' and ')}]`
+                }
+            }
 
-        return this.create(String(message.author.id), data)
+            const data = {
+                content: finalContent, // This should never be null now
+                isAiResponse,
+                contextType,
+                timestamp: new Date(message.createdTimestamp),
+                messageId: String(message.id)
+            }
+
+            // Add channel/guild context for guild messages
+            if (message.guild) {
+                data.channelId = String(message.channel.id)
+                data.guildId = String(message.guild.id)
+            }
+
+            // Add threading context
+            if (parentId) {
+                data.parentId = parentId
+            }
+
+            // Use our create method which will now properly handle the content
+            return this.create(String(message.author.id), data)
+        } catch (error) {
+            console.error('Error in logMessageWithContext:', error)
+            // Create a record with error info
+            const errorData = {
+                content: `[Error logging message: ${error.message}]`,
+                isAiResponse,
+                contextType: 'error',
+                timestamp: new Date(),
+                messageId: message.id ? String(message.id) : 'unknown'
+            }
+
+            return this.create(String(message.author.id), errorData)
+        }
     }
 
     /**
@@ -313,7 +394,7 @@ export class ConversationHistoryModule {
      * @returns {Promise<Array>} Array of reply messages
      */
     async getThread(parentId, limit = 50) {
-        return this.prisma.conversationHistory.findMany({
+        const results = await this.prisma.conversationHistory.findMany({
             where: { parentId: parentId },
             orderBy: { timestamp: 'asc' },
             take: limit,
@@ -326,6 +407,9 @@ export class ConversationHistoryModule {
                 }
             }
         })
+
+        // Decrypt sensitive fields in the results
+        return DbEncryptionHelper.processData(results, this.sensitiveFields)
     }
 
     /**

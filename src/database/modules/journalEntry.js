@@ -1,3 +1,5 @@
+import { DbEncryptionHelper } from '../../helpers/db-encryption.helper.js'
+
 /**
  * JournalEntryModule - Database operations for journal entries
  *
@@ -13,6 +15,7 @@ export class JournalEntryModule {
      */
     constructor(prisma) {
         this.prisma = prisma
+        this.sensitiveFields = ['content'] // Define fields to encrypt
     }
 
     /**
@@ -34,11 +37,16 @@ export class JournalEntryModule {
         // Use user preference or provided privacy setting
         const isPrivate = data.private !== undefined ? data.private : (userPrefs?.journalPrivacy ?? true)
 
+        // Encrypt sensitive fields
+        const encryptedData = DbEncryptionHelper.encryptFields(data, this.sensitiveFields)
+
         return this.prisma.journalEntry.create({
             data: {
-                userId: BigInt(data.userId),
-                content: data.content,
-                private: isPrivate
+                content: encryptedData.content,
+                private: isPrivate,
+                user: {
+                    connect: { id: BigInt(data.userId) }
+                }
             }
         })
     }
@@ -57,10 +65,24 @@ export class JournalEntryModule {
      * })
      */
     async upsert(id, data) {
+        // Encrypt sensitive fields
+        const encryptedData = DbEncryptionHelper.encryptFields(data, this.sensitiveFields)
+
+        // Remove userId if present, as it's not a direct field
+        const { userId, ...updateData } = encryptedData
+
+        // If userId is provided, handle the user relationship
+        const createData = { id, ...updateData }
+        if (userId) {
+            createData.user = {
+                connect: { id: BigInt(userId) }
+            }
+        }
+
         return this.prisma.journalEntry.upsert({
             where: { id },
-            update: data,
-            create: { id, ...data }
+            update: updateData,
+            create: createData
         })
     }
 
@@ -92,7 +114,9 @@ export class JournalEntryModule {
      * })
      */
     async findMany(args = {}) {
-        return this.prisma.journalEntry.findMany(args)
+        const results = await this.prisma.journalEntry.findMany(args)
+        // Decrypt sensitive fields in the results
+        return DbEncryptionHelper.processData(results, this.sensitiveFields)
     }
 
     /**
@@ -114,10 +138,12 @@ export class JournalEntryModule {
      * })
      */
     async findById(id, options = {}) {
-        return this.prisma.journalEntry.findUnique({
+        const result = await this.prisma.journalEntry.findUnique({
             where: { id },
             ...options
         })
+        // Decrypt sensitive fields in the result
+        return DbEncryptionHelper.decryptFields(result, this.sensitiveFields)
     }
 
     /**
@@ -147,13 +173,18 @@ export class JournalEntryModule {
         const isOwner = !requesterId || BigInt(userId) === BigInt(requesterId)
 
         // Non-owners can only see public entries
-        const whereClause = isOwner ? { userId: BigInt(userId) } : { userId: BigInt(userId), private: false }
+        const whereClause = isOwner
+            ? { user: { id: BigInt(userId) } }
+            : { user: { id: BigInt(userId) }, private: false }
 
-        return this.prisma.journalEntry.findMany({
+        const results = await this.prisma.journalEntry.findMany({
             where: whereClause,
             orderBy: { createdAt: 'desc' },
             ...options
         })
+
+        // Decrypt sensitive fields in the results
+        return DbEncryptionHelper.processData(results, this.sensitiveFields)
     }
 
     /**
@@ -167,7 +198,10 @@ export class JournalEntryModule {
     async updatePrivacy(entryId, userId, data) {
         // Verify ownership
         const entry = await this.prisma.journalEntry.findFirst({
-            where: { id: entryId, userId: BigInt(userId) }
+            where: {
+                id: entryId,
+                user: { id: BigInt(userId) }
+            }
         })
 
         if (!entry) {

@@ -585,7 +585,7 @@ export default {
             // Only try to respond if the interaction hasn't been replied to yet
             if (!interaction.replied) {
                 try {
-                    await interaction.reply({
+                    await interaction.editReply({
                         ephemeral: true,
                         content: 'An error occurred while executing this command!'
                     })

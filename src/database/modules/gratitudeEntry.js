@@ -1,8 +1,10 @@
+import { DbEncryptionHelper } from '../../helpers/db-encryption.helper.js'
+
 /**
  * GratitudeEntryModule - Database operations for gratitude entries
  *
  * This module provides a flexible interface for managing gratitude entry data in the database.
- * It handles gratitude journaling, positive reflection tracking, and user appreciation records.
+ * It handles user gratitude journaling and retrieval of positive reflections.
  *
  * @class GratitudeEntryModule
  */
@@ -13,6 +15,7 @@ export class GratitudeEntryModule {
      */
     constructor(prisma) {
         this.prisma = prisma
+        this.sensitiveFields = ['item'] // Define fields to encrypt
     }
 
     /**
@@ -37,7 +40,12 @@ export class GratitudeEntryModule {
      * })
      */
     async create(data) {
-        return this.prisma.gratitudeEntry.create({ data })
+        // Encrypt sensitive fields
+        const encryptedData = DbEncryptionHelper.encryptFields(data, this.sensitiveFields)
+
+        return this.prisma.gratitudeEntry.create({
+            data: encryptedData
+        })
     }
 
     /**
@@ -53,10 +61,13 @@ export class GratitudeEntryModule {
      * })
      */
     async upsert(id, data) {
+        // Encrypt sensitive fields
+        const encryptedData = DbEncryptionHelper.encryptFields(data, this.sensitiveFields)
+
         return this.prisma.gratitudeEntry.upsert({
             where: { id },
-            update: data,
-            create: { id, ...data }
+            update: encryptedData,
+            create: { id, ...encryptedData }
         })
     }
 
@@ -87,7 +98,9 @@ export class GratitudeEntryModule {
      * })
      */
     async findMany(args = {}) {
-        return this.prisma.gratitudeEntry.findMany(args)
+        const results = await this.prisma.gratitudeEntry.findMany(args)
+        // Decrypt sensitive fields in the results
+        return DbEncryptionHelper.processData(results, this.sensitiveFields)
     }
 
     /**
@@ -109,10 +122,33 @@ export class GratitudeEntryModule {
      * })
      */
     async findById(id, options = {}) {
-        return this.prisma.gratitudeEntry.findUnique({
+        const result = await this.prisma.gratitudeEntry.findUnique({
             where: { id },
             ...options
         })
+        // Decrypt sensitive fields in the result
+        return DbEncryptionHelper.decryptFields(result, this.sensitiveFields)
+    }
+
+    /**
+     * Gets gratitude entries for a specific user
+     *
+     * @param {string|number} userId - Discord user ID
+     * @param {number} [limit=50] - Maximum number of entries to retrieve
+     * @returns {Promise<Array>} Array of gratitude entry records for the user
+     *
+     * @example
+     * // Get the latest 10 gratitude entries for a user
+     * const entries = await gratitudeEntryModule.getEntriesForUser('123456789', 10)
+     */
+    async getEntriesForUser(userId, limit = 50) {
+        const results = await this.prisma.gratitudeEntry.findMany({
+            where: { userId: BigInt(userId) },
+            orderBy: { createdAt: 'desc' },
+            take: limit
+        })
+        // Decrypt sensitive fields in the results
+        return DbEncryptionHelper.processData(results, this.sensitiveFields)
     }
 
     /**

@@ -5,7 +5,67 @@ All notable changes to Mellow will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.3.2] - 2025-07-15
+## [1.3.3] - 2025-07-18
+
+### 🔒 Data Privacy & Encryption Infrastructure
+
+#### Comprehensive Encryption System
+
+-   **Added**: End-to-end encryption for all sensitive user data (conversations, journals, mental health information)
+-   **Added**: AES-256-GCM encryption with authentication tags for maximum security
+-   **Added**: Encryption service with proper key derivation and salt management
+-   **Added**: Database encryption helper for transparent data protection
+-   **Enhanced**: All database modules now encrypt sensitive fields automatically
+-   **Improved**: Key rotation capabilities for enhanced security management
+-   **Added**: Secure environment variable configuration for encryption settings
+
+#### Database Module Security Enhancement
+
+-   **Updated**: ConversationHistory module with content encryption
+-   **Updated**: JournalEntry module with content encryption
+-   **Updated**: GhostLetter module with content encryption
+-   **Updated**: CrisisEvent module with details encryption
+-   **Updated**: MoodCheckIn module with mood, note, and activity encryption
+-   **Updated**: Feedback module with message encryption
+-   **Added**: Proper handling of null/undefined values in encryption logic
+-   **Fixed**: Content processing to prevent null values in encrypted fields
+
+#### Security Infrastructure Improvements
+
+-   **Added**: Support for custom encryption keys and salts via environment variables
+-   **Added**: Graceful fallback for encryption failures to prevent data loss
+-   **Enhanced**: Error handling throughout encryption/decryption processes
+-   **Improved**: Database operations to handle encrypted field processing transparently
+-   **Added**: Proper initialization and validation of encryption service at startup
+
+#### Technical Security Enhancements
+
+-   **Improved**: Prisma database operations to support encrypted fields
+-   **Enhanced**: Object processing utilities for handling nested encrypted content
+-   **Added**: JSON serialization support for complex encrypted objects
+-   **Fixed**: Relationship handling in database operations with encrypted fields
+-   **Enhanced**: Logging for encryption operations with privacy-preserving information
+-   **Added**: Support for processing arrays of records with encryption/decryption
+
+### 🛠️ Technical Improvements
+
+-   **Fixed**: Schema relationship issues in ConversationHistory and JournalEntry models
+-   **Improved**: Error handling for database operations with relationship fields
+-   **Enhanced**: User experience with better error messages for data operations
+-   **Optimized**: Database queries with proper relationship handling
+-   **Added**: Support for BigInt Discord IDs in all database operations
+
+### 🐛 Bug Fixes
+
+-   **Fixed**: ConversationHistory null content issue in message logging
+-   **Fixed**: JournalEntry schema relationship issues with user connections
+-   **Fixed**: Empty message handling in conversation context logging
+-   **Fixed**: Inconsistent relationship field usage across database modules
+-   **Fixed**: Potential data loss from encryption failures with proper fallbacks
+
+---
+
+## [1.3.2] - 2025-07-17
 
 ### ✨ Interactive Features & Game Improvements
 
@@ -46,7 +106,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.3.1] - 2025-07-10
+## [1.3.1] - 2025-07-17
 
 ### ✨ Improved User Experience
 
@@ -261,7 +321,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 -   **Fixed**: System logger usage audit - all commands now provide proper logType parameters
 -   **Fixed**: Missing error handling in commands replaced with proper systemLogger calls
 -   **Enhanced**: Command reliability and user feedback across all categories
--
 
 ### 📚 Documentation Updates
 
@@ -695,31 +754,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 -   Fixed interaction acknowledgment conflicts
 -   Fixed guild settings not saving correctly
 -   Fixed duplicate startup notifications
--   Fixed malformed code in guild settings command
--   Fixed incorrect channel field mappings
-
----
-
-## [1.0.0] - 2025-06-20 - Initial Release
-
-### 🎉 Initial Features
-
--   AI-powered mental health companion
--   Mood check-ins and tracking
--   Crisis detection and intervention
--   Ghost letter private venting
--   Coping tools and resources
--   Community moderation features
--   User preference management
--   Comprehensive database schema
-
----
-
-**Note**: This changelog follows semantic versioning. Version numbers indicate:
-
--   **Major**: Breaking changes
--   **Minor**: New features (backward compatible)
--   **Patch**: Bug fixes (backward compatible)
 -   Fixed malformed code in guild settings command
 -   Fixed incorrect channel field mappings
 

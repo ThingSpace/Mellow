@@ -1,3 +1,5 @@
+import { DbEncryptionHelper } from '../../helpers/db-encryption.helper.js'
+
 /**
  * MoodCheckInModule - Database operations for mood check-ins
  *
@@ -14,6 +16,7 @@ export class MoodCheckInModule {
      */
     constructor(prisma) {
         this.prisma = prisma
+        this.sensitiveFields = ['mood', 'note', 'activity'] // Define fields to encrypt
     }
 
     /**
@@ -52,13 +55,16 @@ export class MoodCheckInModule {
             nextCheckIn.setMinutes(nextCheckIn.getMinutes() + userPrefs.checkInInterval)
         }
 
+        // Encrypt sensitive fields
+        const encryptedData = DbEncryptionHelper.encryptFields(data, this.sensitiveFields)
+
         return this.prisma.moodCheckIn.create({
             data: {
                 userId: BigInt(data.userId),
-                mood: data.mood,
+                mood: encryptedData.mood,
                 intensity: data.intensity || 3,
-                activity: data.activity,
-                note: data.note,
+                activity: encryptedData.activity,
+                note: encryptedData.note,
                 nextCheckIn
             }
         })
@@ -79,10 +85,13 @@ export class MoodCheckInModule {
      * })
      */
     async upsert(id, data) {
+        // Encrypt sensitive fields
+        const encryptedData = DbEncryptionHelper.encryptFields(data, this.sensitiveFields)
+
         return this.prisma.moodCheckIn.upsert({
             where: { id },
-            update: data,
-            create: { id, ...data }
+            update: encryptedData,
+            create: { id, ...encryptedData }
         })
     }
 
@@ -113,7 +122,9 @@ export class MoodCheckInModule {
      * })
      */
     async findMany(args = {}) {
-        return this.prisma.moodCheckIn.findMany(args)
+        const results = await this.prisma.moodCheckIn.findMany(args)
+        // Decrypt sensitive fields in the results
+        return DbEncryptionHelper.processData(results, this.sensitiveFields)
     }
 
     /**
@@ -135,10 +146,12 @@ export class MoodCheckInModule {
      * })
      */
     async findById(id, options = {}) {
-        return this.prisma.moodCheckIn.findUnique({
+        const result = await this.prisma.moodCheckIn.findUnique({
             where: { id },
             ...options
         })
+        // Decrypt sensitive fields in the result
+        return DbEncryptionHelper.decryptFields(result, this.sensitiveFields)
     }
 
     /**
@@ -174,12 +187,14 @@ export class MoodCheckInModule {
      * })
      */
     async getAllForUser(userId, limit = 30, options = {}) {
-        return this.prisma.moodCheckIn.findMany({
+        const results = await this.prisma.moodCheckIn.findMany({
             where: { userId: BigInt(userId) },
             orderBy: { createdAt: 'desc' },
             take: limit,
             ...options
         })
+        // Decrypt sensitive fields in the results
+        return DbEncryptionHelper.processData(results, this.sensitiveFields)
     }
 
     /**
@@ -196,7 +211,7 @@ export class MoodCheckInModule {
      */
     async getDueReminders() {
         const now = new Date()
-        return this.prisma.moodCheckIn.findMany({
+        const results = await this.prisma.moodCheckIn.findMany({
             where: {
                 nextCheckIn: {
                     lte: now
@@ -213,6 +228,8 @@ export class MoodCheckInModule {
                 nextCheckIn: 'asc'
             }
         })
+        // Decrypt sensitive fields in the results
+        return DbEncryptionHelper.processData(results, this.sensitiveFields)
     }
 
     /**
@@ -287,9 +304,14 @@ export class MoodCheckInModule {
             orderBy: { createdAt: 'desc' },
             take: 7
         })
-        if (!checkIns.length) return null
+
+        // Decrypt sensitive fields in the results
+        const decryptedCheckIns = await DbEncryptionHelper.processData(checkIns, this.sensitiveFields)
+
+        if (!decryptedCheckIns.length) return null
+
         // Example: summarize as a comma-separated list of moods
-        return checkIns
+        return decryptedCheckIns
             .map(c => c.mood)
             .reverse()
             .join(' → ')
@@ -322,13 +344,7 @@ export class MoodCheckInModule {
     async getRecentByGuild(guildId, hours = 24) {
         const since = new Date(Date.now() - hours * 60 * 60 * 1000)
 
-        // Note: Since we don't store guild membership in the database,
-        // we can't directly query by guild. We would need the Discord client
-        // to get guild member IDs first, then query those users.
-        // For now, return all recent check-ins and let the calling code
-        // filter by guild membership if needed.
-
-        return this.prisma.moodCheckIn.findMany({
+        const results = await this.prisma.moodCheckIn.findMany({
             where: {
                 createdAt: { gte: since }
             },
@@ -338,6 +354,9 @@ export class MoodCheckInModule {
             orderBy: { createdAt: 'desc' },
             take: 50 // Limit to prevent huge responses
         })
+
+        // Decrypt sensitive fields in the results
+        return DbEncryptionHelper.processData(results, this.sensitiveFields)
     }
 
     /**
@@ -347,9 +366,6 @@ export class MoodCheckInModule {
      * @returns {Promise<number>} Number of check-ins for this guild
      */
     async countByGuild(guildId) {
-        // Note: Since we don't store guild membership in the database,
-        // we can't directly count by guild. Return total count for now.
-        // The calling code should filter by guild membership if needed.
         return this.prisma.moodCheckIn.count()
     }
 }

@@ -1,3 +1,5 @@
+import { DbEncryptionHelper } from '../../helpers/db-encryption.helper.js'
+
 /**
  * FeedbackModule - Database operations for user feedback
  *
@@ -13,6 +15,7 @@ export class FeedbackModule {
      */
     constructor(prisma) {
         this.prisma = prisma
+        this.sensitiveFields = ['message']
     }
 
     /**
@@ -36,7 +39,12 @@ export class FeedbackModule {
      * })
      */
     async create(data) {
-        return this.prisma.feedback.create({ data })
+        // Encrypt sensitive fields
+        const encryptedData = DbEncryptionHelper.encryptFields(data, this.sensitiveFields)
+
+        return this.prisma.feedback.create({
+            data: encryptedData
+        })
     }
 
     /**
@@ -52,10 +60,13 @@ export class FeedbackModule {
      * })
      */
     async upsert(id, data) {
+        // Encrypt sensitive fields
+        const encryptedData = DbEncryptionHelper.encryptFields(data, this.sensitiveFields)
+
         return this.prisma.feedback.upsert({
             where: { id },
-            update: data,
-            create: { id, ...data }
+            update: encryptedData,
+            create: { id, ...encryptedData }
         })
     }
 
@@ -86,7 +97,10 @@ export class FeedbackModule {
      * })
      */
     async findMany(args = {}) {
-        return this.prisma.feedback.findMany(args)
+        const result = await this.prisma.feedback.findMany(args)
+
+        // Decrypt sensitive fields in the results
+        return DbEncryptionHelper.processData(result, this.sensitiveFields)
     }
 
     /**
@@ -108,10 +122,13 @@ export class FeedbackModule {
      * })
      */
     async findById(id, options = {}) {
-        return this.prisma.feedback.findUnique({
+        const result = await this.prisma.feedback.findUnique({
             where: { id },
             ...options
         })
+
+        // Decrypt sensitive fields in the result
+        return DbEncryptionHelper.decryptFields(result, this.sensitiveFields)
     }
 
     /**

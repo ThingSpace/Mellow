@@ -1,3 +1,5 @@
+import { DbEncryptionHelper } from '../../helpers/db-encryption.helper.js'
+
 /**
  * CopingPlanModule - Database operations for coping plans
  *
@@ -13,6 +15,7 @@ export class CopingPlanModule {
      */
     constructor(prisma) {
         this.prisma = prisma
+        this.sensitiveFields = ['plan'] // Define fields to encrypt
     }
 
     /**
@@ -37,7 +40,12 @@ export class CopingPlanModule {
      * })
      */
     async create(data) {
-        return this.prisma.copingPlan.create({ data })
+        // Encrypt sensitive fields
+        const encryptedData = DbEncryptionHelper.encryptFields(data, this.sensitiveFields)
+
+        return this.prisma.copingPlan.create({
+            data: encryptedData
+        })
     }
 
     /**
@@ -53,10 +61,13 @@ export class CopingPlanModule {
      * })
      */
     async upsert(id, data) {
+        // Encrypt sensitive fields
+        const encryptedData = DbEncryptionHelper.encryptFields(data, this.sensitiveFields)
+
         return this.prisma.copingPlan.upsert({
             where: { id },
-            update: data,
-            create: { id, ...data }
+            update: encryptedData,
+            create: { id, ...encryptedData }
         })
     }
 
@@ -87,7 +98,9 @@ export class CopingPlanModule {
      * })
      */
     async findMany(args = {}) {
-        return this.prisma.copingPlan.findMany(args)
+        const results = await this.prisma.copingPlan.findMany(args)
+        // Decrypt sensitive fields in the results
+        return DbEncryptionHelper.processData(results, this.sensitiveFields)
     }
 
     /**
@@ -109,10 +122,12 @@ export class CopingPlanModule {
      * })
      */
     async findById(id, options = {}) {
-        return this.prisma.copingPlan.findUnique({
+        const result = await this.prisma.copingPlan.findUnique({
             where: { id },
             ...options
         })
+        // Decrypt sensitive fields in the result
+        return DbEncryptionHelper.decryptFields(result, this.sensitiveFields)
     }
 
     /**

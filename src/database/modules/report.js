@@ -1,3 +1,5 @@
+import { DbEncryptionHelper } from '../../helpers/db-encryption.helper.js'
+
 /**
  * ReportModule - Database operations for user reports
  *
@@ -13,6 +15,7 @@ export class ReportModule {
      */
     constructor(prisma) {
         this.prisma = prisma
+        this.sensitiveFields = ['message'] // Define fields to encrypt
     }
 
     /**
@@ -36,7 +39,12 @@ export class ReportModule {
      * })
      */
     async create(data) {
-        return this.prisma.report.create({ data })
+        // Encrypt sensitive fields
+        const encryptedData = DbEncryptionHelper.encryptFields(data, this.sensitiveFields)
+
+        return this.prisma.report.create({
+            data: encryptedData
+        })
     }
 
     /**
@@ -86,7 +94,9 @@ export class ReportModule {
      * })
      */
     async findMany(args = {}) {
-        return this.prisma.report.findMany(args)
+        const results = await this.prisma.report.findMany(args)
+        // Decrypt sensitive fields in the results
+        return DbEncryptionHelper.processData(results, this.sensitiveFields)
     }
 
     /**
@@ -108,10 +118,12 @@ export class ReportModule {
      * })
      */
     async findById(id, options = {}) {
-        return this.prisma.report.findUnique({
+        const result = await this.prisma.report.findUnique({
             where: { id },
             ...options
         })
+        // Decrypt sensitive fields in the result
+        return DbEncryptionHelper.decryptFields(result, this.sensitiveFields)
     }
 
     /**
