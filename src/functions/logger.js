@@ -1,11 +1,11 @@
 import chalk from 'chalk'
 import debug from 'debug'
 
-debug.enable('discord,discord:*')
+debug.enable('mellow,mellow:*')
 
 debug.useColors = () => true
 
-export const baseLog = debug('discord')
+export const baseLog = debug('mellow')
 
 export const log = (string, style, ...args) => {
     const styles = {

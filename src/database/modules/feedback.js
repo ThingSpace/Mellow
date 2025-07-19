@@ -1,10 +1,12 @@
 import { DbEncryptionHelper } from '../../helpers/db-encryption.helper.js'
+import { log } from '../../functions/logger.js'
 
 /**
  * FeedbackModule - Database operations for user feedback
  *
  * This module provides a flexible interface for managing user feedback data in the database.
- * It handles feedback submission, retrieval, and management.
+ * It handles feedback submission, retrieval, management, and now includes support for
+ * staff replies and approval for testimonials.
  *
  * @class FeedbackModule
  */
@@ -24,26 +26,20 @@ export class FeedbackModule {
      * @param {Object} data - Feedback data
      * @param {string} data.message - Feedback message content
      * @param {string|number} [data.userId] - Discord user ID (optional for anonymous feedback)
+     * @param {boolean} [data.public] - Whether this feedback can be shared publicly (default: false)
      * @returns {Promise<Object>} The created feedback record
-     *
-     * @example
-     * // Create feedback from a user
-     * await feedbackModule.create({
-     *   message: 'The bot is really helpful for my mental health!',
-     *   userId: '123456789'
-     * })
-     *
-     * // Create anonymous feedback
-     * await feedbackModule.create({
-     *   message: 'Could you add more coping tools?'
-     * })
      */
     async create(data) {
         // Encrypt sensitive fields
         const encryptedData = DbEncryptionHelper.encryptFields(data, this.sensitiveFields)
 
         return this.prisma.feedback.create({
-            data: encryptedData
+            data: {
+                message: encryptedData.message,
+                userId: data.userId ? BigInt(data.userId) : undefined,
+                public: data.public || false,
+                approved: false // New feedback starts unapproved
+            }
         })
     }
 
@@ -53,11 +49,6 @@ export class FeedbackModule {
      * @param {number} id - Feedback record ID
      * @param {Object} data - Feedback data to update
      * @returns {Promise<Object>} The created or updated feedback record
-     *
-     * @example
-     * await feedbackModule.upsert(1, {
-     *   message: 'Updated feedback message'
-     * })
      */
     async upsert(id, data) {
         // Encrypt sensitive fields
@@ -74,33 +65,30 @@ export class FeedbackModule {
      * Retrieves multiple feedback records based on provided criteria
      *
      * @param {Object} [args={}] - Prisma findMany arguments
-     * @param {Object} [args.where] - Filter criteria
-     * @param {Object} [args.select] - Fields to select
-     * @param {Object} [args.include] - Relations to include
-     * @param {number} [args.take] - Number of records to take
-     * @param {number} [args.skip] - Number of records to skip
-     * @param {Object} [args.orderBy] - Sorting criteria
      * @returns {Promise<Array>} Array of feedback records
-     *
-     * @example
-     * // Get all feedback from a specific user
-     * const feedback = await feedbackModule.findMany({
-     *   where: { userId: BigInt('123456789') },
-     *   orderBy: { createdAt: 'desc' }
-     * })
-     *
-     * // Get recent feedback with user info
-     * const feedback = await feedbackModule.findMany({
-     *   take: 10,
-     *   include: { user: true },
-     *   orderBy: { createdAt: 'desc' }
-     * })
      */
     async findMany(args = {}) {
-        const result = await this.prisma.feedback.findMany(args)
+        const result = await this.prisma.feedback.findMany({
+            ...args,
+            include: {
+                ...(args.include || {}),
+                replies: args.include?.replies !== false
+            }
+        })
 
         // Decrypt sensitive fields in the results
-        return DbEncryptionHelper.processData(result, this.sensitiveFields)
+        const decryptedResults = DbEncryptionHelper.processData(result, this.sensitiveFields)
+
+        // If we have replies, decrypt those too
+        if (decryptedResults.length > 0 && decryptedResults[0].replies) {
+            decryptedResults.forEach(feedback => {
+                if (feedback.replies) {
+                    feedback.replies = DbEncryptionHelper.processData(feedback.replies, this.sensitiveFields)
+                }
+            })
+        }
+
+        return decryptedResults
     }
 
     /**
@@ -108,27 +96,48 @@ export class FeedbackModule {
      *
      * @param {number} id - Feedback record ID
      * @param {Object} [options={}] - Additional Prisma options
-     * @param {Object} [options.select] - Fields to select
-     * @param {Object} [options.include] - Relations to include
      * @returns {Promise<Object|null>} Feedback record or null if not found
-     *
-     * @example
-     * // Get basic feedback info
-     * const feedback = await feedbackModule.findById(1)
-     *
-     * // Get feedback with user info included
-     * const feedback = await feedbackModule.findById(1, {
-     *   include: { user: true }
-     * })
      */
     async findById(id, options = {}) {
         const result = await this.prisma.feedback.findUnique({
             where: { id },
-            ...options
+            ...options,
+            include: {
+                ...(options.include || {}),
+                replies: options.include?.replies !== false
+            }
         })
 
+        if (!result) return null
+
         // Decrypt sensitive fields in the result
-        return DbEncryptionHelper.decryptFields(result, this.sensitiveFields)
+        const decryptedResult = DbEncryptionHelper.decryptFields(result, this.sensitiveFields)
+
+        // If we have replies, decrypt those too
+        if (decryptedResult.replies) {
+            decryptedResult.replies = DbEncryptionHelper.processData(decryptedResult.replies, this.sensitiveFields)
+        }
+
+        return decryptedResult
+    }
+
+    /**
+     * Retrieves all feedback for a specific user
+     *
+     * @param {string|number} userId - Discord user ID
+     * @param {Object} [options={}] - Additional Prisma options
+     * @returns {Promise<Array>} Array of feedback records for the user
+     */
+    async findByUserId(userId, options = {}) {
+        return this.findMany({
+            where: { userId: BigInt(userId) },
+            orderBy: { createdAt: 'desc' },
+            ...options,
+            include: {
+                ...(options.include || {}),
+                replies: options.include?.replies !== false
+            }
+        })
     }
 
     /**
@@ -136,13 +145,92 @@ export class FeedbackModule {
      *
      * @param {number} id - Feedback record ID
      * @returns {Promise<Object>} The deleted feedback record
-     *
-     * @example
-     * await feedbackModule.delete(1)
      */
     async delete(id) {
         return this.prisma.feedback.delete({
             where: { id }
+        })
+    }
+
+    /**
+     * Updates the approval status of a feedback record
+     *
+     * @param {number} id - Feedback record ID
+     * @param {boolean} approved - New approval status
+     * @returns {Promise<Object>} The updated feedback record
+     */
+    async updateApproval(id, approved) {
+        return this.prisma.feedback.update({
+            where: { id },
+            data: { approved }
+        })
+    }
+
+    /**
+     * Updates the public status of a feedback record
+     *
+     * @param {number} id - Feedback record ID
+     * @param {boolean} public - New public status
+     * @returns {Promise<Object>} The updated feedback record
+     */
+    async updatePublicStatus(id, isPublic) {
+        return this.prisma.feedback.update({
+            where: { id },
+            data: { public: isPublic }
+        })
+    }
+
+    /**
+     * Adds a staff reply to a feedback
+     *
+     * @param {number} feedbackId - Feedback record ID
+     * @param {string|number} staffId - Staff Discord ID
+     * @param {string} message - Reply message content
+     * @returns {Promise<Object>} The created feedback reply
+     */
+    async addReply(feedbackId, staffId, message) {
+        // Encrypt message
+        const encryptedMessage = encryptionService.encrypt(message)
+
+        return this.prisma.feedbackReply.create({
+            data: {
+                feedbackId,
+                staffId: BigInt(staffId),
+                message: encryptedMessage
+            }
+        })
+    }
+
+    /**
+     * Get all feedback replies for a specific feedback
+     *
+     * @param {number} feedbackId - Feedback record ID
+     * @returns {Promise<Array>} Array of feedback replies
+     */
+    async getReplies(feedbackId) {
+        const replies = await this.prisma.feedbackReply.findMany({
+            where: { feedbackId },
+            orderBy: { createdAt: 'asc' }
+        })
+
+        // Decrypt reply messages
+        return DbEncryptionHelper.processData(replies, this.sensitiveFields)
+    }
+
+    /**
+     * Get all approved public feedback that can be used as testimonials
+     *
+     * @param {number} [limit=10] - Maximum number of testimonials to return
+     * @returns {Promise<Array>} Array of approved public feedback records
+     */
+    async getTestimonials(limit = 10) {
+        return this.findMany({
+            where: {
+                approved: true,
+                public: true
+            },
+            orderBy: { createdAt: 'desc' },
+            take: limit
         })
     }
 }
