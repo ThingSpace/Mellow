@@ -5,50 +5,21 @@
         "moduleResolution": "Node",
         "baseUrl": "./",
         "paths": {
-            "@/*": [
-                "./*"
-            ],
-            "@client/*": [
-                "src/class/client/*"
-            ],
-            "@classes/*": [
-                "src/class/*"
-            ],
-            "@configs/*": [
-                "src/configs/*"
-            ],
-            "@database/*": [
-                "src/prisma/prisma.client/*"
-            ],
-            "@filters/*": [
-                "src/filters/*"
-            ],
-            "@functions/*": [
-                "src/functions/*"
-            ],
-            "@handlers/*": [
-                "src/handlers/*"
-            ],
-            "@services/*": [
-                "src/services/*"
-            ],
-            "@commands/*": [
-                "src/commands/*"
-            ],
-            "@servers/*": [
-                "src/servers/*"
-            ],
+            "@/*": ["./*"],
+            "@client/*": ["src/class/client/*"],
+            "@classes/*": ["src/class/*"],
+            "@configs/*": ["src/configs/*"],
+            "@database/*": ["src/prisma/prisma.client/*"],
+            "@filters/*": ["src/filters/*"],
+            "@functions/*": ["src/functions/*"],
+            "@handlers/*": ["src/handlers/*"],
+            "@services/*": ["src/services/*"],
+            "@commands/*": ["src/commands/*"],
+            "@servers/*": ["src/servers/*"]
         },
         "allowSyntheticDefaultImports": true,
         "esModuleInterop": true
     },
-    "include": [
-        "src/**/*",
-        "jsconfig.json",
-        "package.json",
-        ".env"
-    ],
-    "exclude": [
-        "node_modules"
-    ]
+    "include": ["src/**/*", "jsconfig.json", "package.json", ".env"],
+    "exclude": ["node_modules"]
 }
