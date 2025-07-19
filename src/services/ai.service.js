@@ -1355,6 +1355,440 @@ Rules:
 
         return content
     }
+
+    /**
+     * Generate a response optimized for API usage with better error handling
+     * @param {Object} options - API response options
+     * @param {string} options.message - User's message
+     * @param {string|null} options.sessionId - Session ID for conversation threading
+     * @param {Object|null} options.userContext - User context data (name, preferences, etc)
+     * @param {string} options.source - Source of the request (e.g., 'api', 'discord')
+     * @returns {Promise<Object>} Response object with content and metadata
+     */
+    async generateApiResponse({ message, sessionId = null, userContext = null, source = 'api' }) {
+        const perfId = `api-resp-${Date.now()}`
+
+        try {
+            // Check if Mellow is enabled
+            const isEnabled = await this.isEnabled()
+            if (!isEnabled) {
+                return {
+                    content: "I'm sorry, Mellow AI is currently disabled. Please try again later.",
+                    error: 'AI_DISABLED',
+                    success: false
+                }
+            }
+
+            // Ensure we have fresh configuration
+            if (!this.config) {
+                await this.loadConfig()
+            }
+
+            this.performance.startTracking(perfId)
+
+            // Extract username from context for personalization
+            const username = userContext?.username || 'Anonymous User'
+
+            // Get personality setting from context or use default
+            const personality = userContext?.personality || 'gentle'
+
+            // Get chat history if we have a sessionId
+            let chatHistory = []
+            let threadHistory = []
+
+            if (sessionId) {
+                try {
+                    // Convert sessionId to numeric if it's a string
+                    const numericId = typeof sessionId === 'string' ? parseInt(sessionId, 10) : sessionId
+
+                    if (!isNaN(numericId)) {
+                        // Get thread history using sessionId
+                        threadHistory = await db.conversationHistory.getThread(numericId, 30)
+
+                        if (threadHistory && threadHistory.length > 0) {
+                            // Convert to the format expected by the AI
+                            chatHistory = threadHistory.map(msg => {
+                                // Extract actual content without metadata
+                                let cleanContent = msg.content
+                                const metaMatch = msg.content.match(/^\[META\](.*?)\[\/META\](.*)/s)
+                                if (metaMatch && metaMatch.length >= 3) {
+                                    cleanContent = metaMatch[2] // Get just the message content
+                                }
+
+                                return {
+                                    role: msg.isAiResponse ? 'assistant' : 'user',
+                                    content: cleanContent, // Use clean content for AI context
+                                    name: msg.metadata?.username || msg.user?.username || 'Anonymous User'
+                                }
+                            })
+                        }
+                    } else {
+                        log(`Invalid sessionId format: ${sessionId}`, 'warn')
+                    }
+                } catch (historyError) {
+                    log(`API: Failed to get session history: ${historyError.message}`, 'warn')
+                    // Continue without history
+                }
+            }
+
+            // Build prompt with API-specific instructions
+            let enhancedPrompt = this.config.systemPrompt
+
+            // Add personality-specific instructions
+            enhancedPrompt += this.getPersonalityInstructions(personality)
+
+            // Add user context if available
+            if (username && username !== 'Anonymous User') {
+                enhancedPrompt += `\n\n**User Context:**\nYou are speaking with ${username}. Refer to them by name occasionally.`
+            }
+
+            // Add any additional context from the userContext object
+            if (userContext) {
+                // Extract relevant info from context without revealing sensitive data
+                const safeContext = { ...userContext }
+                delete safeContext.password
+                delete safeContext.token
+                delete safeContext.email
+                delete safeContext.ip
+
+                // If there's useful context, add it to the prompt
+                if (Object.keys(safeContext).length > 1) {
+                    // More than just username
+                    enhancedPrompt += `\n\n**Additional Context:**\n`
+                    for (const [key, value] of Object.entries(safeContext)) {
+                        if (key !== 'username' && key !== 'personality' && value) {
+                            enhancedPrompt += `- ${key}: ${value}\n`
+                        }
+                    }
+                }
+            }
+
+            // Add API-specific instructions
+            enhancedPrompt += `\n\n**API Response Guidelines:**
+- This message is coming from an API request, not Discord.
+- Keep responses concise and straightforward.
+- Format text appropriately for display in various UI contexts.
+- Avoid references to Discord features.
+- Be helpful and informative while maintaining your supportive nature.
+- Ensure responses are complete without relying on previous context.
+- Craft responses that are useful even when seen in isolation.
+- Be sensitive to the possibility that messages might be shown on public websites.`
+
+            // Prepare messages array with enhanced prompt and chat history
+            const messages = [
+                { role: 'system', content: enhancedPrompt },
+                ...chatHistory,
+                { role: 'user', content: message, name: username }
+            ]
+
+            // Use a higher temperature for API responses to ensure variety
+            const apiTemp = Math.min(this.config.temperature + 0.1, 0.9)
+
+            // Generate the response with error handling
+            try {
+                const { text: fullResponse } = await generateText({
+                    model: this.model,
+                    messages,
+                    temperature: apiTemp,
+                    maxTokens: this.config.maxTokens,
+                    presencePenalty: this.config.presencePenalty + 0.1,
+                    frequencyPenalty: this.config.frequencyPenalty + 0.1
+                })
+
+                // Save conversation history
+                let newSessionId = sessionId
+                let userMsgId = null
+
+                try {
+                    // Prepare parent data if sessionId is provided and valid
+                    let parentData = {}
+                    if (sessionId && !isNaN(parseInt(sessionId))) {
+                        const numericId = parseInt(sessionId)
+                        if (numericId > 0 && numericId <= Number.MAX_SAFE_INTEGER) {
+                            parentData = {
+                                parent: {
+                                    connect: { id: numericId }
+                                }
+                            }
+                        }
+                    }
+
+                    // Save user message anonymously
+                    const userMsg = await db.conversationHistory.createAnonymous({
+                        content: message,
+                        isAiResponse: false,
+                        contextType: 'api',
+                        metadata: {
+                            username,
+                            source: 'api',
+                            ...(userContext || {})
+                        },
+                        ...parentData
+                    })
+
+                    userMsgId = userMsg.id
+                    newSessionId = userMsgId // Use the new message ID as session ID if none provided
+
+                    // Save AI response as a reply to the user message
+                    if (userMsgId) {
+                        await db.conversationHistory.createAnonymous({
+                            content: fullResponse,
+                            isAiResponse: true,
+                            contextType: 'api',
+                            metadata: {
+                                username,
+                                source: 'api',
+                                ...(userContext || {})
+                            },
+                            parent: {
+                                connect: { id: userMsgId }
+                            }
+                        })
+                    }
+                } catch (saveError) {
+                    log(`API: Failed to save message to database: ${saveError.message}`, 'error')
+                }
+
+                const duration = this.performance.endTracking(perfId)
+
+                // Return structured response with metadata and new sessionId
+                return {
+                    content: fullResponse,
+                    formattedContent: this.messageFormatting.formatForDiscord(fullResponse),
+                    success: true,
+                    metadata: {
+                        responseTime: duration || 0,
+                        tokensUsed: 0, // Provide a default value since we can't accurately measure tokens
+                        personality: personality,
+                        source: source,
+                        sessionId: (newSessionId || userMsgId || Date.now()).toString()
+                    }
+                }
+            } catch (aiError) {
+                log(`API response generation error: ${aiError.message}`, 'error')
+                return {
+                    content: "I'm sorry, I encountered an error processing your request. Please try again.",
+                    error: aiError.message,
+                    success: false
+                }
+            }
+        } catch (error) {
+            this.performance.recordError('api_response_generation')
+            log(`Error in generateApiResponse: ${error.message}`, 'error')
+            return {
+                content: "I apologize, but I'm experiencing technical difficulties. Please try again later.",
+                error: error.message,
+                success: false
+            }
+        } finally {
+            if (this.performance && typeof this.performance.endTracking === 'function') {
+                this.performance.endTracking(perfId)
+            }
+        }
+    }
+
+    /**
+     * Generate a streamed response for API clients
+     * Returns an async generator that yields content chunks
+     * @param {Object} options - Same options as generateApiResponse
+     * @yields {Object} Content chunks with metadata
+     */
+    async *generateResponseStream(options) {
+        const { message, sessionId, userContext, source = 'api' } = options
+        const perfId = `stream-${Date.now()}`
+
+        try {
+            if (this.performance && typeof this.performance.startTracking === 'function') {
+                this.performance.startTracking(perfId)
+            }
+
+            // Check if Mellow is enabled
+            const isEnabled = await this.isEnabled()
+            if (!isEnabled) {
+                yield {
+                    content: "I'm sorry, Mellow AI is currently disabled. Please try again later.",
+                    done: true,
+                    error: 'AI_DISABLED'
+                }
+                return
+            }
+
+            // Ensure configuration is loaded
+            if (!this.config) {
+                await this.loadConfig()
+            }
+
+            // Extract username and personality from context
+            const username = userContext?.username || 'Anonymous User'
+            const personality = userContext?.personality || 'gentle'
+
+            // Get chat history from session if available
+            let chatHistory = []
+            if (sessionId) {
+                try {
+                    // Convert sessionId to numeric if it's a string
+                    const numericId = typeof sessionId === 'string' ? parseInt(sessionId, 10) : sessionId
+
+                    if (!isNaN(numericId)) {
+                        const threadHistory = await db.conversationHistory.getThread(numericId, 20)
+                        if (threadHistory && threadHistory.length > 0) {
+                            chatHistory = threadHistory.map(msg => ({
+                                role: msg.isAiResponse ? 'assistant' : 'user',
+                                content: msg.content,
+                                name: msg.user?.username || 'Anonymous User'
+                            }))
+                        }
+                    } else {
+                        log(`Invalid sessionId format for streaming: ${sessionId}`, 'warn')
+                    }
+                } catch (error) {
+                    log(`API Stream: Failed to get session history: ${error.message}`, 'warn')
+                }
+            }
+
+            // Build enhanced prompt
+            let enhancedPrompt = this.config.systemPrompt
+            enhancedPrompt += this.getPersonalityInstructions(personality)
+
+            // Add user context if available
+            if (username && username !== 'Anonymous User') {
+                enhancedPrompt += `\n\n**User Context:**\nYou are speaking with ${username}. Refer to them by name occasionally.`
+            }
+
+            // Add API-specific instructions
+            enhancedPrompt += `\n\n**API Streaming Guidelines:**
+- This message is coming from an API request, not Discord.
+- The response will be streamed to the user in real-time.
+- Format text appropriately for progressive display.
+- Ensure the response is coherent even when read incrementally.
+- Be helpful and informative while maintaining your supportive nature.`
+
+            // Setup messages array
+            const messages = [
+                { role: 'system', content: enhancedPrompt },
+                ...chatHistory,
+                { role: 'user', content: message, name: username }
+            ]
+
+            // Save user message to history
+            let userMsgId = null
+            let newSessionId = sessionId
+
+            try {
+                // Prepare parent data if sessionId is provided
+                let parentData = {}
+                if (sessionId && !isNaN(parseInt(sessionId))) {
+                    const numericId = parseInt(sessionId)
+                    if (numericId > 0 && numericId <= Number.MAX_SAFE_INTEGER) {
+                        parentData = {
+                            parent: {
+                                connect: { id: numericId }
+                            }
+                        }
+                    }
+                }
+
+                // Save user message anonymously
+                const userMsg = await db.conversationHistory.createAnonymous({
+                    content: message,
+                    isAiResponse: false,
+                    contextType: 'api_stream',
+                    metadata: {
+                        username,
+                        source: 'api_stream',
+                        ...(userContext || {})
+                    },
+                    ...parentData
+                })
+
+                userMsgId = userMsg.id
+                if (!newSessionId) {
+                    newSessionId = userMsgId
+                }
+            } catch (error) {
+                log(`API Stream: Failed to save user message: ${error.message}`, 'error')
+            }
+
+            // Stream the response
+            let fullResponse = ''
+            try {
+                const streamingConfig = {
+                    model: this.model,
+                    messages,
+                    temperature: this.config.temperature,
+                    maxTokens: this.config.maxTokens,
+                    presencePenalty: this.config.presencePenalty,
+                    frequencyPenalty: this.config.frequencyPenalty
+                }
+
+                const stream = await generateText.stream(streamingConfig)
+
+                // Yield each chunk from the stream
+                for await (const chunk of stream) {
+                    fullResponse += chunk.text || ''
+                    yield {
+                        content: chunk.text || '',
+                        done: false
+                    }
+                }
+
+                // Save the complete response to history
+                if (userMsgId) {
+                    try {
+                        await db.conversationHistory.createAnonymous({
+                            content: fullResponse,
+                            isAiResponse: true,
+                            contextType: 'api_stream',
+                            metadata: {
+                                username,
+                                source: 'api_stream',
+                                ...(userContext || {})
+                            },
+                            parent: {
+                                connect: { id: userMsgId }
+                            }
+                        })
+                    } catch (error) {
+                        log(`API Stream: Failed to save AI response: ${error.message}`, 'error')
+                    }
+                }
+
+                // Calculate response time
+                let responseTime = null
+                if (this.performance && typeof this.performance.endTracking === 'function') {
+                    responseTime = this.performance.endTracking(perfId)
+                }
+
+                // Yield the final chunk with metadata
+                yield {
+                    content: '',
+                    done: true,
+                    responseTime,
+                    tokensUsed: 0,
+                    personality,
+                    sessionId: (newSessionId || userMsgId || Date.now()).toString()
+                }
+            } catch (error) {
+                log(`API Stream error: ${error.message}`, 'error')
+                yield {
+                    content: "\n\nI'm sorry, I encountered an error while generating a response. Please try again.",
+                    done: true,
+                    error: error.message
+                }
+            }
+        } catch (error) {
+            log(`Error in response stream generator: ${error.message}`, 'error')
+            yield {
+                content: "I apologize, but I'm experiencing technical difficulties. Please try again later.",
+                done: true,
+                error: error.message
+            }
+        } finally {
+            if (this.performance && typeof this.performance.endTracking === 'function') {
+                this.performance.endTracking(perfId)
+            }
+        }
+    }
 }
 
 export const aiService = new AIService()

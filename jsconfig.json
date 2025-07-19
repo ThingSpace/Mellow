@@ -5,24 +5,50 @@
         "moduleResolution": "Node",
         "baseUrl": "./",
         "paths": {
-            "@/*": ["./*"],
-            "@client/*": ["src/class/client/*"],
-            "@classes/*": ["src/class/*"],
-            "@configs/*": ["src/configs/*"],
-            "@database/*": ["src/prisma/prisma.client/*"],
-            "@filters/*": ["src/filters/*"],
-            "@functions/*": ["src/functions/*"],
-            "@handlers/*": ["src/handlers/*"]
+            "@/*": [
+                "./*"
+            ],
+            "@client/*": [
+                "src/class/client/*"
+            ],
+            "@classes/*": [
+                "src/class/*"
+            ],
+            "@configs/*": [
+                "src/configs/*"
+            ],
+            "@database/*": [
+                "src/prisma/prisma.client/*"
+            ],
+            "@filters/*": [
+                "src/filters/*"
+            ],
+            "@functions/*": [
+                "src/functions/*"
+            ],
+            "@handlers/*": [
+                "src/handlers/*"
+            ],
+            "@services/*": [
+                "src/services/*"
+            ],
+            "@commands/*": [
+                "src/commands/*"
+            ],
+            "@servers/*": [
+                "src/servers/*"
+            ],
         },
         "allowSyntheticDefaultImports": true,
         "esModuleInterop": true
     },
     "include": [
-        "src/**/*.js",
-        "src/commands/slash/guild/guilddebug.js",
-        "src/commands/private/owner/tools.js",
-        "ignored/debug.js",
-        "src/commands/private/owner/twitter.js"
+        "src/**/*",
+        "jsconfig.json",
+        "package.json",
+        ".env"
     ],
-    "exclude": ["node_modules"]
+    "exclude": [
+        "node_modules"
+    ]
 }

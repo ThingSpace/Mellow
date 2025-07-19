@@ -5,6 +5,58 @@ All notable changes to Mellow will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2025-07-25 - RESTful API Server Introduction
+
+### 🚀 New API Server
+
+- **Added**: Complete RESTful API server implementation with Elysia.js
+- **Added**: API endpoints for chat, check-ins, and health monitoring
+- **Added**: OpenAPI/Swagger documentation at `/docs` for API exploration
+- **Added**: Comprehensive session management and stateless authentication
+- **Added**: API-specific error handling and structured responses
+- **Added**: Server configuration with environment variable support
+- **Added**: Production-ready logging and error reporting
+- **Added**: Real-time streaming support for chat responses
+
+### 🔒 Rate Limiting & Security
+
+- **Added**: Comprehensive rate limiting system for all API routes
+- **Added**: Route-specific rate limits (60 req/min default, 20 req/min for chat, 5 req/hour for check-ins)
+- **Added**: Client IP tracking and management for rate limiting
+- **Added**: Proper rate limit headers (X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset)
+- **Enhanced**: Rate limit error responses with Retry-After headers and detailed messages
+- **Added**: Route-specific rate limit messages for better user guidance
+- **Improved**: Memory management with automatic cleanup of expired rate limit data
+
+### 💬 API Endpoints
+
+- **Added**: `/chat` endpoint for conversational AI interactions
+- **Added**: `/checkin` endpoint for mood tracking and mental health check-ins
+- **Added**: `/checkin/summary` endpoint for mood trend analysis
+- **Added**: Health check and status endpoints for monitoring
+- **Added**: Streaming API support for real-time responses
+- **Added**: Comprehensive endpoint documentation with usage examples
+
+### 📚 Documentation & Swagger
+
+- **Added**: Comprehensive API tags in Swagger documentation
+- **Enhanced**: Route descriptions and response schemas
+- **Fixed**: Swagger configuration for all API endpoints
+- **Added**: Better parameter descriptions for all routes
+- **Improved**: Error response documentation with status codes and schemas
+- **Enhanced**: Example requests and responses in API documentation
+
+### 🐛 Bug Fixes
+
+- **Fixed**: Chat API error with incorrect parameter format
+- **Fixed**: AI service syntax error in response generation
+- **Fixed**: Check-in route swagger documentation issues
+- **Fixed**: Session ID handling and validation throughout API routes
+- **Fixed**: Rate limiting implementation compatibility with Elysia
+- **Fixed**: AI service error handling and recovery
+
+---
+
 ## [1.4.0] - 2025-07-18 - Encryption Refinements & System Reliability Improvements
 
 ### 🔒 Enhanced Encryption System
