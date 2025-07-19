@@ -5,6 +5,68 @@ All notable changes to Mellow will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2025-07-18 - Encryption Refinements & System Reliability Improvements
+
+### 🔒 Enhanced Encryption System
+
+- **Refactored**: Complete encryption service rewrite with multiple salt/key support
+- **Added**: Layered decryption system to handle double-encrypted content automatically
+- **Fixed**: Decryption reliability issues with partial data or corrupted payloads
+- **Enhanced**: Depth-limited recursive decryption with cycle detection
+- **Added**: Support for both 3-part and 4-part encrypted payload formats
+- **Improved**: Tag length detection and handling for AES-GCM authentication tags
+
+### 🚨 Crisis Detection & Reporting Improvements
+
+- **Fixed**: Crisis detection now properly extracts encrypted details
+- **Enhanced**: Crisis alerts show decrypted content for better staff response
+- **Fixed**: Crisis history command correctly displays details data
+- **Improved**: Crisis event logging with more reliable data storage
+- **Enhanced**: Moderation alert system with properly decrypted message previews
+- **Fixed**: Crisis history view for administrators with proper formatting
+- **Added**: Better error handling for crisis detection and reporting
+
+### 💬 Feedback & Report System Updates
+
+- **Enhanced**: Feedback command properly displays encrypted content
+- **Added**: Feedback status tracking and display for users
+- **Improved**: Staff feedback management with decrypted content
+- **Fixed**: Report creation and viewing with properly managed sensitive data
+- **Enhanced**: User feedback history with proper decryption and display
+- **Improved**: Status tracking for user-submitted feedback and reports
+
+### 🛠️ Database Module Reliability Improvements
+
+- **Fixed**: Profile command now properly retrieves and displays encrypted data
+- **Enhanced**: Direct database module retrieval for consistent decryption
+- **Fixed**: Crisis events properly decrypted when displayed in history
+- **Improved**: Error handling and graceful fallbacks for database operations
+- **Fixed**: Relationship data properly decrypted in nested queries
+- **Added**: Fallback to direct Prisma queries when database modules are unavailable
+
+### 🐛 Critical Bug Fixes
+
+- **Fixed**: Ghost letter and journal entry decryption failures
+- **Fixed**: Crisis event details displaying as encrypted strings
+- **Fixed**: "Partial recovery" data incorrectly written to database
+- **Fixed**: User profile showing encrypted mood data instead of decrypted content
+- **Fixed**: "Cannot read properties of undefined" errors in decryption process
+- **Fixed**: Missing variable definition causing runtime errors in profile display
+- **Fixed**: Feedback and report commands accessing undefined database modules
+- **Fixed**: Crisis history displaying raw JSON instead of formatted data
+
+### 🔧 Technical Enhancements
+
+- **Added**: ENCRYPTION_SALT_LIST environment variable for key rotation
+- **Improved**: Encryption detection algorithm with more robust validation
+- **Enhanced**: JSON parsing for encrypted serialized objects
+- **Optimized**: Database module organization and method consistency
+- **Fixed**: Tag length handling for AES-GCM authentication tags
+- **Enhanced**: Database module error handling with better logging
+- **Fixed**: Database module findMany implementation for all sensitive data types
+
+---
+
 ## [1.3.3] - 2025-07-18
 
 ### 🔒 Data Privacy & Encryption Infrastructure

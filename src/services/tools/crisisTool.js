@@ -215,31 +215,37 @@ function identifyConcernAreas(result) {
 
 /**
  * Check if message requires immediate crisis intervention
- * Significantly more conservative approach to reduce false positives
+ * Less conservative approach to ensure crisis events are caught
  * @param {object} moderationResult - Enhanced moderation result
  * @returns {boolean} - Whether immediate intervention is needed
  */
 export function requiresImmediateIntervention(moderationResult) {
-    // Only intervene for truly critical situations with high confidence
-    if (moderationResult.crisisLevel === SEVERITY_LEVELS.CRITICAL && moderationResult.confidence !== 'low') {
+    // Intervene for critical situations
+    if (moderationResult.crisisLevel === SEVERITY_LEVELS.CRITICAL) {
         return true
     }
 
-    // Require very specific patterns for intervention on high-level cases
+    // Also intervene for high-level cases with supporting evidence
     if (
         moderationResult.crisisLevel === SEVERITY_LEVELS.HIGH &&
-        moderationResult.hasPatterns &&
-        moderationResult.keywordConfidence === 'high' &&
-        moderationResult.concernAreas?.some(area => area.area.includes('self-harm') && area.level === 'high')
+        (moderationResult.hasPatterns || moderationResult.hasKeywords)
     ) {
         return true
     }
 
-    // Only intervene on keyword patterns if they are immediate crisis patterns
+    // Intervene on keyword patterns for immediate crisis
     if (
         moderationResult.hasPatterns &&
-        moderationResult.keywordConfidence === 'high' &&
-        moderationResult.patterns?.immediate_crisis
+        (moderationResult.patterns?.immediate_crisis || moderationResult.patterns?.method_specific)
+    ) {
+        return true
+    }
+
+    // Consider direct self-harm keywords as requiring intervention
+    if (
+        moderationResult.hasKeywords &&
+        moderationResult.keywords?.self_harm_direct &&
+        moderationResult.keywords.self_harm_direct.length > 0
     ) {
         return true
     }
@@ -360,6 +366,7 @@ export function checkCrisisKeywords(message) {
             'end my life',
             'want to die',
             'suicide',
+            'suicidal',
             'self harm',
             'cut myself',
             'hurt myself',
@@ -367,7 +374,12 @@ export function checkCrisisKeywords(message) {
             'not worth living',
             'better off dead',
             'going to kill myself',
-            'planning to die'
+            'planning to die',
+            "don't want to be alive",
+            'want to be dead',
+            'rather be dead',
+            'take my own life',
+            'ending my life'
         ],
         // Violence against others
         violence_direct: [
@@ -388,7 +400,12 @@ export function checkCrisisKeywords(message) {
             'goodbye world',
             'this is the end',
             "can't go on anymore",
-            'ready to end it'
+            'ready to end it',
+            'last message',
+            "won't be here tomorrow",
+            'my final goodbye',
+            'no longer able to cope',
+            'too painful to continue'
         ]
     }
 
@@ -428,19 +445,26 @@ export function checkCrisisKeywords(message) {
     // Context-aware patterns that require specific crisis context
     const contextualPatterns = {
         self_harm_intent: [
-            /\b(want to|going to|might|will|plan to).{0,30}(kill myself|end my life|hurt myself|die tonight)\b/i,
-            /\b(thinking about|thoughts of).{0,20}(suicide|killing myself|ending it all|dying)\b/i,
-            /\b(can't|cannot).{0,20}(go on|take it anymore|live like this anymore)\b/i,
-            /\b(ready to|about to).{0,20}(kill myself|end my life|hurt myself)\b/i
+            /\b(want to|going to|might|will|plan to).{0,30}(kill myself|end my life|hurt myself|die tonight|end it all)\b/i,
+            /\b(thinking about|thoughts of).{0,20}(suicide|killing myself|ending it all|dying|hurting myself)\b/i,
+            /\b(can't|cannot|don't want to).{0,20}(go on|take it anymore|live like this|be here anymore|continue|keep going)\b/i,
+            /\b(ready to|about to|plan to|going to).{0,20}(kill myself|end my life|hurt myself|give up|end everything)\b/i,
+            /\bi (hate|don't want) (my life|to live|being alive|existing)\b/i,
+            /\bno (reason|point) (to live|in living|in continuing)\b/i
         ],
         immediate_crisis: [
-            /\b(tonight|today|right now|this moment).{0,30}(kill myself|end it|hurt myself|die)\b/i,
-            /\b(have a plan|ready to|about to).{0,20}(kill myself|end my life|hurt myself)\b/i,
-            /\b(goodbye|this is it|the end).{0,30}(everyone|world|life)\b/i
+            /\b(tonight|today|right now|this moment|soon).{0,30}(kill myself|end it|hurt myself|die|won't be here)\b/i,
+            /\b(have a plan|ready to|about to|prepared to).{0,20}(kill myself|end my life|hurt myself|die|leave forever)\b/i,
+            /\b(goodbye|this is it|the end|farewell|last time).{0,30}(everyone|world|life|forever)\b/i,
+            /\bi've (decided|made up my mind|chosen) to (end|kill|hurt)\b/i,
+            /\bthis (pain|suffering|misery) (ends|stops) (today|tonight|now|soon)\b/i
         ],
         method_specific: [
-            /\b(pills|rope|bridge|gun|knife).{0,30}(end it|kill myself|hurt myself)\b/i,
-            /\b(overdose|hanging|jumping|cutting).{0,20}(myself|tonight|today)\b/i
+            /\b(pills|rope|bridge|gun|knife|razor|blade).{0,30}(end it|kill myself|hurt myself|suicide|die)\b/i,
+            /\b(overdose|hanging|jumping|cutting|shooting).{0,20}(myself|tonight|today|now|soon)\b/i,
+            /\bi('ve| have) (the|my|a) (pills|rope|gun|knife|blade|razor|method)\b/i,
+            /\b(swallow|take|use) (all|these|the) pills\b/i,
+            /\bjump (off|from) (a|the) (bridge|building|roof|window|balcony)\b/i
         ]
     }
 
@@ -470,13 +494,13 @@ export function checkCrisisKeywords(message) {
     if (foundPatterns.immediate_crisis || foundPatterns.method_specific) {
         severity = 'critical'
         confidence = 'high'
-    } else if (foundPatterns.self_harm_intent || foundKeywords.self_harm_direct) {
+    } else if (foundPatterns.self_harm_intent || Object.keys(foundKeywords.self_harm_direct || {}).length > 0) {
         severity = 'high'
         confidence = 'medium'
-    } else if (foundKeywords.violence_direct) {
+    } else if (Object.keys(foundKeywords.violence_direct || {}).length > 0) {
         severity = 'medium'
         confidence = 'medium'
-    } else if (foundKeywords.immediate_danger) {
+    } else if (Object.keys(foundKeywords.immediate_danger || {}).length > 0) {
         severity = 'medium'
         confidence = 'low'
     }
@@ -510,17 +534,36 @@ export async function logCrisisEvent(userId, analysis, message, db) {
             escalated: analysis.crisisLevel === 'critical' || analysis.severity === 'high'
         }
 
+        // Log for debugging
+        console.log(`Logging crisis event for user ${userId}: ${details.severity} severity`)
+
+        // Create the crisis event with the CrisisEvent module
         const crisisEvent = await db.crisisEvents.create({
-            userId: BigInt(userId),
+            userId: userId,
             details: JSON.stringify(details),
             escalated: details.escalated
         })
 
-        console.log(`Crisis event logged for user ${userId}: ${details.severity} severity`)
         return crisisEvent
     } catch (error) {
         console.error('Failed to log crisis event:', error)
-        throw error
+        // Try a more direct approach if the module approach fails
+        try {
+            return await db.prisma.crisisEvent.create({
+                data: {
+                    userId: BigInt(userId),
+                    details: JSON.stringify({
+                        severity: analysis.crisisLevel || 'unknown',
+                        supportLevel: analysis.supportLevel || 'unknown',
+                        messagePreview: message.substring(0, 200) + (message.length > 200 ? '...' : '')
+                    }),
+                    escalated: analysis.crisisLevel === 'critical'
+                }
+            })
+        } catch (fallbackError) {
+            console.error('Fallback crisis event logging also failed:', fallbackError)
+            return null
+        }
     }
 }
 
@@ -533,14 +576,26 @@ export async function logCrisisEvent(userId, analysis, message, db) {
  */
 export async function getRecentCrisisEvents(userId, db, limit = 5) {
     try {
+        // Try using the module method first
         return await db.crisisEvents.findMany({
             where: { userId: BigInt(userId) },
             orderBy: { detectedAt: 'desc' },
             take: limit
         })
     } catch (error) {
-        console.error('Failed to get crisis events:', error)
-        return []
+        console.error('Failed to get crisis events through module:', error)
+        // Fallback to direct Prisma query
+        try {
+            const events = await db.prisma.crisisEvent.findMany({
+                where: { userId: BigInt(userId) },
+                orderBy: { detectedAt: 'desc' },
+                take: limit
+            })
+            return events
+        } catch (fallbackError) {
+            console.error('Fallback crisis events query also failed:', fallbackError)
+            return []
+        }
     }
 }
 
@@ -563,10 +618,6 @@ export async function sendModeratorAlert(guildId, userId, analysis, message, cli
             return false
         }
 
-        // Get user info
-        const user = await db.users.findById(userId)
-        const username = user?.username || 'Unknown User'
-
         // Get alert channel - used for crisis alerts and serious moderation events
         const alertChannelId = guild.modAlertChannelId
         if (!alertChannelId) {
@@ -578,6 +629,15 @@ export async function sendModeratorAlert(guildId, userId, analysis, message, cli
         if (!channel) {
             console.error(`Crisis alert channel not found: ${alertChannelId}`)
             return false
+        }
+
+        // Get user info
+        let username = 'Unknown User'
+        try {
+            const user = await client.users.fetch(userId)
+            username = user.username
+        } catch (error) {
+            console.warn(`Could not fetch username for user ID ${userId}`)
         }
 
         // Create alert embed
@@ -610,7 +670,11 @@ export async function sendModeratorAlert(guildId, userId, analysis, message, cli
 
         // Add concern areas if any
         if (analysis.concernAreas && analysis.concernAreas.length > 0) {
-            const concerns = analysis.concernAreas.map(area => `${area.area} (${area.level})`).join(', ')
+            const concerns = analysis.concernAreas
+                .slice(0, 3)
+                .map(area => `${area.area} (${area.level})`)
+                .join(', ')
+
             embed.fields.push({
                 name: 'Areas of Concern',
                 value: concerns,
@@ -622,8 +686,8 @@ export async function sendModeratorAlert(guildId, userId, analysis, message, cli
         const recentEvents = await getRecentCrisisEvents(userId, db, 3)
         if (recentEvents.length > 0) {
             embed.fields.push({
-                name: 'Recent Crisis Events',
-                value: `${recentEvents.length} events in the last 30 days`,
+                name: 'Recent History',
+                value: `This user has had ${recentEvents.length} crisis events recently.`,
                 inline: true
             })
         }
@@ -733,7 +797,7 @@ What would be most helpful for you right now - talking through what's going on, 
  */
 export async function getCrisisStats(userId, db) {
     try {
-        const allEvents = await db.crisisEvents.findMany({
+        const allEvents = await db.crisisEventss.findMany({
             where: { userId: BigInt(userId) },
             orderBy: { detectedAt: 'desc' },
             take: 100
@@ -781,68 +845,36 @@ export async function checkCrisisDetectionSettings(userId, guildId, db) {
         // Get user preferences with more detailed settings
         const userPreferences = await db.userPreferences.findById(userId)
 
-        // Check various user opt-out settings
-        const userOptedOut =
-            userPreferences?.disableCrisisDetection ||
-            userPreferences?.disableAIAnalysis ||
-            userPreferences?.privacyMode === 'maximum' ||
-            false
+        // Default is enabled
+        let enabled = true
 
-        // Check if user has disabled all AI features
-        const aiDisabled = userPreferences?.disableAIFeatures || false
+        // Check user preferences first - user can opt out
+        if (userPreferences?.disableCrisisDetection) {
+            enabled = false
+        }
 
-        // For DMs, only check user preferences
-        if (!guildId || guildId === 'DM') {
-            return {
-                enabled: !userOptedOut && !aiDisabled,
-                reason: userOptedOut
-                    ? 'User has opted out of crisis detection'
-                    : aiDisabled
-                      ? 'User has disabled AI features'
-                      : 'Enabled for DMs',
-                guildAlertsEnabled: false,
-                userOptedOut,
-                aiDisabled
+        // For guild messages, also check guild settings
+        if (enabled && guildId && guildId !== 'DM') {
+            try {
+                const guild = await db.guilds.findById(guildId)
+                if (guild && !guild.enableCrisisAlerts) {
+                    enabled = false
+                }
+            } catch (error) {
+                console.error(`Error checking guild settings: ${error.message}`)
+                // Default to enabled if we can't check guild settings
             }
         }
 
-        // Get guild settings
-        const guild = await db.guilds.findById(guildId)
-        const guildCrisisEnabled = guild?.enableCrisisAlerts !== false
-        const guildAIEnabled = guild?.disableAIFeatures !== true
-
-        // Check if guild has sensitivity settings
-        const guildSensitivity = guild?.crisisDetectionSensitivity || 'medium'
-        const allowLowConfidence = guildSensitivity === 'high'
-
         return {
-            enabled: !userOptedOut && !aiDisabled && guildCrisisEnabled && guildAIEnabled,
-            reason: userOptedOut
-                ? 'User has opted out of crisis detection'
-                : aiDisabled
-                  ? 'User has disabled AI features'
-                  : !guildCrisisEnabled
-                    ? 'Guild has disabled crisis alerts'
-                    : !guildAIEnabled
-                      ? 'Guild has disabled AI features'
-                      : 'Enabled',
-            guildAlertsEnabled: guildCrisisEnabled,
-            userOptedOut,
-            aiDisabled,
-            guildSensitivity,
-            allowLowConfidence
+            enabled,
+            userPreferences: !!userPreferences,
+            guildEnabled: guildId !== 'DM'
         }
     } catch (error) {
-        console.error('Error checking crisis detection settings:', error)
-        // Default to disabled for safety (changed from enabled)
-        return {
-            enabled: false,
-            reason: 'Settings check failed - defaulting to disabled for privacy',
-            guildAlertsEnabled: false,
-            userOptedOut: false,
-            aiDisabled: false,
-            error: true
-        }
+        console.error(`Error checking crisis detection settings: ${error.message}`)
+        // Default to enabled for safety if we can't check settings
+        return { enabled: true }
     }
 }
 
@@ -864,7 +896,7 @@ export async function canReceiveSupportDMs(userId, db) {
 }
 
 /**
- * Comprehensive crisis management function with enhanced privacy controls and reduced sensitivity
+ * Comprehensive crisis management function with enhanced detection
  * @param {string} userId - Discord user ID
  * @param {string} guildId - Discord guild ID
  * @param {string} message - User's message
@@ -888,7 +920,7 @@ export async function handleCrisis(userId, guildId, message, client, db) {
             }
         }
 
-        // Perform initial keyword screening to avoid unnecessary AI calls
+        // Perform initial keyword screening
         const keywordCheck = checkCrisisKeywords(message)
 
         // If generic help request was detected, skip entirely
@@ -903,20 +935,31 @@ export async function handleCrisis(userId, guildId, message, client, db) {
             }
         }
 
-        // Only proceed with AI analysis if we have specific crisis indicators OR guild allows low confidence
-        if (!keywordCheck.hasKeywords && !keywordCheck.hasPatterns && !crisisSettings.allowLowConfidence) {
-            console.log(`No specific crisis indicators found for user ${userId}, skipping AI analysis`)
-            return {
-                crisisEvent: null,
-                analysis: { crisisLevel: 'low', reason: 'No specific crisis indicators' },
-                actions: { logged: false, modAlertSent: false, dmSent: false, requiresImmediate: false },
-                stats: await getCrisisStats(userId, db),
-                response: { immediate: false, message: '', resources: [] }
-            }
+        // Always proceed with AI analysis if we have any keywords or patterns
+        const proceedWithAI = keywordCheck.hasKeywords || keywordCheck.hasPatterns || crisisSettings.allowLowConfidence
+
+        let analysis = {
+            crisisLevel: keywordCheck.severity,
+            supportLevel:
+                keywordCheck.severity === 'critical'
+                    ? 'critical'
+                    : keywordCheck.severity === 'high'
+                      ? 'high'
+                      : keywordCheck.severity === 'medium'
+                        ? 'medium'
+                        : 'low',
+            confidence: keywordCheck.confidence
         }
 
-        // Analyze the message with AI (only if we have indicators or guild allows it)
-        const analysis = await analyzeMessageContent(message)
+        // Analyze with AI if needed
+        if (proceedWithAI) {
+            try {
+                analysis = await analyzeMessageContent(message)
+            } catch (error) {
+                console.error('AI analysis failed, using keyword results:', error)
+                // Continue with keyword results
+            }
+        }
 
         // Enhanced analysis combining AI and keyword detection
         const combinedAnalysis = {
@@ -926,55 +969,55 @@ export async function handleCrisis(userId, guildId, message, client, db) {
             keywords: keywordCheck.keywords,
             patterns: keywordCheck.patterns,
             keywordConfidence: keywordCheck.confidence,
-            // Escalate crisis level based on keyword analysis but be conservative
+            // Use the highest severity from either method
             crisisLevel:
-                keywordCheck.confidence === 'high' && keywordCheck.severity === 'critical'
+                keywordCheck.severity === 'critical' || analysis.crisisLevel === 'critical'
                     ? 'critical'
-                    : keywordCheck.confidence === 'high' && keywordCheck.severity === 'high'
+                    : keywordCheck.severity === 'high' || analysis.crisisLevel === 'high'
                       ? 'high'
-                      : keywordCheck.confidence === 'medium' && keywordCheck.severity === 'high'
+                      : keywordCheck.severity === 'medium' || analysis.crisisLevel === 'medium'
                         ? 'medium'
-                        : analysis.crisisLevel
+                        : 'low'
         }
 
-        // Much more conservative intervention logic
-        const needsIntervention =
-            requiresImmediateIntervention(combinedAnalysis) &&
-            (keywordCheck.confidence === 'high' || combinedAnalysis.crisisLevel === 'critical')
+        // More reasonable intervention logic
+        const needsIntervention = requiresImmediateIntervention(combinedAnalysis)
 
-        if (!needsIntervention) {
-            console.log(
-                `No crisis intervention needed for user ${userId} - confidence: ${keywordCheck.confidence}, level: ${combinedAnalysis.crisisLevel}`
-            )
-            return {
-                crisisEvent: null,
-                analysis: combinedAnalysis,
-                actions: { logged: false, modAlertSent: false, dmSent: false, requiresImmediate: false },
-                stats: await getCrisisStats(userId, db),
-                response: { immediate: false, message: '', resources: [] }
+        // Always log for medium or higher severity
+        const shouldLog =
+            needsIntervention ||
+            combinedAnalysis.crisisLevel === 'critical' ||
+            combinedAnalysis.crisisLevel === 'high' ||
+            combinedAnalysis.crisisLevel === 'medium'
+
+        let crisisEvent = null
+        if (shouldLog) {
+            crisisEvent = await logCrisisEvent(userId, combinedAnalysis, message, db)
+
+            // Log to system logger
+            if (client.systemLogger) {
+                await client.systemLogger.logCrisisEvent(
+                    userId,
+                    guildId,
+                    combinedAnalysis.crisisLevel,
+                    needsIntervention
+                )
             }
-        }
-
-        // Log the crisis event only if intervention is needed
-        const crisisEvent = await logCrisisEvent(userId, combinedAnalysis, message, db)
-
-        // Log to system logger
-        if (client.systemLogger) {
-            await client.systemLogger.logCrisisEvent(userId, guildId, combinedAnalysis.crisisLevel, true)
         }
 
         // Determine actions based on severity and settings
         const actions = {
-            logged: true,
+            logged: shouldLog,
             modAlertSent: false,
             dmSent: false,
-            requiresImmediate: requiresImmediateIntervention(combinedAnalysis)
+            requiresImmediate: needsIntervention
         }
 
-        // Send moderator alert only for critical/high severity with high confidence
+        // Send moderator alert for medium or higher severity with notification-worthy content
         if (
             (combinedAnalysis.crisisLevel === 'critical' ||
-                (combinedAnalysis.crisisLevel === 'high' && keywordCheck.confidence === 'high')) &&
+                combinedAnalysis.crisisLevel === 'high' ||
+                (combinedAnalysis.crisisLevel === 'medium' && needsIntervention)) &&
             crisisSettings.guildAlertsEnabled &&
             guildId !== 'DM'
         ) {
@@ -983,8 +1026,7 @@ export async function handleCrisis(userId, guildId, message, client, db) {
 
         // Send supportive DM only for high/critical severity if user allows support DMs
         if (
-            (combinedAnalysis.crisisLevel === 'critical' ||
-                (combinedAnalysis.crisisLevel === 'high' && keywordCheck.confidence === 'high')) &&
+            (combinedAnalysis.crisisLevel === 'critical' || combinedAnalysis.crisisLevel === 'high') &&
             (await canReceiveSupportDMs(userId, db))
         ) {
             actions.dmSent = await sendSupportiveDM(userId, combinedAnalysis, client, db)

@@ -93,19 +93,19 @@ model Guild {
 }
 
 model ConversationHistory {
-    id            Int      @id @default(autoincrement())
-    user          User     @relation(fields: [userId], references: [id])
-    userId        BigInt
-    content       String
-    isAiResponse  Boolean
-    timestamp     DateTime @default(now())
-    channelId     String?
-    guildId       String?
-    messageId     String?
-    contextType   String   @default("conversation")
-    parentId      Int?
-    parent        ConversationHistory? @relation("ConversationThread", fields: [parentId], references: [id])
-    replies       ConversationHistory[] @relation("ConversationThread")
+    id           Int                   @id @default(autoincrement())
+    user         User                  @relation(fields: [userId], references: [id])
+    userId       BigInt
+    content      String
+    isAiResponse Boolean
+    timestamp    DateTime              @default(now())
+    channelId    String?
+    guildId      String?
+    messageId    String?
+    contextType  String                @default("conversation")
+    parentId     Int?
+    parent       ConversationHistory?  @relation("ConversationThread", fields: [parentId], references: [id])
+    replies      ConversationHistory[] @relation("ConversationThread")
 
     @@index([userId, timestamp])
     @@index([channelId, timestamp])
@@ -206,23 +206,52 @@ model UserPreferences {
 }
 
 model Feedback {
-    id        Int      @id @default(autoincrement())
-    user      User?    @relation(fields: [userId], references: [id])
+    id        Int             @id @default(autoincrement())
+    user      User?           @relation(fields: [userId], references: [id])
     userId    BigInt?
     message   String
-    createdAt DateTime @default(now())
+    createdAt DateTime        @default(now())
+    approved  Boolean         @default(false)
+    public    Boolean         @default(false)
+    replies   FeedbackReply[]
 
     @@index([userId, createdAt])
+    @@index([approved, public])
+}
+
+model FeedbackReply {
+    id         Int      @id @default(autoincrement())
+    feedback   Feedback @relation(fields: [feedbackId], references: [id], onDelete: Cascade)
+    feedbackId Int
+    staffId    BigInt?
+    message    String
+    createdAt  DateTime @default(now())
+
+    @@index([feedbackId, createdAt])
 }
 
 model Report {
-    id        Int      @id @default(autoincrement())
-    user      User?    @relation(fields: [userId], references: [id])
+    id        Int           @id @default(autoincrement())
+    user      User?         @relation(fields: [userId], references: [id])
     userId    BigInt?
+    message   String
+    createdAt DateTime      @default(now())
+    status    String        @default("open") // open, investigating, resolved, closed
+    replies   ReportReply[]
+
+    @@index([userId, createdAt])
+    @@index([status, createdAt])
+}
+
+model ReportReply {
+    id        Int      @id @default(autoincrement())
+    report    Report   @relation(fields: [reportId], references: [id], onDelete: Cascade)
+    reportId  Int
+    staffId   BigInt?
     message   String
     createdAt DateTime @default(now())
 
-    @@index([userId, createdAt])
+    @@index([reportId, createdAt])
 }
 
 model JournalEntry {
@@ -270,19 +299,19 @@ model FavoriteCopingTool {
 
 model SystemLog {
     id          Int      @id @default(autoincrement())
-    guildId     BigInt?  // Null for global logs (e.g., bot startup)
-    userId      BigInt?  // User associated with the log event (if applicable)
-    logType     String   // command, crisis, moderation, system, user, support, startup, error
-    title       String   // Log event title
-    description String?  // Detailed description
-    metadata    String?  // JSON metadata for additional context
+    guildId     BigInt? // Null for global logs (e.g., bot startup)
+    userId      BigInt? // User associated with the log event (if applicable)
+    logType     String // command, crisis, moderation, system, user, support, startup, error
+    title       String // Log event title
+    description String? // Detailed description
+    metadata    String? // JSON metadata for additional context
     severity    String   @default("info") // info, warning, error, critical
     createdAt   DateTime @default(now())
-    
+
     // Relations
-    guild       Guild?   @relation(fields: [guildId], references: [id])
-    user        User?    @relation(fields: [userId], references: [id])
-    
+    guild Guild? @relation(fields: [guildId], references: [id])
+    user  User?  @relation(fields: [userId], references: [id])
+
     @@index([guildId, logType, createdAt])
     @@index([userId, logType, createdAt])
     @@index([logType, createdAt])

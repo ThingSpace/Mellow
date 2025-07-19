@@ -52,9 +52,21 @@ export default {
             await logMessageForContext(message, client)
 
             // 1. CRISIS ANALYSIS - Always run for all messages
+            // Add detailed debug logging
+            console.log(`Running crisis analysis for message from ${message.author.username}`)
             const crisisResult = await handleMessageCrisis(message, client)
-            if (crisisResult?.needsSupport && crisisResult.response?.modAlert) {
-                await sendCrisisModAlert(message, crisisResult.analysis, client)
+
+            // Log the result of crisis analysis
+            if (crisisResult) {
+                console.log(
+                    `Crisis analysis complete: needsSupport=${crisisResult.needsSupport}, level=${crisisResult.analysis?.crisisLevel}`
+                )
+
+                // Handle moderator alerts
+                if (crisisResult.needsSupport && crisisResult.response?.modAlert) {
+                    console.log(`Sending crisis mod alert for ${message.author.username}`)
+                    await sendCrisisModAlert(message, crisisResult.analysis, client)
+                }
             }
 
             // 2. MODERATION - Only for guild messages
