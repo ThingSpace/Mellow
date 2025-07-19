@@ -170,13 +170,27 @@ export class FeedbackModule {
      * Updates the public status of a feedback record
      *
      * @param {number} id - Feedback record ID
-     * @param {boolean} public - New public status
+     * @param {boolean} isPublic - New public status
      * @returns {Promise<Object>} The updated feedback record
      */
     async updatePublicStatus(id, isPublic) {
         return this.prisma.feedback.update({
             where: { id },
             data: { public: isPublic }
+        })
+    }
+
+    /**
+     * Updates the featured status of a feedback record
+     *
+     * @param {number} id - Feedback record ID
+     * @param {boolean} featured - New featured status
+     * @returns {Promise<Object>} The updated feedback record
+     */
+    async updateFeaturedStatus(id, featured) {
+        return this.prisma.feedback.update({
+            where: { id },
+            data: { featured }
         })
     }
 

@@ -6,7 +6,7 @@ export class MessageHistoryTool {
     async saveMessage(userId, messageContent, isAiResponse = false, context = {}) {
         if (!userId) {
             console.error('No userId provided to saveMessage')
-            return
+            return null // Return null if no userId
         }
 
         try {
@@ -17,7 +17,8 @@ export class MessageHistoryTool {
                 ...context // Include channelId, guildId, messageId, etc.
             }
 
-            await this.db.conversationHistory.create(userId, data)
+            // Return the created message so we can access its ID
+            return await this.db.conversationHistory.create(userId, data)
         } catch (error) {
             console.error('Failed to save message history:', error)
             throw error

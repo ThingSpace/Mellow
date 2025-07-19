@@ -461,6 +461,18 @@ export class VersionHandler {
     }
 
     /**
+     * Get the current version string
+     * @returns {string} Current version (e.g., "1.4.0")
+     */
+    getCurrentVersion() {
+        if (!this.github) {
+            return '1.4.0'
+        }
+
+        return this.github.getCurrentVersion()
+    }
+
+    /**
      * Compare versions (semver)
      * @param {string} v1 First version
      * @param {string} v2 Second version

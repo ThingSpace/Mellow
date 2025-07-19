@@ -438,6 +438,69 @@ export class SystemLogger {
     }
 
     /**
+     * Log API interactions for tracking usage
+     * @param {string} userId - User ID or 'anonymous'
+     * @param {string} endpoint - API endpoint that was accessed
+     * @param {Object} details - Additional details about the interaction
+     */
+    async logAPIInteraction(userId, endpoint, details = {}) {
+        if (!this.enabled) return
+
+        const embed = new this.client.Gateway.EmbedBuilder()
+            .setTitle('🔌 API Interaction')
+            .setColor(this.client.colors.primary)
+            .addFields(
+                {
+                    name: 'User',
+                    value: userId !== 'anonymous' ? `<@${userId}>` : 'Anonymous',
+                    inline: true
+                },
+                {
+                    name: 'Endpoint',
+                    value: endpoint,
+                    inline: true
+                },
+                {
+                    name: 'Timestamp',
+                    value: new Date().toISOString(),
+                    inline: true
+                }
+            )
+            .setTimestamp()
+            .setFooter({ text: this.client.footer, iconURL: this.client.logo })
+
+        // Add details if present
+        if (Object.keys(details).length > 0) {
+            embed.addFields({
+                name: 'Details',
+                value: '```json\n' + JSON.stringify(details, null, 2) + '\n```',
+                inline: false
+            })
+        }
+
+        // Log to database
+        await this.logToDatabase('api', 'API Interaction', `API endpoint '${endpoint}' accessed`, {
+            userId: userId !== 'anonymous' ? userId : null,
+            metadata: {
+                endpoint,
+                ...details
+            },
+            severity: 'info'
+        })
+
+        // Only send to channels for important or error-related API calls
+        if (details.error || endpoint.includes('admin') || endpoint === 'chat') {
+            await this.sendToChannels(embed, {
+                logType: 'api',
+                supportOnly: true
+            })
+        }
+
+        // Also log to console for debugging
+        log(`API [${endpoint}] accessed by ${userId || 'anonymous'}`, 'debug')
+    }
+
+    /**
      * Log support requests from guilds
      */
     async logSupportRequest(guildId, guildName, userId, username, severity, issue, contact, hasAdminPerms) {

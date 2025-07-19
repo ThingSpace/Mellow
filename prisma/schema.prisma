@@ -106,6 +106,7 @@ model ConversationHistory {
     parentId     Int?
     parent       ConversationHistory?  @relation("ConversationThread", fields: [parentId], references: [id])
     replies      ConversationHistory[] @relation("ConversationThread")
+    metadataJson Json?                 @map("metadata")
 
     @@index([userId, timestamp])
     @@index([channelId, timestamp])
@@ -211,6 +212,7 @@ model Feedback {
     userId    BigInt?
     message   String
     createdAt DateTime        @default(now())
+    featured  Boolean         @default(false)
     approved  Boolean         @default(false)
     public    Boolean         @default(false)
     replies   FeedbackReply[]
@@ -323,5 +325,6 @@ enum Role {
     ADMIN
     MOD
     SUPPORT
+    SYSTEM
     USER
 }

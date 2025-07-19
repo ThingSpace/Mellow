@@ -85,6 +85,12 @@ export default {
                         description: 'Make this feedback available as a public testimonial',
                         required: false,
                         type: cmdTypes.BOOLEAN
+                    },
+                    {
+                        name: 'featured',
+                        description: 'Feature this testimonial on the website',
+                        required: false,
+                        type: cmdTypes.BOOLEAN
                     }
                 ]
             },
@@ -111,6 +117,25 @@ export default {
                         description: 'Feedback ID to delete',
                         required: true,
                         type: cmdTypes.INTEGER
+                    }
+                ]
+            },
+            {
+                name: 'feature',
+                description: 'Mark/unmark feedback as featured',
+                type: 1, // SUB_COMMAND
+                options: [
+                    {
+                        name: 'id',
+                        description: 'Feedback ID to update',
+                        required: true,
+                        type: cmdTypes.INTEGER
+                    },
+                    {
+                        name: 'featured',
+                        description: 'Whether to feature this testimonial',
+                        required: true,
+                        type: cmdTypes.BOOLEAN
                     }
                 ]
             }
@@ -217,7 +242,7 @@ export default {
                             },
                             {
                                 name: 'Status',
-                                value: `${feedback.approved ? '✅ Approved' : '⏳ Pending Review'} ${feedback.public ? '🌐 Public' : '🔒 Private'}`,
+                                value: `${feedback.approved ? '✅ Approved' : '⏳ Pending Review'} ${feedback.public ? '🌐 Public' : '🔒 Private'} ${feedback.featured ? '⭐ Featured' : ''}`,
                                 inline: true
                             }
                         )
@@ -244,6 +269,16 @@ export default {
                         .setStyle(client.Gateway.ButtonStyle.Success)
                         .setDisabled(feedback.approved)
 
+                    const featureButton = new client.Gateway.ButtonBuilder()
+                        .setCustomId(`feedback_feature_${feedback.id}`)
+                        .setLabel(feedback.featured ? 'Unfeature' : 'Feature')
+                        .setStyle(
+                            feedback.featured
+                                ? client.Gateway.ButtonStyle.Secondary
+                                : client.Gateway.ButtonStyle.Primary
+                        )
+                        .setDisabled(!feedback.approved || !feedback.public)
+
                     const replyButton = new client.Gateway.ButtonBuilder()
                         .setCustomId(`feedback_reply_${feedback.id}`)
                         .setLabel('Reply')
@@ -256,6 +291,7 @@ export default {
 
                     const row = new client.Gateway.ActionRowBuilder().addComponents(
                         approveButton,
+                        featureButton,
                         replyButton,
                         deleteButton
                     )
@@ -326,6 +362,7 @@ export default {
                 case 'approve': {
                     const feedbackId = interaction.options.getInteger('id')
                     const makePublic = interaction.options.getBoolean('public')
+                    const makeFeatured = interaction.options.getBoolean('featured')
 
                     // Check if feedback exists
                     const feedback = await client.db.feedback.findById(feedbackId)
@@ -341,18 +378,23 @@ export default {
                         await client.db.feedback.updatePublicStatus(feedbackId, makePublic)
                     }
 
+                    // Update featured status if specified
+                    if (makeFeatured !== null) {
+                        await client.db.feedback.updateFeaturedStatus(feedbackId, makeFeatured)
+                    }
+
                     // Log the approval
                     if (client.systemLogger) {
                         await client.systemLogger.logUserEvent(
                             staffId,
                             interaction.user.username,
                             'feedback_approved',
-                            `Staff approved feedback #${feedbackId}${makePublic ? ' (public testimonial)' : ''}`
+                            `Staff approved feedback #${feedbackId}${makePublic ? ' (public testimonial)' : ''}${makeFeatured ? ' (featured)' : ''}`
                         )
                     }
 
                     return interaction.editReply(
-                        `✅ Feedback #${feedbackId} has been approved${makePublic ? ' and marked as a public testimonial' : ''}!`
+                        `✅ Feedback #${feedbackId} has been approved${makePublic ? ' and marked as a public testimonial' : ''}${makeFeatured ? ' and featured on the website' : ''}!`
                     )
                 }
 
@@ -409,6 +451,41 @@ export default {
                         content: `⚠️ Are you sure you want to delete feedback #${feedbackId}? This cannot be undone.`,
                         components: [row]
                     })
+                }
+
+                case 'feature': {
+                    const feedbackId = interaction.options.getInteger('id')
+                    const setFeatured = interaction.options.getBoolean('featured')
+
+                    // Check if feedback exists
+                    const feedback = await client.db.feedback.findById(feedbackId)
+                    if (!feedback) {
+                        return interaction.editReply('❌ Feedback not found. Please check the ID and try again.')
+                    }
+
+                    // Check if the feedback is approved and public
+                    if (!feedback.approved || !feedback.public) {
+                        return interaction.editReply(
+                            '❌ Only approved and public feedback can be featured. Please approve and make it public first.'
+                        )
+                    }
+
+                    // Update featured status
+                    await client.db.feedback.updateFeaturedStatus(feedbackId, setFeatured)
+
+                    // Log the action
+                    if (client.systemLogger) {
+                        await client.systemLogger.logUserEvent(
+                            staffId,
+                            interaction.user.username,
+                            setFeatured ? 'feedback_featured' : 'feedback_unfeatured',
+                            `Staff ${setFeatured ? 'featured' : 'unfeatured'} feedback #${feedbackId}`
+                        )
+                    }
+
+                    return interaction.editReply(
+                        `✅ Feedback #${feedbackId} has been ${setFeatured ? 'featured' : 'unfeatured'} successfully!`
+                    )
                 }
             }
         } catch (error) {

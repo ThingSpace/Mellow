@@ -61,3 +61,5 @@ next-env.d.ts
 
 # Bun environment
 bun.lock
+docs
+docs/**

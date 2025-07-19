@@ -12,17 +12,14 @@
             "@database/*": ["src/prisma/prisma.client/*"],
             "@filters/*": ["src/filters/*"],
             "@functions/*": ["src/functions/*"],
-            "@handlers/*": ["src/handlers/*"]
+            "@handlers/*": ["src/handlers/*"],
+            "@services/*": ["src/services/*"],
+            "@commands/*": ["src/commands/*"],
+            "@servers/*": ["src/servers/*"]
         },
         "allowSyntheticDefaultImports": true,
         "esModuleInterop": true
     },
-    "include": [
-        "src/**/*.js",
-        "src/commands/slash/guild/guilddebug.js",
-        "src/commands/private/owner/tools.js",
-        "ignored/debug.js",
-        "src/commands/private/owner/twitter.js"
-    ],
+    "include": ["src/**/*", "jsconfig.json", "package.json", ".env"],
     "exclude": ["node_modules"]
 }

@@ -17,6 +17,9 @@ export class ConversationHistoryModule {
     constructor(prisma) {
         this.prisma = prisma
         this.sensitiveFields = ['content']
+
+        // Check if the metadataJson field exists in the schema
+        this.hasMetadataField = true // We know it exists based on the schema
     }
 
     /**
@@ -394,22 +397,110 @@ export class ConversationHistoryModule {
      * @returns {Promise<Array>} Array of reply messages
      */
     async getThread(parentId, limit = 50) {
-        const results = await this.prisma.conversationHistory.findMany({
-            where: { parentId: parentId },
-            orderBy: { timestamp: 'asc' },
-            take: limit,
-            include: {
-                user: {
-                    select: {
-                        username: true,
-                        role: true
+        try {
+            // Convert parentId to a number if it's a string
+            const numericParentId = typeof parentId === 'string' ? parseInt(parentId, 10) : parentId
+
+            if (isNaN(numericParentId)) {
+                throw new Error(`Invalid parentId: ${parentId}`)
+            }
+
+            const results = await this.prisma.conversationHistory.findMany({
+                where: {
+                    parentId: numericParentId
+                },
+                orderBy: {
+                    timestamp: 'asc'
+                },
+                take: limit,
+                include: {
+                    user: {
+                        select: {
+                            username: true,
+                            role: true
+                        }
                     }
                 }
-            }
-        })
+            })
 
-        // Decrypt sensitive fields in the results
-        return DbEncryptionHelper.processData(results, this.sensitiveFields)
+            // Manually decrypt sensitive fields - ensure this happens before processing metadata
+            const decryptedResults = results.map(msg => {
+                try {
+                    // Only decrypt if field is a string and looks encrypted
+                    if (
+                        typeof msg.content === 'string' &&
+                        this.sensitiveFields.includes('content') &&
+                        (msg.content.includes('==:16:') || msg.content.includes('=='))
+                    ) {
+                        const decryptedContent = DbEncryptionHelper.decryptFields(
+                            {
+                                content: msg.content
+                            },
+                            ['content']
+                        )
+
+                        return {
+                            ...msg,
+                            content: decryptedContent.content
+                        }
+                    }
+                    return msg
+                } catch (err) {
+                    console.error(`Error decrypting message ${msg.id}: ${err.message}`)
+                    return msg
+                }
+            })
+
+            // Process the results to handle anonymous messages and ensure IDs are strings
+            return decryptedResults.map(msg => {
+                // Ensure ID is converted to string
+                if (msg.id !== undefined) {
+                    msg.id = msg.id.toString()
+                }
+
+                // Extract metadata from content if present
+                let metadata = null
+                if (msg.content && typeof msg.content === 'string') {
+                    const metaMatch = msg.content.match(/^\[META\](.*?)\[\/META\](.*)/s)
+                    if (metaMatch && metaMatch.length >= 3) {
+                        try {
+                            metadata = JSON.parse(metaMatch[1])
+                            // Update the content to remove the metadata prefix
+                            msg.content = metaMatch[2] || ''
+                        } catch (e) {
+                            console.error(`Failed to parse metadata in message ${msg.id}: ${e.message}`)
+                        }
+                    }
+                }
+
+                // If we have metadataJson field, use that instead
+                if (msg.metadataJson) {
+                    metadata = msg.metadataJson
+                }
+
+                // If user is null or System, use metadata for username/context
+                if (!msg.user || msg.user.username === 'System') {
+                    const username = metadata?.username || 'Anonymous User'
+                    return {
+                        ...msg,
+                        metadata,
+                        user: {
+                            username,
+                            role: 'user'
+                        }
+                    }
+                }
+
+                // Add metadata to regular user messages too
+                return {
+                    ...msg,
+                    metadata
+                }
+            })
+        } catch (error) {
+            console.error('Failed to get thread:', error)
+            throw error
+        }
     }
 
     /**
@@ -427,7 +518,7 @@ export class ConversationHistoryModule {
                 timestamp: {
                     lt: cutoffDate
                 },
-                contextType: { not: 'system' } // Keep system messages longer
+                contextType: { not: 'system' }
             }
         })
     }
@@ -444,5 +535,139 @@ export class ConversationHistoryModule {
                 guildId: String(guildId)
             }
         })
+    }
+
+    /**
+     * Creates a new conversation history record without a user connection (anonymous)
+     * @param {Object} data - Conversation data
+     * @returns {Promise<Object>} The created conversation history record
+     */
+    async createAnonymous(data) {
+        try {
+            const systemUserId = 1n
+
+            // Check if system user exists, if not create it
+            try {
+                const systemUser = await this.prisma.user.findUnique({
+                    where: { id: systemUserId }
+                })
+
+                if (!systemUser) {
+                    // Create system user if it doesn't exist
+                    await this.prisma.user.create({
+                        data: {
+                            id: systemUserId,
+                            username: 'System',
+                            role: 'SYSTEM'
+                        }
+                    })
+                    console.log('Created system user for anonymous messages')
+                }
+            } catch (userError) {
+                console.error('Error checking/creating system user:', userError)
+            }
+
+            // Prepare message data
+            const messageData = {
+                content: data.content,
+                isAiResponse: data.isAiResponse || false,
+                contextType: data.contextType || 'api',
+                timestamp: new Date(),
+                // Connect to system user
+                user: {
+                    connect: {
+                        id: systemUserId
+                    }
+                }
+            }
+
+            // Include parent connection if provided
+            if (data.parent) {
+                messageData.parent = data.parent
+            }
+
+            // Include any additional provided fields
+            if (data.channelId) messageData.channelId = data.channelId
+            if (data.guildId) messageData.guildId = data.guildId
+            if (data.messageId) messageData.messageId = data.messageId
+
+            // Store metadata in the database column
+            if (data.metadata) {
+                messageData.metadataJson = data.metadata
+            }
+
+            // Create the message
+            const result = await this.prisma.conversationHistory.create({
+                data: messageData
+            })
+
+            return result
+        } catch (error) {
+            console.error('Failed to create anonymous message:', error)
+            throw error
+        }
+    }
+
+    /**
+     * Get preferences associated with a session
+     * @param {string|number} sessionId - Session ID
+     * @returns {Promise<Object|null>} Session preferences or null
+     */
+    async getSessionPreferences(sessionId) {
+        try {
+            const session = await this.findById(parseInt(sessionId, 10))
+            if (!session || !session.metadataJson) return null
+
+            return session.metadataJson.preferences || null
+        } catch (error) {
+            console.error('Failed to get session preferences:', error)
+            return null
+        }
+    }
+
+    /**
+     * Save preferences for a session
+     * @param {string|number} sessionId - Session ID
+     * @param {Object} preferences - User preferences
+     * @returns {Promise<Object>} Updated session
+     */
+    async saveSessionPreferences(sessionId, preferences) {
+        try {
+            const session = await this.findById(parseInt(sessionId, 10))
+            if (!session) throw new Error(`Session ${sessionId} not found`)
+
+            // Update the session's metadata with preferences
+            const updatedMetadata = {
+                ...(session.metadataJson || {}),
+                preferences
+            }
+
+            return this.prisma.conversationHistory.update({
+                where: { id: parseInt(sessionId, 10) },
+                data: {
+                    metadataJson: updatedMetadata,
+                    lastActivity: new Date()
+                }
+            })
+        } catch (error) {
+            console.error('Failed to save session preferences:', error)
+            throw error
+        }
+    }
+
+    /**
+     * Get the count of messages in a thread
+     * @param {string|number} parentId - Parent message ID
+     * @returns {Promise<number>} Number of messages in thread
+     */
+    async getThreadMessageCount(parentId) {
+        try {
+            return await this.prisma.conversationHistory.count({
+                where: { parentId: parseInt(parentId, 10) }
+            })
+        } catch (error) {
+            console.error('Failed to get thread message count:', error)
+            return 0
+        }
     }
 }
