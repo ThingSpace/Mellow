@@ -22,12 +22,12 @@ export default {
                     .addFields(
                         {
                             name: 'Full Policy',
-                            value: '[Read the full privacy policy](https://github.com/ThingSpace/Mellow/blob/master/docs/privacy-policy.md)',
+                            value: '[Read the full privacy policy](https://mymellow.space/privacy)',
                             inline: false
                         },
                         {
                             name: 'Terms of Service',
-                            value: '[View our Terms of Service](https://github.com/ThingSpace/Mellow/blob/master/docs/terms-of-service.md)'
+                            value: '[View our Terms of Service](https://mymellow.space/terms)'
                         }
                     )
                     .setTimestamp()
