@@ -36,7 +36,7 @@ export default {
                             },
                             {
                                 name: 'Contributing',
-                                value: 'We welcome contributions! See the [contributing guidelines](https://mymellow.space/docs/technical/contributing) in the README.',
+                                value: 'We welcome contributions! See the [contributing guidelines](https://mymellow.space/docs/core/technical/contributing) in the README.',
                                 inline: false
                             },
                             {
