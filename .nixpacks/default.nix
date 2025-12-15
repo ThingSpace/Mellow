@@ -2,11 +2,12 @@
 
 pkgs.mkShell {
   buildInputs = [
-    pkgs.openssl          # OpenSSL 3.x
-    pkgs.pkg-config       # Needed for linking libraries
+    pkgs.openssl           # OpenSSL 3.x
+    pkgs.pkg-config        # Needed to locate libraries
+    pkgs.gcc               # For compiling Prisma engines
+    pkgs.make              # For build tools
   ];
 
-  # Make sure Node/Bun can find OpenSSL
   shellHook = ''
     export OPENSSL_DIR=${pkgs.openssl}
     export PKG_CONFIG_PATH=${pkgs.openssl.dev}/lib/pkgconfig
