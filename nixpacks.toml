@@ -1,4 +1,4 @@
 [phases.setup]
+aptPkgs = ["libssl3"]
 nixPkgs = ["bun", "nodejs_22"]
-aptPkgs = ["libssl-dev", "libssl3"]
 includeNode = false
