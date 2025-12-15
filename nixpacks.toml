@@ -1,4 +1,4 @@
 [phases.setup]
-nixPkgs = ["bun", "nodejs_20"]
-packages = ["openssl"]
+nixPkgs = ["bun", "nodejs_20", "libssl3", "openssl"]
+packages = ["openssl", "libssl3"]
 includeNode = false
