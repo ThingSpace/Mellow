@@ -19,6 +19,7 @@ RUN apt-get update && apt-get install -y \
 ENV NODE_ENV=production
 ENV PRISMA_FORCE_NAPI=true
 ENV npm_config_update_notifier=false
+ENV npm_config_ignore_scripts=true
 
 WORKDIR /app
 
@@ -26,8 +27,10 @@ WORKDIR /app
 COPY . .
 
 # ---------- Install dependencies ----------
-COPY package*.json ./
+COPY package.json ./
 RUN npm install
+
+ENV npm_config_ignore_scripts=false
 
 # ---------- Prisma ----------
 RUN npx prisma generate
