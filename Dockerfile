@@ -23,22 +23,16 @@ ENV npm_config_update_notifier=false
 
 WORKDIR /app
 
-# ---------- Dependency install ----------
-COPY package.json ./
-COPY package-lock.json ./
+# ---------- Install dependencies ----------
+COPY package*.json ./
+RUN npm install --omit=dev
 
-RUN if [ -f package-lock.json ]; then \
-      npm ci --omit=dev; \
-    else \
-      npm install --omit=dev; \
-    fi
-
-# ---------- App source ----------
+# ---------- Copy app source ----------
 COPY . .
 
 # ---------- Prisma ----------
 RUN npx prisma generate
 
 # ---------- Runtime ----------
-EXPOSE 3000
+EXPOSE 9420
 CMD ["npm", "start"]
