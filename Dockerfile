@@ -1,5 +1,5 @@
 # ---------- Base ----------
-FROM node:20-bookworm-slim
+FROM node:22
 
 # ---------- System dependencies ----------
 RUN apt-get update && apt-get install -y \
@@ -13,7 +13,6 @@ RUN apt-get update && apt-get install -y \
     php-mbstring \
     php-xml \
     php-zip \
-    php-openssl \
     && rm -rf /var/lib/apt/lists/*
 
 # ---------- Environment ----------
