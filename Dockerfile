@@ -22,12 +22,12 @@ ENV npm_config_update_notifier=false
 
 WORKDIR /app
 
+# ---------- Copy app source ----------
+COPY . .
+
 # ---------- Install dependencies ----------
 COPY package*.json ./
 RUN npm install --omit=dev
-
-# ---------- Copy app source ----------
-COPY . .
 
 # ---------- Prisma ----------
 RUN npx prisma generate
