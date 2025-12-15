@@ -2,12 +2,15 @@
 
 pkgs.mkShell {
   buildInputs = [
-    pkgs.openssl       # OpenSSL 3.x
-    pkgs.pkg-config    # For Prisma linking
+    pkgs.bun         # Bun runtime / package manager
+    pkgs.nodejs      # Node.js runtime (needed for Prisma CLI)
+    pkgs.pkg-config  # Required for building some native deps
+    pkgs.gcc         # Build tools
+    pkgs.make
   ];
 
   shellHook = ''
-    export OPENSSL_DIR=${pkgs.openssl}
-    export LD_LIBRARY_PATH=${pkgs.openssl.out}/lib:$LD_LIBRARY_PATH
+    # Use Prisma N-API engine to avoid libssl issues
+    export PRISMA_FORCE_NAPI=true
   '';
 }
