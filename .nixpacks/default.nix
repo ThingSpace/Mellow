@@ -2,14 +2,12 @@
 
 pkgs.mkShell {
   buildInputs = [
-    pkgs.openssl           # OpenSSL 3.x
-    pkgs.pkg-config        # Needed to locate libraries
-    pkgs.gcc               # For compiling Prisma engines
-    pkgs.make              # For build tools
+    pkgs.openssl       # OpenSSL 3.x
+    pkgs.pkg-config    # For Prisma linking
   ];
 
   shellHook = ''
     export OPENSSL_DIR=${pkgs.openssl}
-    export PKG_CONFIG_PATH=${pkgs.openssl.dev}/lib/pkgconfig
+    export LD_LIBRARY_PATH=${pkgs.openssl.out}/lib:$LD_LIBRARY_PATH
   '';
 }
