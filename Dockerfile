@@ -27,7 +27,7 @@ COPY . .
 
 # ---------- Install dependencies ----------
 COPY package*.json ./
-RUN npm install --omit=dev
+RUN npm install
 
 # ---------- Prisma ----------
 RUN npx prisma generate
