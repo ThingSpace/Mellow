@@ -15,6 +15,10 @@ RUN apt-get update && apt-get install -y \
     php-zip \
     && rm -rf /var/lib/apt/lists/*
 
+# Install Bun
+RUN curl -fsSL https://bun.sh/install | bash
+ENV PATH="/root/.bun/bin:$PATH"
+
 # ---------- Environment ----------
 ENV NODE_ENV=production
 ENV PRISMA_FORCE_NAPI=true
@@ -29,7 +33,7 @@ COPY . .
 
 # ---------- Install dependencies ----------
 COPY package.json ./
-RUN npm install
+RUN bun install
 
 ENV npm_config_ignore_scripts=false
 
@@ -38,4 +42,4 @@ RUN npx prisma generate
 
 # ---------- Runtime ----------
 EXPOSE 9420
-CMD ["npm", "start"]
+CMD ["bun", "start"]
