@@ -1,25 +1,27 @@
 # ---------- Base ----------
-FROM node:22
+FROM node:20-bullseye
 
 # ---------- System dependencies ----------
 RUN apt-get update && apt-get install -y \
-    openssl \
-    libssl3 \
-    ca-certificates \
-    curl \
-    git \
-    php-cli \
-    php-curl \
-    php-mbstring \
-    php-xml \
-    php-zip \
-    && rm -rf /var/lib/apt/lists/*
+  libssl1.1 \
+  libssl3 \
+  openssl \
+  ca-certificates \
+  curl \
+  git \
+  php-cli \
+  php-curl \
+  php-mbstring \
+  php-xml \
+  php-zip \
+  && rm -rf /var/lib/apt/lists/*
 
 # ---------- Environment ----------
 ENV NODE_ENV=production
 ENV PRISMA_FORCE_NAPI=true
 ENV npm_config_update_notifier=false
 ENV npm_config_ignore_scripts=true
+ENV NODE_OPTIONS=--openssl-legacy-provider
 
 WORKDIR /app
 
