@@ -3,7 +3,7 @@ FROM node:22-slim
 
 # ---------- System dependencies ----------
 RUN apt-get update && apt-get install -y \
-    libssl1.1 \
+    libssl3 \
     openssl \
     ca-certificates \
     curl \
