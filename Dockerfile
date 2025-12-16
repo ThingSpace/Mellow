@@ -3,9 +3,7 @@ FROM node:22-slim
 
 # ---------- System dependencies ----------
 RUN apt-get update && apt-get install -y \
-    libssl3 \
-    openssl \
-    ca-certificates \
+    unzip \
     curl \
     git \
     php-cli \
@@ -13,6 +11,8 @@ RUN apt-get update && apt-get install -y \
     php-mbstring \
     php-xml \
     php-zip \
+    openssl \
+    ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Bun
