@@ -1,20 +1,19 @@
 # ---------- Base ----------
-FROM node:20-bullseye
+FROM node:22-slim
 
 # ---------- System dependencies ----------
 RUN apt-get update && apt-get install -y \
-  libssl1.1 \
-  libssl3 \
-  openssl \
-  ca-certificates \
-  curl \
-  git \
-  php-cli \
-  php-curl \
-  php-mbstring \
-  php-xml \
-  php-zip \
-  && rm -rf /var/lib/apt/lists/*
+    libssl1.1 \
+    openssl \
+    ca-certificates \
+    curl \
+    git \
+    php-cli \
+    php-curl \
+    php-mbstring \
+    php-xml \
+    php-zip \
+    && rm -rf /var/lib/apt/lists/*
 
 # ---------- Environment ----------
 ENV NODE_ENV=production
